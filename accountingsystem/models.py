@@ -128,8 +128,7 @@ class Preamt(models.Model):
     adj_mat = models.DecimalField(max_digits=22, decimal_places=2)
     pre_amt = models.DecimalField(max_digits=22, decimal_places=2)
     rpt = models.ForeignKey('Report', models.DO_NOTHING)
-    acc = models.ForeignKey(Account, models.DO_NOTHING)
-
+    acc = models.ForeignKey('Account', models.DO_NOTHING)
     class Meta:
         managed = False
         db_table = 'preamt'
@@ -139,7 +138,7 @@ class Reltrx(models.Model):
     rel_id = models.AutoField(primary_key=True)
     target = models.ForeignKey(Company, models.DO_NOTHING, db_column='target')
     related_amt = models.DecimalField(max_digits=22, decimal_places=2)
-    pre = models.ForeignKey(Preamt, models.DO_NOTHING)
+    pre = models.ForeignKey('Preamt', models.DO_NOTHING)
 
     class Meta:
         managed = False
@@ -151,7 +150,7 @@ class Report(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     type = models.CharField(max_length=2)
-    com = models.ForeignKey(Company, models.DO_NOTHING)
+    com = models.ForeignKey('Company', models.DO_NOTHING)
 
     class Meta:
         managed = False
