@@ -129,7 +129,6 @@ class Preamt(models.Model):
     pre_amt = models.DecimalField(max_digits=22, decimal_places=2)
     rpt = models.ForeignKey('Report', models.DO_NOTHING)
     acc = models.ForeignKey('Account', models.DO_NOTHING)
-
     class Meta:
         managed = False
         db_table = 'preamt'
