@@ -12,15 +12,14 @@ class Sales(models.Model):
     numbers = models.PositiveIntegerField() # 數量
     amount = models.PositiveIntegerField() # 金額
     # FK Products, Stores
-    product_id = models.ForeignKey('Products', on_delete=models.CASCADE)
-    store_id = models.ForeignKey('Stores', on_delete=models.CASCADE)
+    product = models.ForeignKey('Products', on_delete=models.CASCADE)
+    store = models.ForeignKey('Stores', on_delete=models.CASCADE)
     class Meta:
         db_table = 'sales'
 
 class RFM(models.Model):
     rfm_id = models.SmallAutoField(primary_key=True)
-    actual_resp_rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
-                                                                     MaxValueValidator(100)]) # 實際回應率最高 100
+    actual_resp_rate = models.SmallIntegerField(validators=[MaxValueValidator(100)]) # 實際回應率最高 100, 可為負數
     rfm_value = models.PositiveSmallIntegerField()
 
 class Customers(models.Model):
@@ -33,7 +32,7 @@ class Customers(models.Model):
     name = models.CharField(max_length=30)
     gender = models.IntegerField(choices = GENDER)
     # FK RFM
-    rfm_id = models.ForeignKey('RFM', on_delete=models.CASCADE)
+    rfm = models.ForeignKey('RFM', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'customers'
@@ -46,7 +45,7 @@ class ShoppingRecords(models.Model):
     shopping_date = models.DateField() # 消費日
     snackes = models.TextField(blank=True) # 配餐，不同名稱用 , 分割
     # FK Customers
-    cid = models.ForeignKey('Customers', on_delete=models.CASCADE)
+    customer = models.ForeignKey('Customers', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'shopping_records'
@@ -91,7 +90,7 @@ class RawMaterial(models.Model):
     expiration_duration = models.PositiveSmallIntegerField() # 有效期間：天數
     on_hand_inventory = models.PositiveIntegerField() # 現有庫存
     # FK Suppliers
-    supplier_id = models.ForeignKey('Suppliers', on_delete=models.CASCADE)
+    supplier = models.ForeignKey('Suppliers', on_delete=models.CASCADE)
     class Meta:
         db_table = 'raw_material'
 
@@ -100,8 +99,8 @@ class StrategyProductRel(models.Model):
     spr_id = models.AutoField(primary_key = True)
     numbers = models.PositiveSmallIntegerField() # 此一"行銷策略"下所需的"商品"數
     # FK Products, Strategy
-    product_id = models.ForeignKey('Products', on_delete=models.CASCADE)
-    strategy_id = models.ForeignKey('MarketingStrategies', on_delete=models.CASCADE)
+    product = models.ForeignKey('Products', on_delete=models.CASCADE)
+    strategy = models.ForeignKey('MarketingStrategies', on_delete=models.CASCADE)
     class Meta:
         db_table = 'strategy_product_rel'
 
@@ -110,8 +109,8 @@ class ProductMaterialRel(models.Model):
     pmr_id = models.AutoField(primary_key=True)
     numbers = models.PositiveSmallIntegerField() # 此一"商品"需要多少個這種"原物料"
     # FK Products, RawMaterial
-    product_id = models.ForeignKey('Products', on_delete=models.CASCADE)
-    material_id = models.ForeignKey('RawMaterial', on_delete=models.CASCADE)
+    product = models.ForeignKey('Products', on_delete=models.CASCADE)
+    material = models.ForeignKey('RawMaterial', on_delete=models.CASCADE)
     class Meta:
         db_table = 'product_material_rel'
 
@@ -125,7 +124,7 @@ class StoreDemand(models.Model):
     created_date = models.DateField(default=date.today)
     status = models.PositiveSmallIntegerField(choices=DEMAND_STATUS, default=DEMAND_STATUS.RECEIVED) # 需求單狀態
     # FK Store
-    store_id = models.ForeignKey('Stores', on_delete=models.CASCADE)
+    store = models.ForeignKey('Stores', on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['created_date', 'status']
@@ -136,8 +135,8 @@ class StoreDemandDetails(models.Model):
     store_demand_details_id = models.AutoField(primary_key=True)
     prod_numbers = models.PositiveSmallIntegerField() # 所需商品數量
     # FK RawMaterial, Stores
-    product_id = models.ForeignKey('Products', on_delete=models.CASCADE)
-    store_id = models.ForeignKey('Stores', on_delete=models.CASCADE)
+    product = models.ForeignKey('Products', on_delete=models.CASCADE)
+    store = models.ForeignKey('Stores', on_delete=models.CASCADE)
     class Meta:
         db_table = 'store_demand_details'
 
@@ -175,7 +174,7 @@ class Orders(models.Model):
     status = models.PositiveSmallIntegerField(choices=ORDER_STATUS, default=ORDER_STATUS.ESTABLISHED) # 訂單狀態
     order_amount = models.PositiveIntegerField() # 訂購數量
     # FK RawMaterial
-    material_id = models.ForeignKey('RawMaterial', on_delete=models.CASCADE)
+    material = models.ForeignKey('RawMaterial', on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['order_date', 'status']
