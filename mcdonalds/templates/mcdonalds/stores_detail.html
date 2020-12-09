@@ -1,0 +1,12 @@
+
+<table>
+    
+    {% for store in stores %}
+        <tr>
+            <td>{{ store.store_name }}</td> 
+            <td>{{ store.store_address }}</td>
+            <td>{{ store.store_phone }}</td>
+        </tr>
+    {% endfor %}
+    
+</table>
