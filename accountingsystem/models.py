@@ -56,6 +56,7 @@ class Depositaccount(models.Model):
     dep_acc_id = models.AutoField(primary_key=True)
     bank_name = models.CharField(max_length=50)
     bank_account_number = models.CharField(max_length=5)
+    type = models.ForeignKey(Account, models.DO_NOTHING, db_column='type')
     currency = models.CharField(max_length=10)
     foreign_currency_amount = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
     ntd_amount = models.DecimalField(max_digits=22, decimal_places=2)
