@@ -41,6 +41,12 @@
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\USER\accounting_system\accountingsystem" />
+      <recent name="C:\Users\USER\accounting_system\nccu_project" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="NCCU-Project-master" type="Python.DjangoServer" factoryName="Django server">
       <module name="NCCU-Project-master" />
@@ -81,7 +87,7 @@
       <workItem from="1607418669485" duration="3035000" />
       <workItem from="1607493473439" duration="8067000" />
       <workItem from="1607503393546" duration="10057000" />
-      <workItem from="1607616783795" duration="2513000" />
+      <workItem from="1607616783795" duration="5226000" />
     </task>
     <servers />
   </component>
@@ -92,5 +98,11 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$" />
     </ignored-roots>
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="468" y="10" width="599" height="804" key="find.popup" timestamp="1607624864611">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="468" y="10" width="599" height="804" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1607624864611" />
   </component>
 </project>

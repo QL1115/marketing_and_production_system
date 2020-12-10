@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- navigation things-->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <!-- FontAwesome -->
+    <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
+		<!--tree things -->
+		<link href="test.css" rel="stylesheet">
+    <!--start of navbar-->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">OurLogo</a>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+              <li class="nav-item">
+                 <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">匯入</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><strong>檢查</strong></a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="#">定期存款</a>
+                      <a class="dropdown-item" href="#">銀行存款</a>
+              </li>
+               <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"  aria-expanded="false">調整</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="#">定期存款調整科目</a>
+                      <a class="dropdown-item" href="#">銀行存款調整外幣評價損益</a>
+                      <a class="dropdown-item" href="#">調整表</a>
+                      <a class="dropdown-item" href="#">附註格式</a>
+              </li>        
+              <li class="nav-item">
+                  <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">附註格式</a>
+              </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+            <div class="other_nav_buttons">
+              <i class="fas fa-cog"></i>
+              <i class="fas fa-user"></i>
+            </div>               
+      </div>
+    </nav>
+     <!--end of navbar-->	
+  </head>
+	<body>
+    <div class="container-fluid">
+      <div class="row">
+    <!--start of tree view-->
+        <div id="content_layout" class="col-2">
+          <div>
+              <div id="treeview1" class=""></div>
+          </div>
+        </div>
+  <!--end of tree view-->
+    <!--start of checking page-->
+        <div id="content_layout" class="col-10">
+          <div id=cashCheckLayout>
+            <div class="row">
+              <div id="cashCheckBtnGroup" class="col-2" aria-label="Basic example">
+                <button id="CheckDepositAccount" type="button" class="btn btn-secondary" >定期存款</button>
+                <button id="CheckCashInBank"type="button" class="btn btn-secondary" >銀行存款</button>
+              </div>
+              <div class="col-10">
+                <div id="editBtnGroup" class="btn-group col-2 float-right" role="group" aria-label="Basic example">
+                <button id="Edit" type="button" class="btn btn-secondary">編輯</button>
+                <button id="save" type="button" class="btn btn-secondary">確定</button>
+              </div>
+            </div>
+        </div>
+            <br>
+          <div id="tableforCheckDepositAccount">            
+            <div>
+              <div>
+                <div class="float-right">
+                  <label for="totalforCheckDepositAccount">合計:</label>
+                  <input id="totalforCheckDepositAccount" type="text" readonly/>
+                </div>
+            </div>
+              <table contenteditable="true" style="width:1000px;">
+                <tr class="table-active"> 
+                  <th style="padding:8px;">銀行別</th>
+                  <th style="padding:8px;">帳號</th>
+                  <th style="padding:8px;">幣別</th>
+                  <th style="padding:8px;">外幣金額</th>
+                  <th style="padding:8px;">台幣金額</th>
+                  <th style="padding:8px;">質押</th>
+                  <th style="padding:8px;">開始</th>
+                  <th style="padding:8px;">結束</th>
+                </tr>
+                <tr>
+                  {% for  in  %}
+                  <td>{{22222sssssssssssssssssss222  }}</td>
+                  <td>{{ 222222222222 }}</td>
+                  <td>{{ 222222 }}</td>
+                  <td>{{ 2222sss22 }}</td>
+                  <td>{{ 22ssss222 }}</td>
+                  <td>{{22222222  }}</td>
+                  <td>{{ 2222222 }}</td>
+                  <td>{{ 22222ssssssssssssssssss }}</td>
+                  {% endfor %}
+                </tr>
+              </table>
+            </div>
+
+        </div>
+
+        <div id="tableforCheckCashInBank">
+          <div>
+            <div class="float-right">
+              <label for="totalforCheckCashInBank">合計:</label>
+              <input id="totalforCheckCashInBank" type="text" readonly/>
+            </div>
+          </div>
+            <table contenteditable="true" style="width:1000px;">
+              <tr class="table-active">
+                  <th>銀行別</th>
+                  <th>帳號</th>
+                  <th>類型</th>
+                  <th>幣別</th>
+                  <th>外幣金額</th>
+                  <th>台幣金額</th>
+                </tr>
+                <tr>
+                  {% for  in  %}
+                  <td>{{  }}</td>
+                  <td>{{  }}</td>
+                  <td>{{  }}</td>
+                  <td>{{  }}</td>
+                  <td>{{  }}</td>
+                  <td>{{  }}</td>
+                  {% endfor %}
+                </tr>
+            </table>
+          </div>
+          <div>
+        </div>
+      </div>
+  </div>
+</div>
+    <!--end of checking page-->
+
+
+      <script src="test3.js"></script>
+      <script type="text/javascript">
+
+        $("#tableforCheckCashInBank").hide();
+        $("#tableforCheckDepositAccount").show();
+
+        $("button").click(function(e){
+          if (e.target.id=="CheckCashInBank") {
+            <!--點了銀行存款，將銀行存款按鈕顯示深色-->
+            $("#CheckDepositAccount").removeClass("btn btn-dark");
+            $(this).addClass("btn btn-dark");
+            <!--點了銀行存款，銀行存款div，隱藏定期存款-->
+            $("#tableforCheckDepositAccount").hide();
+            $("#tableforCheckCashInBank").show();
+
+          }else if(e.target.id=="CheckDepositAccount"){
+            $("#CheckCashInBank").removeClass("btn btn-dark");
+            $(this).addClass("btn btn-dark");
+            $("#tableforCheckDepositAccount").show();
+            $("#tableforCheckCashInBank").hide();
+          }else if(e.target.id=="EditCheck"){
+            <!--點了edit後，先查看使用者當前看的是哪個table-->
+            if ($("#tableforCheckDepositAccount").css('display') == 'none') {
+              <!--目前看的是銀行存款，跳到銀行存款的編輯-->
+              alert("cb v")
+            }else{
+              alert("d v")
+            }
+          }
+            alert(e.target.id);
+          });
+
+      $(function() {
+        var defaultData = [
+          {
+            text: '資產',
+            href: '#parent1',
+            nodes: [
+              {
+                text: 'Child 1',
+                href: '#child1',
+              },
+              {
+                text: 'Child 2',
+                href: '#child2',
+              }
+            ]
+          },
+          {
+            text: '負債',
+            href: '#parent1',
+            nodes: [
+              {
+                text: 'Child 1',
+                href: '#child1',
+              },
+              {
+                text: 'Child 2',
+                href: '#child2',
+              }
+            ]
+          },
+          {
+            text: '損益',
+            href: '#parent1',
+            nodes: [
+              {
+                text: 'Child 1',
+                href: '#child1',
+              },
+              {
+                text: 'Child 2',
+                href: '#child2',
+              }
+            ]
+          },
+          {
+            text: '權益',
+            href: '#parent1',
+            nodes: [
+              {
+                text: 'Child 1',
+                href: '#child1',
+              },
+              {
+                text: 'Child 2',
+                href: '#child2',
+              }
+            ]
+          },
+          {
+            text: '其他',
+            href: '#parent1',
+            nodes: [
+              {
+                text: 'Child 1',
+                href: '#child1',
+              },
+              {
+                text: 'Child 2',
+                href: '#child2',
+              }
+            ]
+          },
+          
+          
+        ];
+        $('#treeview1').treeview({
+          levels:1,
+          data: defaultData
+        });
+
+        var search = function(e) {
+          var pattern = $('#input-search').val();
+          var options = {
+            ignoreCase: $('#chk-ignore-case').is(':checked'),
+            exactMatch: $('#chk-exact-match').is(':checked'),
+            revealResults: $('#chk-reveal-results').is(':checked')
+          };
+          var results = $searchableTree.treeview('search', [ pattern, options ]);
+
+          var output = '<p>' + results.length + ' matches found</p>';
+          $.each(results, function (index, result) {
+            output += '<p>- ' + result.text + '</p>';
+          });
+          $('#search-output').html(output);
+        }
+        $('#btn-clear-search').on('click', function (e) {
+          $searchableTree.treeview('clearSearch');
+          $('#input-search').val('');
+          $('#search-output').html('');
+        });
+        });
+
+    </script>
+<!--
+    <div class="tab-content" style="position: absolute; top:35px; left: 200px">
+
+		<div id="標章" class="tab-pane fade">
+			<h1>NIGGER</h1>
+		</div>
+        <div id="匯入" class="tab-pane fade in active">
+            <h3>匯入</h3>
+            <p>(匯入的內容)</p>
+        </div>
+        <div id="檢查1" class="tab-pane fade">
+            <h3>檢查1</h3>
+            <p>(檢查1的內容)</p>
+        </div>
+        <div id="檢查2" class="tab-pane fade">
+            <h3>檢查2</h3>
+            <p>(檢查2的內容)</p>
+        </div>
+        <div id="調整1" class="tab-pane fade">
+            <h3>調整</h3>
+            <p>(調整1的內容)</p>
+        </div>
+        <div id="調整2" class="tab-pane fade">
+            <h3>調整</h3>
+            <p>(調整2的內容)</p>
+        </div>
+        <div id="調整3" class="tab-pane fade">
+            <h3>調整</h3>
+            <p>(調整3的內容)</p>
+        </div>
+        <div id="附註格式" class="tab-pane fade">
+        	<h4>附註格式</h4>
+        	<p>(附註格式內容)</p>
+        </div>
+        <div id="設定" class="tab-pane">
+          <h3>設定頁面</h3>
+          <p>(設定頁面內容)</p>
+        </div>
+    </div>
+  -->
+  </body>
+<html>
