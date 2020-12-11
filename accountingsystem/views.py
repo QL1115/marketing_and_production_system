@@ -30,7 +30,7 @@ def upload_cash_in_bank(request, comp_id, rpt_id): # TODO: check 的時候給 ac
         return '{"status_code": 500, "msg": "檔案類型非xlsx，或發生不明錯誤。"}'
     if cash_in_banks_sheet.nsheets != 1:
         return '{"status_code": 422, "msg":"檔案超過一個分頁。", "redirect_url":" "}'
-        check_and_save_cah_in_banks(rpt_id, cash_in_banks_sheet.sheet_by_index(0))
+        check_and_save_cah_in_banks(rpt_id, cash_in_banks_sheet)
     return HttpResponse({"status_code": 200, "msg":"成功上傳銀行存款"})
 
 @require_http_methods(["POST"])
@@ -43,7 +43,7 @@ def upload_deposit_account(request, comp_id, rpt_id):
         return '{"status_code": 500, "msg": "檔案類型非xlsx，或發生不明錯誤。"}'
     if deposit_account_sheet.nsheets != 1:
         return '{"status_code": 422, "msg":"檔案超過一個分頁。", "redirect_url":" "}'
-    #check_and_save_deposit_account(rpt_id, deposit_account_sheet.sheet_by_index(0));
+    #check_and_save_deposit_account(rpt_id, deposit_account_sheet);
     return HttpResponse({"status_code": 200, "msg":"成功上傳定期存款"})
 
 def get_import_page(request,comp_id, rpt_id, acc_id):
