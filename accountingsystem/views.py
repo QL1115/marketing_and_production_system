@@ -11,7 +11,7 @@ def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["DELETE"])
 @csrf_exempt # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
 def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     result = delete_uploaded_file(rpt_id, table_name)
