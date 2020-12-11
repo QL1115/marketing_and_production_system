@@ -84,7 +84,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nccu_project', # 目標資料庫的名稱
         'USER': 'root', # 資料庫帳號
-        'PASSWORD': '1234', # 資料庫密碼
+        'PASSWORD': 'winnie0721', # 資料庫密碼
         'HOST': 'localhost', # 主機位置，可以先測本地localhost
         'PORT': '3306', # 設定連接埠
     }
