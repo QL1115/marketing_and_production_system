@@ -32,5 +32,6 @@ Step.3
 以上步驟完成後即可測試專案是否能成功執行
 
 --- 資料庫更動紀錄(script請至Google Drive拿取  
-201211 1. 針對現金Ans-v.3做的修改於資料表Depositaccount新增欄位Type  
-       2. 新增科目
+201211  
+* 1. 針對現金Ans-v.3做的修改於資料表Depositaccount新增欄位Type  
+* 2. 新增科目
