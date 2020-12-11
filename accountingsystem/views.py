@@ -16,3 +16,7 @@ def index(request):
 def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     result = delete_uploaded_file(rpt_id, table_name)
     return HttpResponse(result) # TODO: for test
+
+
+def get_import_page(request,comp_id, rpt_id, acc_id):
+    return render (request,'<<import_page.html>>',{ 'acc_id': acc_id})
