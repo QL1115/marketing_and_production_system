@@ -10,7 +10,6 @@ from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
-
 @require_http_methods(["DELETE"])
 @csrf_exempt # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
 def delete_file(request, comp_id, rpt_id, acc_id, table_name):
@@ -46,3 +45,7 @@ def upload_deposit_account(request, comp_id, rpt_id):
         return '{"status_code": 422, "msg":"檔案超過一個分頁。", "redirect_url":" "}'
     #check_and_save_deposit_account(rpt_id, deposit_account_sheet.sheet_by_index(0));
     return HttpResponse({"status_code": 200, "msg":"成功上傳定期存款"})
+
+def get_import_page(request,comp_id, rpt_id, acc_id):
+    return render (request,'<<匯入頁面 HTML 位置>>',{ 'acc_id': acc_id})
+
