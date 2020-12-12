@@ -1,9 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
-
 from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode
-import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db import transaction
-
+import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 
 
 def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中的分頁
@@ -54,7 +52,6 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
     except Exception as e:
         print('check_and_save_cah_in_banks >>> ', e)
         return '{"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}'
-
 
 def check_and_save_deposit_account(rpt_id, deposit_account_sheet): # 參數：sheet 為 Excel 中的分頁
     '''檢查及儲存「定期存款」'''
@@ -113,7 +110,6 @@ def check_and_save_deposit_account(rpt_id, deposit_account_sheet): # 參數：sh
         print('check_and_save_cah_in_banks >>> ', e)
         return '{"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}'
 
-
 def delete_uploaded_file(rpt_id, table_name):
     '''根據 table name 刪除特定的上傳資料。eg. cash_in_banks 代表銀行存款'''
     # 1. 根據 rpt_id 和 table_name 判斷要刪除那個 uploaded file
@@ -129,7 +125,6 @@ def delete_uploaded_file(rpt_id, table_name):
     except Exception as e:
         print('delete_uploaded_file >>> ', e)
         return '{"status_code":500, "msg": "刪除資料發生不明錯誤。}'
-
 
 def get_uploaded_file(rpt_id, table_name):
     '''根據 table name 抓取特定的上傳資料。eg. cash_in_banks 代表銀行存款'''
