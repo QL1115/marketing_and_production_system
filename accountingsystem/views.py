@@ -30,18 +30,17 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
     cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_idinner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
     count_Depositaccount = cursor2.fetchall()
 
-    if count_CashInBank>0&&count_Depositaccount>0:
+    if count_CashInBank>0 and count_Depositaccount>0:
         #銀行存款跟定期存款皆已匯入資料
-        
-
-    elif count_CashInBank>0&&count_Depositaccount=0:
+        pass
+    elif count_CashInBank>0 and count_Depositaccount==0:
         #銀行存款已匯入資料
-
-    elif count_Depositaccount>0&&count_CashInBank=0:
+        pass
+    elif count_Depositaccount>0 and count_CashInBank==0:
         #定期存款已匯入資料
-        
+        pass
     else:
-
+        pass
 
 
     return render (request,'<<import_page.html>>',{ 'acc_id': acc_id})
