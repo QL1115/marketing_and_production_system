@@ -21,8 +21,7 @@ Step.1
   
 Step.2  
 從git上clone下程式碼  
-** 注意clone時要選擇master分支  
-clone網址: https://github.com/squirrelnrosie/NCCU-Project.git  
+clone網址: https://github.com/squirrelnrosie/NCCU_Project.git
   
 Step.3  
 安裝所需套件  
