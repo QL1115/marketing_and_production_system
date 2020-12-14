@@ -3,7 +3,7 @@ from django.db import models
 class Account(models.Model):
     acc_id = models.AutoField(primary_key=True)
     acc_name = models.CharField(max_length=50)
-    acc_parent = models.ForeignKey('self', models.DO_NOTHING, db_column='acc_parent', blank=True, null=True)
+    acc_parent = models.ForeignKey('self', models.CASCADE, db_column='acc_parent', blank=True, null=True)
     acc_level = models.IntegerField()
 
     class Meta:
@@ -16,7 +16,7 @@ class Adjentry(models.Model):
     adj_id = models.AutoField(primary_key=True)
     amount = models.DecimalField(max_digits=22, decimal_places=2)
     adj_num = models.IntegerField()
-    pre = models.ForeignKey('Preamt', models.DO_NOTHING)
+    pre = models.ForeignKey('Preamt', models.CASCADE)
 
     class Meta:
         managed = False
@@ -26,12 +26,12 @@ class Adjentry(models.Model):
 class Cashinbanks(models.Model):
     cash_in_banks_id = models.AutoField(primary_key=True)
     bank_name = models.CharField(max_length=50)
-    bank_account_number = models.CharField(max_length=5)
-    type = models.ForeignKey(Account, models.DO_NOTHING, db_column='type')
+    bank_account_number = models.CharField(max_length=20)
+    type = models.ForeignKey(Account, models.CASCADE, db_column='type')
     currency = models.CharField(max_length=10)
     foreign_currency_amount = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
     ntd_amount = models.DecimalField(max_digits=22, decimal_places=2)
-    rpt = models.ForeignKey('Report', models.DO_NOTHING)
+    rpt = models.ForeignKey('Report', models.CASCADE)
 
     class Meta:
         managed = False
@@ -41,10 +41,10 @@ class Cashinbanks(models.Model):
 class Company(models.Model):
     com_id = models.AutoField(primary_key=True)
     com_name = models.CharField(max_length=50)
-    com_parent = models.ForeignKey('self', models.DO_NOTHING, db_column='com_parent', blank=True, null=True)
+    com_parent = models.ForeignKey('self', models.CASCADE, db_column='com_parent', blank=True, null=True)
     parent_ratio = models.DecimalField(max_digits=6, decimal_places=4, blank=True, null=True)
     currency = models.CharField(max_length=10)
-    grp = models.ForeignKey('Group', models.DO_NOTHING)
+    grp = models.ForeignKey('Group', models.CASCADE)
 
     class Meta:
         managed = False
@@ -55,15 +55,15 @@ class Company(models.Model):
 class Depositaccount(models.Model):
     dep_acc_id = models.AutoField(primary_key=True)
     bank_name = models.CharField(max_length=50)
-    bank_account_number = models.CharField(max_length=5)
-    type = models.ForeignKey(Account, models.DO_NOTHING, db_column='type')
+    bank_account_number = models.CharField(max_length=20)
+    type = models.ForeignKey(Account, models.CASCADE, db_column='type')
     currency = models.CharField(max_length=10)
     foreign_currency_amount = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
     ntd_amount = models.DecimalField(max_digits=22, decimal_places=2)
     plege = models.IntegerField()
     start_date = models.DateField()
     end_date = models.DateField()
-    rpt = models.ForeignKey('Report', models.DO_NOTHING)
+    rpt = models.ForeignKey('Report', models.CASCADE)
 
     class Meta:
         managed = False
@@ -73,8 +73,8 @@ class Depositaccount(models.Model):
 class Disclosure(models.Model):
     disclosure_id = models.AutoField(primary_key=True)
     pre_amt = models.DecimalField(max_digits=22, decimal_places=2)
-    dis_detail = models.ForeignKey('Disdetail', models.DO_NOTHING)
-    pre = models.ForeignKey('Preamt', models.DO_NOTHING)
+    dis_detail = models.ForeignKey('Disdetail', models.CASCADE)
+    pre = models.ForeignKey('Preamt', models.CASCADE)
 
     class Meta:
         managed = False
@@ -85,7 +85,7 @@ class Disdetail(models.Model):
     dis_detail_id = models.AutoField(primary_key=True)
     row_name = models.CharField(max_length=50)
     row_amt = models.DecimalField(max_digits=22, decimal_places=2)
-    dis_title = models.ForeignKey('Distitle', models.DO_NOTHING)
+    dis_title = models.ForeignKey('Distitle', models.CASCADE)
 
     class Meta:
         managed = False
@@ -95,7 +95,7 @@ class Disdetail(models.Model):
 class Distitle(models.Model):
     dis_title_id = models.AutoField(primary_key=True)
     dis_name = models.CharField(max_length=50)
-    rpt = models.ForeignKey('Report', models.DO_NOTHING)
+    rpt = models.ForeignKey('Report', models.CASCADE)
 
     class Meta:
         managed = False
@@ -106,7 +106,7 @@ class Exchangerate(models.Model):
     rate_id = models.AutoField(primary_key=True)
     currency_name = models.CharField(max_length=10)
     rate = models.DecimalField(max_digits=8, decimal_places=5)
-    pre = models.ForeignKey('Preamt', models.DO_NOTHING)
+    pre = models.ForeignKey('Preamt', models.CASCADE)
 
     class Meta:
         managed = False
@@ -128,8 +128,8 @@ class Preamt(models.Model):
     book_amt = models.DecimalField(max_digits=22, decimal_places=2)
     adj_mat = models.DecimalField(max_digits=22, decimal_places=2)
     pre_amt = models.DecimalField(max_digits=22, decimal_places=2)
-    rpt = models.ForeignKey('Report', models.DO_NOTHING)
-    acc = models.ForeignKey('Account', models.DO_NOTHING)
+    rpt = models.ForeignKey('Report', models.CASCADE)
+    acc = models.ForeignKey('Account', models.CASCADE)
     class Meta:
         managed = False
         db_table = 'preamt'
@@ -137,9 +137,9 @@ class Preamt(models.Model):
 
 class Reltrx(models.Model):
     rel_id = models.AutoField(primary_key=True)
-    target = models.ForeignKey(Company, models.DO_NOTHING, db_column='target')
+    target = models.ForeignKey(Company, models.CASCADE, db_column='target')
     related_amt = models.DecimalField(max_digits=22, decimal_places=2)
-    pre = models.ForeignKey('Preamt', models.DO_NOTHING)
+    pre = models.ForeignKey('Preamt', models.CASCADE)
 
     class Meta:
         managed = False
@@ -151,7 +151,7 @@ class Report(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     type = models.CharField(max_length=2)
-    com = models.ForeignKey('Company', models.DO_NOTHING)
+    com = models.ForeignKey('Company', models.CASCADE)
 
     class Meta:
         managed = False
