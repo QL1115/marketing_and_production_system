@@ -53,13 +53,14 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
         print('check_and_save_cah_in_banks >>> ', e)
         return '{"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}'
 
-def check_and_save_deposit_account(rpt_id, deposit_account_sheet): # 參數：sheet 為 Excel 中的分頁
+def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel 中的分頁
     '''檢查及儲存「定期存款」'''
     # 1. 檢查 columns 個數，每個 column 的型態(除了 row 1)
     # 2. 一筆一筆存入 DepositAccount table
     # 3. 回傳訊息。
 
     # 確認有此專案/報表 ID
+    print(' d a >>> start')
     rpt = Report.objects.filter(rpt_id=rpt_id).first()  # 如果有就回傳，如果找不到就會回傳 None
     if rpt is None:
         return '{"status_code": 404, "msg":"無此專案/報表。"}'
@@ -76,6 +77,7 @@ def check_and_save_deposit_account(rpt_id, deposit_account_sheet): # 參數：sh
         return '{"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}'
     # column 型態檢查，每次檢查一整個 column
     for i in range(expected_ncols):
+        print('', sheet.row_value(rowx=0, start_colx=0, end_colx=sheet.nrows))
         # 第 i 個 column 的 cell type，應該會回傳 list
         cell_type_list = sheet.col_types(colx=i, start_rowx=1, end_rowx=sheet.nrows)
         # 第 i 個 column 的 cell type 應該都是一樣的，並且應該要與 col_types[i] 相同

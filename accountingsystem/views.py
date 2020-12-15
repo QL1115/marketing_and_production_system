@@ -22,26 +22,33 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
     # 1. 檢查檔案類型是否為 excel
     # 2. 檢查檔案是否僅有1個分頁
     # 3. 呼叫 check_and_save 方法，進入檢查流程
+    print('upload >>> start')
     try:
+        # file = request.FILES.('file')
         file = request.FILES["file"]
-        sheet = xlrd.open_workbook("file")
+        print('request>>>>>>',request)
+        book = xlrd.open_workbook(file.name, file_contents=file.read())
+        print('book >>>', book)
+
     except Exception as e:
         print('upload_cash_in_bank >>> ', e)
-        return '{"status_code": 500, "msg": "檔案類型非xlsx，或發生不明錯誤。"}'
-    if sheet.nsheets != 1:
-        return '{"status_code": 422, "msg":"檔案超過一個分頁。", "redirect_url":" "}'
+        return HttpResponse('{"status_code": 500, "msg": "檔案類型非xlsx，或發生不明錯誤。"}')
+    if book.nsheets != 1:
+        return HttpResponse('{"status_code": 422, "msg":"檔案超過一個分頁。", "redirect_url":" "}')
+    sheet = book.sheets()[0]
     if table_name == "cash_in_bank":
         check_and_save_cash_in_banks(rpt_id, sheet)
     if table_name == "deposit_account":
         check_and_save_deposit_account(rpt_id, sheet)
-    return HttpResponse({"status_code": 200, "msg":"成功上傳銀行存款"})
+    print('upload file >>> end')
+    return HttpResponse('{"status_code": 200, "msg":"成功上傳銀行存款"}')
 
 @require_http_methods(["DELETE"])
 @csrf_exempt # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
 def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     result = delete_uploaded_file(rpt_id, table_name)
     return HttpResponse(result) # TODO: for test
-.
+
 
 def get_import_page(request,comp_id, rpt_id, acc_id):
 
