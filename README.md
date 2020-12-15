@@ -33,7 +33,7 @@ Step.3
 --- 資料庫更動紀錄(script請至Google Drive拿取  
 201211  
 1. 針對現金Ans-v.3做的修改於資料表Depositaccount新增欄位Type  
-2. 新增科目
-201215
-1. 將FK on_delete改為CASCADE
-2. 修改CashInBanks, DepositAccount兩個TABLE中的bank_account_number欄位屬性，改為NVARCHAR(20)
+2. 新增科目  
+201215  
+1. 將FK on_delete改為CASCADE  
+2. 修改CashInBanks, DepositAccount兩個TABLE中的bank_account_number欄位屬性，改為NVARCHAR(20)  
