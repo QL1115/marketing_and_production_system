@@ -13,7 +13,7 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
     # 確認有此專案/報表 ID
     rpt = Report.objects.filter(rpt_id=rpt_id).first()  # 如果有就回傳，如果找不到就會回傳 None
     if rpt is None:
-        return '{"status_code": 404, "msg":"無此專案/報表。"}'
+        return {"status_code": 404, "msg": "無此專案/報表。"}
 
     # 確認 column 的名稱和個數是否一致
     expected_ncols = 6
@@ -21,16 +21,16 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
     col_types = [xlrd.XL_CELL_TEXT, xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_NUMBER] # 上傳的檔案欄位長度應該 為 6
     #
     if sheet.ncols != expected_ncols:
-        return '{"status_code": 422, "msg":"檔案欄位個數不符合格式。"}'
+        return 422, '檔案欄位個數不符合格式' # '{"status_code": 422, "msg":"檔案欄位個數不符合格式。"}'
     if col_names != sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.nrows): # TODO 之後要更彈性
-        return '{"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}'
+        return {"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}
     # column 型態檢查，每次檢查一整個 column
     for i in range(expected_ncols):
         # 第 i 個 column 的 cell type，應該會回傳 list
         cell_type_list = sheet.col_types(colx=i, start_rowx=1, end_rowx=sheet.nrows)
         # 第 i 個 column 的 cell type 應該都是一樣的，並且應該要與 col_types[i] 相同
         if (cell_type_list[0] != col_types[i]) or (not all(x == cell_type_list[0] for x in cell_type_list)): # 注意寫法
-            return '{"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}'
+            return {"status_code": 422, "msg": "檔案欄位名稱不符合格式。"}
 
     # 儲存資料：
     try:
@@ -48,10 +48,10 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
                                            ntd_amount = sheet.cell_value(rowx=i, colx=5),
                                            rpt = rpt)
                 record.save(commit=True)
-        return '{"status_code": 200, "msg": "檔案上傳/更新成功。"}'
+        return {"status_code": 200, "msg": "檔案上傳/更新成功。"}
     except Exception as e:
         print('check_and_save_cah_in_banks >>> ', e)
-        return '{"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}'
+        return {"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}
 
 def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel 中的分頁
     '''檢查及儲存「定期存款」'''
@@ -63,7 +63,7 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
     print(' d a >>> start')
     rpt = Report.objects.filter(rpt_id=rpt_id).first()  # 如果有就回傳，如果找不到就會回傳 None
     if rpt is None:
-        return '{"status_code": 404, "msg":"無此專案/報表。"}'
+        return {"status_code": 404, "msg":"無此專案/報表。"}
 
     # 確認 column 的名稱和個數是否一致
     expected_ncols = 9
@@ -72,17 +72,17 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
                , xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_DATE, xlrd.XL_CELL_DATE] # 上傳的檔案欄位長度應該 為 9
     #
     if sheet.ncols != expected_ncols:
-        return '{"status_code": 422, "msg":"檔案欄位個數不符合格式。"}'
+        print('sheet.ncols >>> ', sheet.ncols)
+        return {"status_code": 422, "msg":"檔案欄位個數不符合格式。"}
     if col_names != sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.nrows): # TODO 之後要更彈性
-        return '{"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}'
+        return {"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}
     # column 型態檢查，每次檢查一整個 column
     for i in range(expected_ncols):
-        print('', sheet.row_value(rowx=0, start_colx=0, end_colx=sheet.nrows))
         # 第 i 個 column 的 cell type，應該會回傳 list
         cell_type_list = sheet.col_types(colx=i, start_rowx=1, end_rowx=sheet.nrows)
         # 第 i 個 column 的 cell type 應該都是一樣的，並且應該要與 col_types[i] 相同
         if (cell_type_list[0] != col_types[i]) or (not all(x == cell_type_list[0] for x in cell_type_list)): # 注意寫法
-            return '{"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}'
+            return {"status_code": 422, "msg":"檔案欄位型態不符合格式。"}
 
     # 儲存資料：
     try:
@@ -107,10 +107,10 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
                                                      end_date = sheet.cell_value(rowx=i, colx=8),
                                                      rpt = rpt)
                 record.save(commit=True)
-        return '{"status_code": 200, "msg": "檔案上傳/更新成功。"}'
+        return {"status_code": 200, "msg": "檔案上傳/更新成功。"}
     except Exception as e:
         print('check_and_save_cah_in_banks >>> ', e)
-        return '{"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}'
+        return {"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}
 
 def delete_uploaded_file(rpt_id, table_name):
     '''根據 table name 刪除特定的上傳資料。eg. cash_in_banks 代表銀行存款'''

@@ -12,12 +12,19 @@
   <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
   <!--tree things -->
   <link href="test.css" rel="stylesheet">
-
+    <style>
+        body {
+            min-height: 100vh;
+        }
+        .container-fluid{
+            min-height: 100vh;
+        }
+    </style>
    
   </head>
   <body>
     <!--upload section start-->
-    <div class="container-fluid">
+
       <!--start of navbar-->
       <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">OurLogo</a>
@@ -31,6 +38,7 @@
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
               <a class="dropdown-item" href="#">定期存款</a>
               <a class="dropdown-item" href="#">銀行存款</a>
+            </div>
             </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"  aria-expanded="false">調整</a>
@@ -39,6 +47,7 @@
                 <a class="dropdown-item" href="#">銀行存款調整外幣評價損益</a>
                 <a class="dropdown-item" href="#">調整表</a>
                 <a class="dropdown-item" href="#">附註格式</a>
+              </div>
               </li>        
               <li class="nav-item">
                 <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
@@ -58,43 +67,59 @@
           </div>
         </nav>
         <!--end of navbar--> 
-      <div class="row">
-        <!--start of tree view-->
-        <div id="content_layput" class="col-2">
-          <!-- <div> -->
-            <div id="treeview1" class="col-2">
-             <!--  <div class="row">lalalalalala</div>
-              <div class="row">lalalalalala</div>
-              <div class="row">lalalalalala</div>
-              <div class="row">lalalalalala</div> -->
-            </div>
-          <!-- </div> -->
-        </div>
+{#      <div class="row">#}
+{#        <!--start of tree view-->#}
+{#        <div id="content_layput" class="col-2">#}
+{#          <!-- <div> -->#}
+{#            <div id="treeview1" class="col-2">#}
+{#            </div>#}
+{#          <!-- </div> -->#}
+{#        </div>#}
      
-      <!--end of tree view-->      
-      <div id="content_layout" class="col-10">
+      <!--end of tree view-->
+    <div class="container-fluid">
+{#      <div id="content_layout" class="col-10">#}
 
-        <div class="row">
-          <div class="col-md-1">定期存款：</div>
-          <div class="col-md-4">
-            <!-- "upload_file" comp_id rpt_id acc_id table_name="deposit_account" -->
-            <form action='http://127.0.0.1:8000/accountingsystem/companies/1/projects/1/accounts/1/raw_files/deposit_account' method="post" enctype="multipart/form-data">
-              <div class="custom-file" style="width: 80%">
-                <input type="file" accept=".xls" class="custom-file-input" id="UploadCashInBank" name='file'></input>
-                <label class="custom-file-label text-left" for="customFile"></label>
+        <div class="row justify-content-center">
+        {% if import_related_list.count == 0 or import_related_list.0 != 200 %}
+
+              <div class="col-2 align-self-center">定期存款：</div>
+              <div class="col-4">
+    {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
+
+                    <form action='./import' method="post" enctype="multipart/form-data">
+                      <div class="custom-file" style="width: 80%">
+                          <input type="text" hidden name="table_name" value="deposit_account"/>
+                          <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadCashInBank" name='file' />
+                        <label class="custom-file-label text-left" for="customFile"></label>
+                      </div>
+                      <input class="btn btn-primary" type="submit" />
+                    </form>
               </div>
-              <input type="submit"></input>
-            </form>
+              <div class="col-2">
+{#                <form>#}
+{#                  <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/import'">刪除</a></button>#}
+{#                </form>#}
+              </div>
           </div>
-          <div class="col-md-1">
-            <form>
-              <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/import'"></a>刪除</a></button>  
-            </form>
-          </div>
-        </div>
+          {% if import_related_list.count != 0 and import_related_list.0 != 200 %}
+              <div class="row justify-content-center"><div class="col-8">上傳失敗，原因：{{ import_related_list.1 }}</div></div>
+          {% endif %}
+        {% else %}
+            <div class="col-3 align-self-center">定期存款：</div>
+            {% if import_related_list.0 == 200 %}
+                <div class="col-4 align-self-center">您已成功上傳</div>
+            {% endif %}
+            <div class="col-3">
+                <form>
+                  <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/import'">刪除已上傳的檔案</a></button>
+                </form>
+            </div>
+        {% endif %}
 
-      </div>
-       </div>
+
+{#      </div>#}
+{#       </div>#}
     </div>
     <!--upload section end-->
   <!-- </div> -->
