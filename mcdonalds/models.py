@@ -84,7 +84,7 @@ class RawMaterial(models.Model):
     amount = models.PositiveIntegerField() # 原物料售價
     security_numbers = models.PositiveIntegerField() # 安全存量
     quantity = models.PositiveIntegerField() # 經濟訂購量
-    reorder_point = models.DateField() # 再訂購點
+    reorder_point = models.PositiveIntegerField() # 再訂購點
     consumption_rate = models.PositiveIntegerField() # 消耗速度：N / 天(期間)
     lead_time = models.PositiveSmallIntegerField() # 前置時間：天數
     expiration_duration = models.PositiveSmallIntegerField() # 有效期間：天數
@@ -136,7 +136,8 @@ class StoreDemandDetails(models.Model):
     prod_numbers = models.PositiveSmallIntegerField() # 所需商品數量
     # FK RawMaterial, Stores
     product = models.ForeignKey('Products', on_delete=models.CASCADE)
-    store = models.ForeignKey('Stores', on_delete=models.CASCADE)
+    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE)
+
     class Meta:
         db_table = 'store_demand_details'
 
