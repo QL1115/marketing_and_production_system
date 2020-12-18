@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}原物料訂購預估{% endblock title %}
+
+{% block content %}
+
+
+<div class="col-md-12">
+    <br>
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <button id="rawmaterialspredict" type="button" class="btn btn-dark" onclick="location.href='raw_materials_predict'">原物料訂購預估</button>
+        <button id="rawmaterialsorder" type="button" class="btn btn-light" onclick="location.href='raw_materials_order'">原物料實際訂購單</button>
+    </div>
+
+   <br>
+   <br>
+   <br>
+ 
+    <!-- <input type="button" value="原物料訂購預估" onclick="location.href='raw_materials_predict'">
+    <input type="button" value="原物料實際訂購單" onclick="location.href='要前往的網頁連結'">
+    <h4>原物料訂購預估</h4> -->
+    <div class="table-responsive">
+        <table id="bootstrapdatatable" class="table table-striped table-bordered" width="60%">
+            <thead>
+                <th>原物料名稱</th>
+                <th>經濟訂購量</th>
+                <th>再訂購點</th>
+            </thead>
+            <tbody>
+            {% for raw_material_predict in raw_materials_predict %}  
+
+                <tr>
+                    <td>{{ raw_material_predict.material_name }}</td> 
+                    <td>{{ raw_material_predict.quantity }}</td>
+                    <td>{{ raw_material_predict.reorder_point }}</td>
+                </tr>  
+            {% endfor %} 
+            </tbody>
+        </table>
+	</div>
+</div>
+<!-- 
+<script>
+    $("#rawmaterialspredict").click(function() {
+    alert( "!" );
+    $("#raw_materials_predict").removeClass("btn btn-light");
+    $("#rawmaterialspredict").addClass("btn btn-dark");
+    alert( "!" );
+    });
+</script> -->
+
+{% endblock content %}

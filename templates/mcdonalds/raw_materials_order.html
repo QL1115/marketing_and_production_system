@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}原物料訂購預估{% endblock title %}
+
+{% block content %}
+
+
+<div class="col-md-12">
+    <br>
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <button id="rawmaterialspredict" type="button" class="btn btn-light" onclick="location.href='raw_materials_predict'">原物料訂購預估</button>
+        <button id="rawmaterialsorder" type="button" class="btn btn-dark" onclick="location.href='raw_materials_order'">原物料實際訂購單</button>
+    </div>
+
+   <br>
+   <br>
+   <br>
+
+    <div class="table-responsive">
+        <table id="bootstrapdatatable" class="table table-striped table-bordered" width="60%">
+            <thead>
+                <th>原物料名稱</th>
+                <th>訂購量</th>
+                <th>下訂日期</th>
+                <th>訂單狀態</th>
+            </thead>
+            <tbody>
+
+            {% for raw_material_order in raw_materials_order %}  
+                <tr>
+                    <td>{{ raw_material_order.material_name }}</td> 
+                    <td>{{ raw_material_order.order_amount }}</td>
+                    <td>{{ raw_material_order.order_date }}</td>
+                    <td>{{ raw_material_order.status }}</td>
+                </tr>  
+            {% endfor %} 
+            </tbody>
+        </table>
+	</div>
+</div>
+
+
+{% endblock content %}
