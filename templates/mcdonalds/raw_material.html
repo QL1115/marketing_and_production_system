@@ -32,7 +32,9 @@
                     <td>{{ raw_material.on_hand_inventory }}</td>
                     <td>{{ raw_material.security_numbers }}</td>
                     <td>{{ raw_material.supplier_name }}</td>
-                    
+                    <td>
+                        <a href="{% url 'mcdonalds:update' pk=raw_material.material_id %}" class="btn btn-info">修改</a>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
