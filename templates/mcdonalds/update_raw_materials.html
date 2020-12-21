@@ -1,17 +1,62 @@
 
+{% extends "base.html" %}
+ 
+{% block title %}Add New Employee Records{% endblock title %}
+ 
 {% block content %}
+<div class="col-md-12">
+  
+  <form method="POST" class="post-form" action="/mcdonalds/update/{{raw_materials.material_id}}">  
+   {% csrf_token %}  
+    <div class="container">  
+      <br>  
+      <div class="form-group row">  
+        
+        <div class="col-sm-4">  
+          <h3>編輯原物料資訊</h3>  
+        </div>  
+      </div>  
+      <div class="form-group row">  
+        <label class="col-sm-2 col-form-label">原物料名稱:</label>  
+        <div class="col-sm-4">  
+          <input type="text" class="form-control" name="material_name" id="id_name" required maxlength="100" value="{{ raw_materials.material_name }}" readonly="readonly" />  
+        </div>  
+      </div>  
 
-<form action="" method="POST">
-    {% csrf_token %}
-    <div class="form-group">
-        <div class="form-group col-md-6">
+      <div class="form-group row">  
+        <label class="col-sm-2 col-form-label">單位成本:</label>  
+        <div class="col-sm-4">  
+          <input type="text" class="form-control" name="amount" id="id_name" required maxlength="100" value="{{ raw_materials.amount }}" />  
+        </div>  
+      </div> 
 
-        {{ form }}
 
-        <input class="btn btn-success" type="submit" value="更新" />
+      <div class="form-group row">  
+         <label class="col-sm-2 col-form-label">庫存:</label>  
+         <div class="col-sm-4">  
+         <input type="text" class="form-control" name="on_hand_inventory" id="id_name" required maxlength="100" value="{{ raw_materials.on_hand_inventory}}" readonly="readonly" />  
+         </div>  
+      </div> 
+
+      <div class="form-group row">  
+         <label class="col-sm-2 col-form-label">安全存量:</label>  
+         <div class="col-sm-4">  
+         <input type="text" class="form-control" name="security_numbers" id="id_name" required maxlength="100" value="{{ raw_materials.security_numbers }}" />  
+         </div>  
+      </div> 
+
+
+      <div class="form-group row">  
+        <label class="col-sm-4 col-form-label"></label>  
+        <div class="col-sm-2">  
+        <button type="submit" class="btn btn-success btn-lg">確定</button>  
+        <button type="submit" class="btn btn-success btn-lg" onclick="location.href='raw_materials'">取消</button>
         </div>
-    </div>
-</form>
+        
+      </div> 
 
-
-{% endblock  %}
+      
+     
+    </div>  
+  </form>  
+{% endblock content %}   

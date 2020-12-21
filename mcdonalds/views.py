@@ -1,10 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import HttpResponse
 
 # from mcdonalds.forms import RawMaterialModelForm
 from .forms import MarketingStrategyForm
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
+from .forms import RawMaterialModelForm 
 
 # Create your views here.
 def index(request):
@@ -53,9 +54,9 @@ def raw_materials(request):
 
 
 
-def update_raw_materials(request, pk):
-    raw_materials = RawMaterial.objects.get(material_id=pk)
-
+def update_raw_materials(request,id):
+    raw_materials = RawMaterial.objects.get(id=id)
+    print(id)
     form = RawMaterialModelForm(instance=raw_materials)
     context = {
         'form': form
@@ -87,4 +88,20 @@ def binary_tree(request):
     }
     return render(request, 'mcdonalds/binary_tree.html', context)
 
+def get_edit_page(request, material_id):  
+    raw_materials = RawMaterial.objects.get(material_id=material_id)  
+    print('!')
+    print(raw_materials.material_id)
+
+    return render(request,'mcdonalds/update_raw_materials.html', {'raw_materials':raw_materials}) 
+
+
+def save_update(request, material_id):  
+    raw_materials = RawMaterial.objects.get(material_id=material_id)  
+    form = RawMaterialModelForm(request.POST, instance = raw_materials)  
+    print('here~~~~~~')
+    if form.is_valid():  
+        form.save()  
+        return redirect("/mcdonalds/raw_materials")  
+    return render(request, 'mcdonalds/update_raw_materials.html', {'raw_materials': raw_materials}) 
 
