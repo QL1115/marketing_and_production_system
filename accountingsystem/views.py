@@ -71,7 +71,7 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
         cursor2 = connection.cursor()
         cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
         count_Depositaccount = cursor2.fetchone()
-
+        
         if count_CashInBank[0]>0 and count_Depositaccount[0]>0:
             #銀行存款跟定期存款皆已匯入資料
             pass

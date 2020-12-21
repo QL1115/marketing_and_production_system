@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
   <!-- navigation things-->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,75 +12,58 @@
   <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
   <!--tree things -->
   <link href="test.css" rel="stylesheet">
-    <style>
-        body {
-            min-height: 100vh;
-        }
-        .container-fluid{
-            min-height: 100vh;
-        }
-    </style>
+  
    
   </head>
+ 
   <body>
-    <!--upload section start-->
-
-      <!--start of navbar-->
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">OurLogo</a>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">OurLogo</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-             <a class="nav-link" href="#" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
-           </li>
-           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">檢查</a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">定期存款</a>
-              <a class="dropdown-item" href="#">銀行存款</a>
-            </div>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"  aria-expanded="false">調整</a>
-              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">定期存款調整科目</a>
-                <a class="dropdown-item" href="#">銀行存款調整外幣評價損益</a>
-                <a class="dropdown-item" href="#">調整表</a>
-                <a class="dropdown-item" href="#">附註格式</a>
-              </div>
+            <ul class="navbar-nav mr-auto">
+              <li class="nav-item">
+                 <a class="nav-link" href="#" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">檢查</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="#">定期存款</a>
+                      <a class="dropdown-item" href="#">銀行存款</a>
+              </li>
+               <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"  aria-expanded="false">調整</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="#">定期存款調整科目</a>
+                      <a class="dropdown-item" href="#">銀行存款調整外幣評價損益</a>
+                      <a class="dropdown-item" href="#">調整表</a>
+                      <a class="dropdown-item" href="#">附註格式</a>
               </li>        
               <li class="nav-item">
-                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
+                  <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">附註格式</a>
+                  <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">附註格式</a>
               </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
-              <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
             <div class="other_nav_buttons">
               <i class="fas fa-cog"></i>
               <i class="fas fa-user"></i>
             </div>               
-          </div>
-        </nav>
-        <!--end of navbar--> 
-{#      <div class="row">#}
-{#        <!--start of tree view-->#}
-{#        <div id="content_layput" class="col-2">#}
-{#          <!-- <div> -->#}
-{#            <div id="treeview1" class="col-2">#}
-{#            </div>#}
-{#          <!-- </div> -->#}
-{#        </div>#}
-     
-      <!--end of tree view-->
-    <div class="container-fluid">
-{#      <div id="content_layout" class="col-10">#}
+      </div>
+    </nav>
+  <div class="container-fluid" >
 
-        <div class="row justify-content-center">
+
+      <div class="row">
+        <div class="col-2">
+          <div id="treeview1" class=""></div>
+        </div>
+        <div class="col-4">
+          <div class="row justify-content-center">
         {% if import_related_list.count == 0 or import_related_list.0 != 200 %}
 
               <div class="col-2 align-self-center">定期存款：</div>
@@ -116,153 +99,130 @@
                 </form>
             </div>
         {% endif %}
-
-
-{#      </div>#}
-{#       </div>#}
-    </div>
-    <!--upload section end-->
-  <!-- </div> -->
-<!-- </div> -->
+        </div>
 
 
 
-<!-- <div class="row">
-  <div class="col-md-1">定期存款：</div>
-  <div class="col-md-4">
-    <form method="post" enctype="multipart/form-data">
-      <div class="custom-file" style="width: 80%">
-        <input type="file" accept=".xls" class="custom-file-input" id="UploadCashInBank"></input>
-        <label class="custom-file-label text-left" for="customFile"></label>
+
       </div>
-      <input type="submit"></input>
-    </form>
   </div>
-  <div class="col-md-1">
-    <form>
-      <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/raw_files/Cashinbanks'"></a>刪除</a></button>  
-    </form>
-  </div>
-</div> -->
-
-
-
-<!--upload documents-->
-<!-- <script src="test3.js"></script> -->
+<script src="test3.js"></script>
 <script type="text/javascript">
       document.getElementById("UploadCashInBank").addEventListener('change',function(e){
         var fileName = document.getElementById("UploadCashInBank").files[0].name;
         var nextSibling = e.target.nextElementSibling
         nextSibling.innerText = fileName})
 
-      document.getElementById("UploadDepositAccount").addEventListener('change',function(e){
-        var fileName = document.getElementById("UploadDepositAccount").files[0].name;
-        var nextSibling = e.target.nextElementSibling
-        nextSibling.innerText = fileName})
+      // document.getElementById("UploadDepositAccount").addEventListener('change',function(e){
+      //   var fileName = document.getElementById("UploadDepositAccount").files[0].name;
+      //   var nextSibling = e.target.nextElementSibling
+      //   nextSibling.innerText = fileName})
 
-  // $(function() {
+  $(function() {
 
-  //   var defaultData = [
-  //   {
-  //     text: '資產',
-  //     href: '#parent1',
-  //     nodes: [
-  //     {
-  //       text: 'Child 1',
-  //       href: '#child1',
-  //     },
-  //     {
-  //       text: 'Child 2',
-  //       href: '#child2',
-  //     }
-  //     ]
-  //   },
-  //   {
-  //     text: '負債',
-  //     href: '#parent1',
-  //     nodes: [
-  //     {
-  //       text: 'Child 1',
-  //       href: '#child1',
-  //     },
-  //     {
-  //       text: 'Child 2',
-  //       href: '#child2',
-  //     }
-  //     ]
-  //   },
-  //   {
-  //     text: '損益',
-  //     href: '#parent1',
-  //     nodes: [
-  //     {
-  //       text: 'Child 1',
-  //       href: '#child1',
-  //     },
-  //     {
-  //       text: 'Child 2',
-  //       href: '#child2',
-  //     }
-  //     ]
-  //   },
-  //   {
-  //     text: '權益',
-  //     href: '#parent1',
-  //     nodes: [
-  //     {
-  //       text: 'Child 1',
-  //       href: '#child1',
-  //     },
-  //     {
-  //       text: 'Child 2',
-  //       href: '#child2',
-  //     }
-  //     ]
-  //   },
-  //   {
-  //     text: '其他',
-  //     href: '#parent1',
-  //     nodes: [
-  //     {
-  //       text: 'Child 1',
-  //       href: '#child1',
-  //     },
-  //     {
-  //       text: 'Child 2',
-  //       href: '#child2',
-  //     }
-  //     ]
-  //   },
+    var defaultData = [
+    {
+      text: '資產',
+      href: '#parent1',
+      nodes: [
+      {
+        text: 'Child 1',
+        href: '#child1',
+      },
+      {
+        text: 'Child 2',
+        href: '#child2',
+      }
+      ]
+    },
+    {
+      text: '負債',
+      href: '#parent1',
+      nodes: [
+      {
+        text: 'Child 1',
+        href: '#child1',
+      },
+      {
+        text: 'Child 2',
+        href: '#child2',
+      }
+      ]
+    },
+    {
+      text: '損益',
+      href: '#parent1',
+      nodes: [
+      {
+        text: 'Child 1',
+        href: '#child1',
+      },
+      {
+        text: 'Child 2',
+        href: '#child2',
+      }
+      ]
+    },
+    {
+      text: '權益',
+      href: '#parent1',
+      nodes: [
+      {
+        text: 'Child 1',
+        href: '#child1',
+      },
+      {
+        text: 'Child 2',
+        href: '#child2',
+      }
+      ]
+    },
+    {
+      text: '其他',
+      href: '#parent1',
+      nodes: [
+      {
+        text: 'Child 1',
+        href: '#child1',
+      },
+      {
+        text: 'Child 2',
+        href: '#child2',
+      }
+      ]
+    },
 
 
-  //   ];
-  //   $('#treeview1').treeview({
-  //     levels:1,
-  //     data: defaultData
-  //   });
+    ];
+    $('#treeview1').treeview({
+      levels:1,
+      data: defaultData
+    });
 
-  //   var search = function(e) {
-  //     var pattern = $('#input-search').val();
-  //     var options = {
-  //       ignoreCase: $('#chk-ignore-case').is(':checked'),
-  //       exactMatch: $('#chk-exact-match').is(':checked'),
-  //       revealResults: $('#chk-reveal-results').is(':checked')
-  //     };
-  //     var results = $searchableTree.treeview('search', [ pattern, options ]);
+    var search = function(e) {
+      var pattern = $('#input-search').val();
+      var options = {
+        ignoreCase: $('#chk-ignore-case').is(':checked'),
+        exactMatch: $('#chk-exact-match').is(':checked'),
+        revealResults: $('#chk-reveal-results').is(':checked')
+      };
+      var results = $searchableTree.treeview('search', [ pattern, options ]);
 
-  //     var output = '<p>' + results.length + ' matches found</p>';
-  //     $.each(results, function (index, result) {
-  //       output += '<p>- ' + result.text + '</p>';
-  //     });
-  //     $('#search-output').html(output);
-  //   }
-  //   $('#btn-clear-search').on('click', function (e) {
-  //     $searchableTree.treeview('clearSearch');
-  //     $('#input-search').val('');
-  //     $('#search-output').html('');
-  //   });
-  // });
+      var output = '<p>' + results.length + ' matches found</p>';
+      $.each(results, function (index, result) {
+        output += '<p>- ' + result.text + '</p>';
+      });
+      $('#search-output').html(output);
+    }
+    $('#btn-clear-search').on('click', function (e) {
+      $searchableTree.treeview('clearSearch');
+      $('#input-search').val('');
+      $('#search-output').html('');
+    });
+  });
 
 </script>
-</body>
-</html>
+
+    
+  </body>
+<html>
