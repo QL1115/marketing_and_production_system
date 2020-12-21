@@ -79,8 +79,8 @@ class Products(models.Model):
 
 class RawMaterial(models.Model):
     '''原物料'''
-    material_id = models.AutoField(primary_key=True,editable = False)
-    material_name = models.CharField(max_length=30,editable = False) # 原物料名稱
+    material_id = models.AutoField(primary_key=True)
+    material_name = models.CharField(max_length=30) # 原物料名稱
     amount = models.PositiveIntegerField() # 原物料售價
     security_numbers = models.PositiveIntegerField() # 安全存量
     quantity = models.PositiveIntegerField() # 經濟訂購量

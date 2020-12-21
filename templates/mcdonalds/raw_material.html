@@ -12,6 +12,8 @@
     <!-- <input type="button" value="原物料訂購預估" onclick="location.href='raw_materials_predict'">
     <input type="button" value="原物料實際訂購單" onclick="location.href='要前往的網頁連結'">
     <h4>原物料訂購預估</h4> -->
+    <h4>原物料庫存</h4>
+    <br>
     <table class="table table-bordered table-striped">
         <thead class="thead-dark">
             <tr>
@@ -26,14 +28,14 @@
         <tbody>
             {% for raw_material in raw_materials %}
                 <tr>
-                    <td>{{ raw_material.material_id }}</td>
+                    
                     <td>{{ raw_material.material_name }}</td>
                     <td>{{ raw_material.amount }}</td>
                     <td>{{ raw_material.on_hand_inventory }}</td>
                     <td>{{ raw_material.security_numbers }}</td>
                     <td>{{ raw_material.supplier_name }}</td>
                     <td>
-                        <a href="{% url 'mcdonalds:update' pk=raw_material.material_id %}" class="btn btn-info">修改</a>
+                        <a href="edit/{{ raw_material.material_id }}" class="btn btn-info">修改</a>
                     </td>
                 </tr>
             {% endfor %}
