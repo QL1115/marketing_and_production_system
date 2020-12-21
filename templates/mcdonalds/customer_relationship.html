@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %} 顧客關係管理 {% endblock title %}
+
+{% block content %}
+    <!--  -->
+    <div class="col-md-12">
+        <div id="customer_rel_tab" class="btn-group" role="group" aria-label="Basic example">
+            <a class="btn btn-primary btn-light btn-dark" href="{% url 'mcdonalds:binary_tree' %}" role="button">二元樹</a>
+            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:survival_rate' %}" role="button">存活率</a>
+            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:rfm' %}" role="button">RFM</a>
+        </div>
+    </div>
+
+    {# TODO 尚未完成顧客關係管理 #}
+    {% if tab_selected == 'binary_tree' %}<!-- 二元樹 -->
+        <p>二元樹</p>
+    {% elif tab_selected == 'survival_rate' %}<!-- 存活率 -->
+        <p>存活率</p>
+    {% elif tab_selected == 'rfm' %}<!-- RFM -->
+        <p>RFM</p>
+    {% endif %}
+
+
+
+
+{% endblock content %}
+{% block extra_scripts %}
+    <script type="text/javascript">
+        {#  處理顧客關係管理 「二元樹」、「存活率」、「RFM」點擊下去的顏色  #}
+        $('#customer_rel_tab > .btn').on('click', function() {
+            $('#customer_rel_tab > .btn').removeClass('btn-dark')
+            $(this).addClass(('btn-dark'))
+        })
+    </script>
+{% endblock %}

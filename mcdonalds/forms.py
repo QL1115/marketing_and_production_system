@@ -34,6 +34,7 @@ class MarketingStrategyForm(forms.ModelForm):
             (1, 'DISABLED')
         )
         widgets = {
+            # 'strategy_id': forms.NumberInput(attrs= {'class': 'form-control'}),
             'strategy_name': forms.TextInput(attrs = {'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),

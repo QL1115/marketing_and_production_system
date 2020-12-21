@@ -1,11 +1,8 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
-
-# from mcdonalds.forms import RawMaterialModelForm
-from .forms import MarketingStrategyForm
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
-from .forms import RawMaterialModelForm 
+from .forms import RawMaterialModelForm, MarketingStrategyForm
 
 # Create your views here.
 def index(request):
@@ -66,29 +63,79 @@ def update_raw_materials(request,id):
 def strategies_list(request):
     '''行銷策略列表'''
 
+    strategies_list = MarketingStrategies.objects.all()
     context = {
-
+        'strategies_list': strategies_list
     }
     return render(request, 'mcdonalds/marketing_strategies_list.html', context)
 
-def strategies_detail(request, pk):
-    '''行銷策略詳細資訊'''
-    context = {'strategy_id': pk}
-    if request.method == 'GET':
+def add_strategy(request):
+
+    if request.method == 'POST':
+        form = MarketingStrategyForm(request.POST)
+        if form.is_valid():
+            new_strategy = form.save()
+            print('new_strategy >>> ', new_strategy)
+            # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
+            return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form, 'isAdded':True})
+    else:
         form = MarketingStrategyForm()
-        context['form'] = form
-    elif request.method == 'POST':
-        context['msg'] = '上傳成功與否資訊' # TODO 之後要修改
-    return render(request, 'mcdonalds/marketing_strategies_detail.html', context)
+        return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form})
+
+def update_strategy(request, strategy_id):
+    '''行銷策略詳細資訊'''
+    if request.method == 'POST':
+        form = MarketingStrategyForm(request.POST)
+        if form.is_valid():
+            strategy = MarketingStrategies.objects.get(pk=strategy_id)
+            form = MarketingStrategyForm(request.POST, instance=strategy)
+            updated_strategy = form.save()
+            print('updated_strategy >>> ', updated_strategy)
+            # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
+            return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form, 'isAdded':True})
+    else:
+        try:
+            strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
+            form = MarketingStrategyForm(instance=strategy)
+            context = {
+                'strategy_id': strategy.strategy_id,
+                'form': form
+            }
+        except MarketingStrategies.DoesNotExist:
+            # context['form'] = form
+            return redirect('/mcdonalds/strategy/add/')
+        return render(request, 'mcdonalds/marketing_strategies_detail.html', context)
+
+
+
+def delete_strategy(request, strategy_id):
+    deleted_strategy = MarketingStrategies.objects.get(strategy_id=strategy_id).delete()
+    print('deleted_strategy >>> ', deleted_strategy)
+    return redirect('/mcdonalds/strategies_list')
 
 def binary_tree(request):
     '''二元樹'''
+    # TODO 二元樹
     context = {
-
+        'tab_selected': 'binary_tree'
     }
-    return render(request, 'mcdonalds/binary_tree.html', context)
+    return render(request, 'mcdonalds/customer_relationship.html', context)
 
-def get_edit_page(request, material_id):  
+def survival_rate(request):
+    # TODO 存活率
+    context = {
+        'tab_selected': 'survival_rate'
+    }
+    return render(request, 'mcdonalds/customer_relationship.html', context)
+
+def rfm(request):
+    # TODO rfm
+    context = {
+        'tab_selected': 'rfm'
+    }
+    return render(request, 'mcdonalds/customer_relationship.html', context)
+
+def get_edit_page(request, material_id):
     raw_materials = RawMaterial.objects.get(material_id=material_id)  
     print('!')
     print(raw_materials.material_id)
