@@ -31,6 +31,7 @@ class Customers(models.Model):
     cid = models.AutoField(primary_key=True)
     name = models.CharField(max_length=30)
     gender = models.IntegerField(choices = GENDER)
+    email = models.EmailField(max_length=30, blank=True, null=True)
     # FK RFM
     rfm = models.ForeignKey('RFM', on_delete=models.CASCADE)
 
@@ -136,7 +137,7 @@ class StoreDemandDetails(models.Model):
     prod_numbers = models.PositiveSmallIntegerField() # 所需商品數量
     # FK RawMaterial, Stores
     product = models.ForeignKey('Products', on_delete=models.CASCADE)
-    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE)
+    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE, blank=True, null=True) # TODO 不知道為什麼這裡它要預設值或者要允許 null
 
     class Meta:
         db_table = 'store_demand_details'
