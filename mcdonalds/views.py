@@ -1,11 +1,14 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+
+# from mcdonalds.forms import RawMaterialModelForm
+from .forms import MarketingStrategyForm
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
 
 # Create your views here.
 def index(request):
-    return HttpResponse('產銷資訊系統首頁')
+    return render(request, 'mcdonalds/index.html', {})
 
 def stores_detail(request):
     stores=Stores.objects.values()
@@ -58,4 +61,30 @@ def update_raw_materials(request, pk):
         'form': form
     }
     return render(request, 'expenses/update_raw_materials.html', context)
+
+def strategies_list(request):
+    '''行銷策略列表'''
+
+    context = {
+
+    }
+    return render(request, 'mcdonalds/marketing_strategies_list.html', context)
+
+def strategies_detail(request, pk):
+    '''行銷策略詳細資訊'''
+    context = {'strategy_id': pk}
+    if request.method == 'GET':
+        form = MarketingStrategyForm()
+        context['form'] = form
+    elif request.method == 'POST':
+        context['msg'] = '上傳成功與否資訊' # TODO 之後要修改
+    return render(request, 'mcdonalds/marketing_strategies_detail.html', context)
+
+def binary_tree(request):
+    '''二元樹'''
+    context = {
+
+    }
+    return render(request, 'mcdonalds/binary_tree.html', context)
+
 

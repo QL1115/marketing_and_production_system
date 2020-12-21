@@ -1,5 +1,9 @@
+from datetime import date
+
 from django import forms
-from .models import RawMaterial
+from model_utils import Choices
+
+from .models import RawMaterial, MarketingStrategies
 
 
 class RawMaterialModelForm(forms.ModelForm):
@@ -19,3 +23,28 @@ class RawMaterialModelForm(forms.ModelForm):
             'on_hand_inventory': '庫存', 
             'security_numbers':'安全存量'
         }
+
+class MarketingStrategyForm(forms.ModelForm):
+    class Meta:
+        model = MarketingStrategies
+        fields = ('strategy_name', 'description', 'start_date', 'end_date', 'status')
+        STRATEGY_STATUS = Choices(
+            (0, 'ENABLED'),
+            (1, 'DISABLED')
+        )
+        widgets = {
+            'strategy_name': forms.TextInput(attrs = {'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
+            'end_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
+            'status': forms.Select(attrs = {'class': 'form-control'}, choices=STRATEGY_STATUS)
+
+        }
+        labels = {
+            'strategy_name': '策略名稱',
+            'description': '策略內容',
+            'start_date': '開始日期',
+            'end_date': '結束日期',
+            'status': '狀態'
+        }
+
