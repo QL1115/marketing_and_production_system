@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}通訊錄{% endblock title %}
+
+{% block content %}
+
+<div class="col-md-12">
+    <br>
+    <br><br>
+    <h4>通訊錄</h4>
+    <br>
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <button id="suppliers_contact" type="button" class="btn btn-light" onclick="location.href='suppliers_contact'">供應商</button>
+        <button id="stores_contact" type="button" class="btn btn-dark" onclick="location.href='stores_contact'">分店</button>
+    </div>
+
+   <br>
+   <br>
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>分店名稱</th>
+                <th>地址</th>
+                <th>連絡電話</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for store in stores %}
+            <tr>
+                <td>{{ store.store_name }}</td>
+	            <td>{{ store.store_address }}</td>
+	            <td>{{ store.store_phone }}</td>
+                <td>
+                    <a href="edit/{{ stores.store_id }}" class="btn btn-info">修改</a>
+                </td>
+             </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}
+
+

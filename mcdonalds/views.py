@@ -8,9 +8,13 @@ from .forms import RawMaterialModelForm
 def index(request):
     return HttpResponse('產銷資訊系統首頁')
 
-def stores_detail(request):
+def stores_contact(request):
     stores=Stores.objects.values()
-    return render(request,'mcdonalds/stores_detail.html', {'stores': stores})
+    return render(request,'mcdonalds/stores_contact.html', {'stores': stores})
+
+def suppliers_contact(request):
+    suppliers=Suppliers.objects.values()
+    return render(request,'mcdonalds/suppliers_contact.html', {'suppliers': suppliers})
 
 def raw_materials_predict(request):
     raw_materials_predict=RawMaterial.objects.values('material_name', 'quantity', 'reorder_point').order_by('reorder_point')
