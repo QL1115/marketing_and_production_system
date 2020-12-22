@@ -76,42 +76,30 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
 
     return render (request, 'import_page.html', { 'acc_id': acc_id})
 
-
-def get_check_page(request, comp_id, rpt_id, acc_id, table_name):
-    # TODO
-    # 用途 取得檢查頁面
-    # GET / companies / << Company ID >> / projects / <<Report ID>> / accounts / << Account ID>> / check
-    # 前面都確認過了 有什麼要再補確認的嗎
-    # 先拿到回傳的整個QuerySet
-    return
-    with get_uploaded_file(rpt_id, table_name) as f:
-        upload_file = f
-
-    # 處理報錯
-    if upload_file.get('msg') != None:
-        # 沒出錯
-        file = upload_file['returnObject']
-        # ----------------------------------------------
-        # 處理資料 做成list :
-        # cashInBanks = file.objects.all()
-        # data = []
-        # 484不需要回傳foreignKey?
-
-        # for cib in cashInBanks:
-        #    data.append(cib.cash_in_bank_id, cib.bank_name, cib.bank_account_number,
-        #                cib.type, cib.currency, cib.foreign_currency_amount,
-        #                cin.ntd_amount)
-        # -----------------------------------------------
-        # 不處理資料 直接回傳 :
-        # 就這樣嗎!?
-        data = file.objects.all()
-        # 還是要弄成一個cashInBanks的list
-        # data = file.objects.fliter(rpt=rpt_id)
+def get_check_page(request, comp_id, rpt_id, acc_id):
+    table_name = 'cash_in_banks'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    cibSummary = 0
+    if uploadFile.get('status_code') == 200:
+        cibData = uploadFile.get('returnObject')
+        for i in cibData:
+            cibSummary += (i.ntd_amount)
     else:
-        # 有出錯
-        msg = upload_file['msg']
-        return render(request, 'checking_page.html', {'acc_id':acc_id, 'msg': msg})
-    # 把data做成個list?
+        msg = uploadFile.get('msg')
 
-    return render(request, 'checking_page.html', {'acc_id': acc_id, 'data': data})
+    table_name = 'deposit_account'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    depositSummary = 0
+    if uploadFile.get('status_code') == 200:
+        depositData = uploadFile.get('returnObject')
+        # cauclate summary
+
+        for i in depositData:
+            depositSummary += int(i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
+        # 這裡要傳errorPage回去嗎
+        return render(request, 'checking_page.html', {'acc_id':acc_id, 'msg':msg})
+    return render(request, 'checking_page.html', {'acc_id': acc_id, 'cibData': cibData, 'depositData':depositData,
+                                                 'cibSummary':cibSummary, 'depositSummary':depositSummary})
 
