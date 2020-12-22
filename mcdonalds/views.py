@@ -1,8 +1,13 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
+from plotly.graph_objs import Scatter
+from plotly.offline import plot
+
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
 from .forms import RawMaterialModelForm, MarketingStrategyForm
+import plotly.graph_objects as go
+import pandas as pd
 
 # Create your views here.
 def index(request):
@@ -70,7 +75,7 @@ def strategies_list(request):
     return render(request, 'mcdonalds/marketing_strategies_list.html', context)
 
 def add_strategy(request):
-
+    '''新增行銷策略'''
     if request.method == 'POST':
         form = MarketingStrategyForm(request.POST)
         if form.is_valid():
@@ -83,7 +88,7 @@ def add_strategy(request):
         return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form})
 
 def update_strategy(request, strategy_id):
-    '''行銷策略詳細資訊'''
+    '''查看及修改行銷策略詳細資訊'''
     if request.method == 'POST':
         form = MarketingStrategyForm(request.POST)
         if form.is_valid():
@@ -109,6 +114,7 @@ def update_strategy(request, strategy_id):
 
 
 def delete_strategy(request, strategy_id):
+    '''刪除單一行銷策略，最後會回到行銷策略列表'''
     deleted_strategy = MarketingStrategies.objects.get(strategy_id=strategy_id).delete()
     print('deleted_strategy >>> ', deleted_strategy)
     return redirect('/mcdonalds/strategies_list')
@@ -122,9 +128,66 @@ def binary_tree(request):
     return render(request, 'mcdonalds/customer_relationship.html', context)
 
 def survival_rate(request):
-    # TODO 存活率
+    # TODO 存活率 & 留存率
+    all_marketing_data = MarketingData.objects.all()
+    month_list = [item.date.strftime('%Y-%m-%d') for item in all_marketing_data]
+    survival_rate_list = [item.survival_rate for item in all_marketing_data]
+    print('month_list >>> ', month_list)
+    print('survival_rate_list >>> ', survival_rate_list)
+
+    # Load data
+    # df = pd.read_csv(
+    #     "https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
+    # df.columns = [col.replace("AAPL.", "") for col in df.columns]
+
+    # Create figure
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(x=month_list, y=survival_rate_list))
+
+    # Set title
+    fig.update_layout(
+        title_text="存活率"
+    )
+
+    # Add range slider
+    fig.update_layout(
+        xaxis=dict(
+            title='時間',
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1,
+                         label="1m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=3,
+                         label="3m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=6,
+                         label="6m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=1,
+                         label="1y",
+                         step="year",
+                         stepmode="backward"),
+                    dict(step="all")
+                ])
+            ),
+            rangeslider=dict(
+                visible=True
+            ),
+            type="date"
+        ),
+        yaxis=dict(title='存活率 (%)')
+    )
+    graph = fig.to_html()
+
     context = {
-        'tab_selected': 'survival_rate'
+        'tab_selected': 'survival_rate',
+        'survival_rate_graph': graph
     }
     return render(request, 'mcdonalds/customer_relationship.html', context)
 
