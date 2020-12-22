@@ -114,7 +114,6 @@
         {% endif %}
     <div class="row justify-content-center">
         {% if import_related_list.count == 0 or import_related_list.0 != 200 %}
-
             <div class="col-2 align-self-center">銀行存款：</div>
             <div class="col-4">
                 {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
@@ -162,22 +161,7 @@
 <!-- </div> -->
 <!-- </div> -->
 
-
-<!-- <div class="row">
-  <div class="col-md-1">定期存款：</div>
-  <div class="col-md-4">
-    <form method="post" enctype="multipart/form-data">
-      <div class="custom-file" style="width: 80%">
-        <input type="file" accept=".xls" class="custom-file-input" id="UploadCashInBank"></input>
-        <label class="custom-file-label text-left" for="customFile"></label>
       </div>
-      <input type="submit"></input>
-    </form>
-  </div>
-  <div class="col-md-1">
-    <form>
-      <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/raw_files/Cashinbanks'"></a>刪除</a></button>  
-    </form>
   </div>
 </div> -->
 
