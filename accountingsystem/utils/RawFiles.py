@@ -2,6 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode
 from django.db import transaction
 from decimal import Decimal, ROUND_05UP
+from datetime import datetime
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 
 
@@ -101,26 +102,28 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
             for i in range(1, sheet.nrows):
                 # row_values = sheet.row_values(i, )
                 type = Account.objects.filter(acc_name = sheet.cell_value(rowx=i, colx=2)).first()
-                currency = Systemcode.objects.filter(code_type='幣別', code_name=sheet.cell_value(rowx=i, colx=2)).first().system_code # currency欄位存所屬幣別的system_code
+                currency = Systemcode.objects.filter(code_type='幣別', code_name=sheet.cell_value(rowx=i, colx=3)).first().system_code # currency欄位存所屬幣別的system_code
                 if type is None:
                     raise ObjectDoesNotExist
                 if currency is None:
                     raise ObjectDoesNotExist
                 record = Depositaccount.objects.create(
                                                      bank_name = sheet.cell_value(rowx=i, colx=0),
+                                                     # 帳號欄位若讀成了「數字」型態，則去掉 .0，否則直接存入 DB
                                                      bank_account_number = sheet.cell_value(rowx=i, colx=1) if not isinstance(sheet.cell_value(rowx=i, colx=1), (int, float)) else int(sheet.cell_value(rowx=i, colx=1)),
                                                      type = type,
                                                      currency = currency,
                                                      foreign_currency_amount = Decimal(sheet.cell_value(rowx=i, colx=4)).quantize(Decimal('.01'), rounding=ROUND_05UP) if sheet.cell_value(rowx=i, colx=4) != '' else None,
                                                      ntd_amount = sheet.cell_value(rowx=i, colx=5),
                                                      plege = sheet.cell_value(rowx=i, colx=6),
-                                                     start_date = sheet.cell_value(rowx=i, colx=7),
-                                                     end_date = sheet.cell_value(rowx=i, colx=8),
+                                                     # xlrd直接讀日期會是float，需轉成datetime後存入DB
+                                                     start_date = datetime(*xlrd.xldate_as_tuple(sheet.cell_value(rowx=i, colx=7), 0)), 
+                                                     end_date = datetime(*xlrd.xldate_as_tuple(sheet.cell_value(rowx=i, colx=8), 0)),
                                                      rpt = rpt)
                 record.save()
         return {"status_code": 200, "msg": "檔案上傳/更新成功。"}
     except Exception as e:
-        print('check_and_save_cah_in_banks >>> ', e)
+        print('check_and_save_deposit_account >>> ', e)
         return {"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}
 
 def delete_uploaded_file(rpt_id, table_name):
