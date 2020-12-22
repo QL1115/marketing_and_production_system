@@ -146,10 +146,8 @@ class MarketingData(models.Model):
     '''行銷數據，資料來源：由我們系統算出結果後存入。'''
     md_id = models.AutoField(primary_key=True)
     date = models.DateField() # 只需要其中的 year, month
-    cvr = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
-                                                                     MaxValueValidator(100)])
-    breakeven_rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
-                                                       MaxValueValidator(100)]) # 損益平衡率
+    cvr = models.DecimalField(max_digits=5, decimal_places=2)
+    breakeven_rate = models.DecimalField(max_digits=5, decimal_places=2) # 損益平衡率
     survival_rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
                                                                      MaxValueValidator(100)]) # 存活率
     class Meta:
