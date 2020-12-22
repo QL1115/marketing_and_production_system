@@ -5,16 +5,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
+import xlrd  # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
+
 @require_http_methods(["DELETE"])
-@csrf_exempt # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
+@csrf_exempt  # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
 def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     delete_uploaded_file(rpt_id, table_name)
     return HttpResponse({"status_code": 200, "msg":"成功刪除檔案"})
+
 
 @require_http_methods(["POST"])
 @csrf_exempt
@@ -42,7 +45,6 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
         elif table_name == "deposit_account":
             result = check_and_save_deposit_account(rpt_id, sheet)
             return result
-
         else:
             return {"status_code": 500, "msg": "發生不明錯誤。"}
 
