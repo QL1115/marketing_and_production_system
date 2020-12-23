@@ -5,10 +5,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
+import xlrd  # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
+
 
 
 
@@ -145,3 +147,31 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
                                                     'count_CashInBank_list': [count_CashInBank_result['status_code'], count_CashInBank_result['msg']],
                                                     'count_Depositaccount_list':[count_Depositaccount_result['status_code'], count_Depositaccount_result['msg']]
                                                     })
+
+
+def get_check_page(request, comp_id, rpt_id, acc_id):
+    table_name = 'cash_in_banks'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    cibSummary = 0
+    if uploadFile.get('status_code') == 200:
+        cibData = uploadFile.get('returnObject')
+        for i in cibData:
+            cibSummary += (i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
+
+    table_name = 'deposit_account'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    depositSummary = 0
+    if uploadFile.get('status_code') == 200:
+        depositData = uploadFile.get('returnObject')
+        # cauclate summary
+
+        for i in depositData:
+            depositSummary += int(i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
+        # 這裡要傳errorPage回去嗎
+        return render(request, 'checking_page.html', {'acc_id':acc_id, 'msg':msg})
+    return render(request, 'checking_page.html', {'acc_id': acc_id, 'cibData': cibData, 'depositData':depositData,
+                                                 'cibSummary':cibSummary, 'depositSummary':depositSummary})
