@@ -75,6 +75,7 @@ class Products(models.Model):
     product_id = models.AutoField(primary_key=True)
     product_name = models.CharField(max_length=30) # 商品名稱
     amount = models.PositiveSmallIntegerField() # 商品售價
+    category = models.CharField(blank=True, max_length=10) # 商品類別
     class Meta:
         db_table = 'products'
 
@@ -186,7 +187,7 @@ class Stores(models.Model):
     store_name = models.CharField(max_length=30) # 門市名稱
     store_address = models.CharField(max_length=255) # 門市地址
     store_phone = models.CharField(max_length=30) # 門市電話，存成 CharField
-
+    store_region = models.CharField(blank=True, max_length=2) # 門市地區
     class Meta:
         db_table = 'stores'
 
