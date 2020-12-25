@@ -16,6 +16,8 @@ urlpatterns = [
     path('customer_rel/survival_rate/', views.survival_rate, name='survival_rate'),
     path('customer_rel/rfm/', views.rfm, name='rfm'),
     path('edit/<int:material_id>/', views.get_edit_page, name='get_edit_page'),
-    path('update/<int:material_id>/', views.save_update, name='save_update'),
+    path('update/<int:material_id>/', views.save_update_raw_materials, name='save_update_raw_materials'),
+    path('send_store_demend', views.receive_store_demand, name='receive_store_demand'),
+    path('go_to_store_send_demand_page',views.go_to_store_send_demand_page, name='go_to_store_send_demand_page')
 ]
 app_name='mcdonalds'

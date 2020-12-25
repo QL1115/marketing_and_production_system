@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>門市送出需求單</title>
+</head>
+<body>
+    <form method="post" action='/mcdonalds/send_store_demend' id="myform">
+        {% csrf_token %}
+
+        <label for="store_id">門市ID：</label><br>
+        <input type="text" name="store_id" ><br>
+
+        <label for="product_id">所需產品ID：</label><br>
+        <input type="text" name="product_id"><br>
+
+        <label for="product_num">所需產品數量：</label><br>
+        <input type="text" name="product_num"><br>
+
+        <input type="submit" value="發送">
+    </form>
+</body>
+</html>
+
