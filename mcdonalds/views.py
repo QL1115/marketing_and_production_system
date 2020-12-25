@@ -6,7 +6,7 @@ from datetime import date
 
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
-from .forms import RawMaterialModelForm, MarketingStrategyForm
+from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm
 import plotly.graph_objects as go
 import pandas as pd
 
@@ -275,6 +275,19 @@ def create_EOQ_orders(m_id):
     print('done')
 
 
+def add_order(request):
+    '''新增order'''
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        print('here!')
+        if form.is_valid():
+            new_order = form.save()
+            print('new_order >>> ', new_order)
+            # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
+            return render(request, 'mcdonalds/raw_materials_order_create.html', {'form': form, 'isAdded':True})
+    else:
+        form = OrderForm()
+        return render(request, 'mcdonalds/raw_materials_order_create.html', {'form': form})
 
 
 

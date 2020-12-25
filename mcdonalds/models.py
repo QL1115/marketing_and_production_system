@@ -95,6 +95,11 @@ class RawMaterial(models.Model):
     supplier = models.ForeignKey('Suppliers', on_delete=models.CASCADE)
     class Meta:
         db_table = 'raw_material'
+    def __unicode__(self):
+        return '%s' % self.material_name
+    
+    def __str__(self):
+        return self.material_name
 
 class StrategyProductRel(models.Model):
     '''行銷策略與商品之間的關係'''
