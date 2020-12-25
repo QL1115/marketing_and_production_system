@@ -1,10 +1,16 @@
+
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from pandas._libs import json
+
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
+from .models import Cashinbanks, Depositaccount
+from .forms import CashinbanksForm, DepositAccountForm
+from django.core import serializers
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 
 def index(request):
@@ -96,3 +102,68 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
                                                     'comp_id': comp_id,
                                                     'rpt_id': rpt_id,
                                                     'import_related_list': [result['status_code'], result['msg']]})
+def get_check_page(request, comp_id, rpt_id, acc_id):
+    table_name = 'cash_in_banks'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    cibSummary = 0
+    if uploadFile.get('status_code') == 200:
+        cibData = uploadFile.get('returnObject')
+        for i in cibData:
+            cibSummary += (i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
+
+    table_name = 'deposit_account'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    depositSummary = 0
+    if uploadFile.get('status_code') == 200:
+        depositData = uploadFile.get('returnObject')
+        # cauclate summary
+
+        for i in depositData:
+            depositSummary += int(i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
+        # 這裡要傳errorPage回去嗎
+        return render(request, 'checking_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
+    return render(request, 'checking_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id': acc_id, 'cibData': cibData, 'depositData':depositData,
+                                                 'cibSummary':cibSummary, 'depositSummary':depositSummary})
+@csrf_exempt
+def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
+    if request.method == 'POST' and request.is_ajax():
+        # ⚠️ 注意：若是用 Ajax 以 JSON 格式， POST 方式送 data 過來，這裡使用 request.body 來接收並且需要處理一下 json。
+        data = json.loads(request.body) #
+        # print("data >>> ", data)
+        if table_name == 'cash_in_banks':
+            form = CashinbanksForm(data)
+            if form.is_valid():
+                cash_in_banks = Cashinbanks.objects.get(cash_in_banks_id=data.get('id'))
+                form = CashinbanksForm(data, instance=cash_in_banks)
+                form.save()
+                context = {
+                    'table_name': 'cash_in_banks',
+                    'isUpdated': True
+                }
+                return JsonResponse(context)
+            else:
+                return JsonResponse({
+                    'table_name': 'cash_in_banks',
+                    'isUpdated': False
+                })
+        elif table_name == 'deposit_account':
+            form = DepositAccountForm(data)
+            if form.is_valid():
+                deposit_account = Depositaccount.objects.get(dep_acc_id=data.get('id'))
+                form = DepositAccountForm(data, instance=deposit_account)
+                form.save()
+                context = {
+                    'table_name': 'deposit_account',
+                    'isUpdated': True
+                }
+                return JsonResponse(context)
+            else:
+                return JsonResponse({
+                    'table_name': 'deposit_account',
+                    'isUpdated': False
+                })
+
