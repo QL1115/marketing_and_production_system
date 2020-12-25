@@ -89,12 +89,16 @@
         .tree li div:hover+ul ul::before{
             border-color:  #94a0b4;
         }
+        tr .collapse .in {
+          display:table-row;
+        }
 
     </style>
 {% endblock %}
 
 {% block content %}
     <!--  -->
+    <br><br>
     <div class="col-md-12">
         <div id="customer_rel_tab" class="btn-group" role="group" aria-label="Basic example">
             <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:binary_tree' %}" role="button">二元樹</a>
@@ -154,7 +158,50 @@
             {% endif %}
         </div>
     {% elif tab_selected == 'rfm' %}<!-- RFM -->
-        <p>RFM</p>
+
+        {% if rfm_list %}
+            <div class="col-md-12 input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" >搜尋 RFM 小組</span>
+                </div>
+                <input id="search_rfm_value" type="text" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+            </div>
+            <div  class="col-md-12">
+                <table id="rfm_area" class="table table-bordered  text-center" data-toggle="table">
+                    <thead class="thead-dark">
+                        <tr>
+{#                            <th></th>#}
+                            <th>RFM 小組</th>
+                            <th data-sortable="true">實際回應率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rfm in rfm_list %}
+                            <tr data-toggle="collapse" data-target=".rfm{{ rfm.rfm_id }}">
+{#                                <td><button class="btn btn-default btn-xs"><span class="glyphicon glyphicon-eye-open"></span></button></td>#}
+                                <td class="font-weight-bold">{{ rfm.rfm_value }}</td>
+                                <td class="font-weight-bold">{{ rfm.actual_resp_rate }}%</td>
+                            </tr>
+                            <tr id="rfm{{ rfm.rfm_id }}" class="collapse "></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {# TODO 分頁 #}
+
+            <div class="col-md-12" aria-label="Page navigation example">
+                <br>
+              <ul class="pagination">
+                <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                <li class="page-item"><a class="page-link" href="?page=2">2</a></li>
+                <li class="page-item"><a class="page-link" href="?page=3">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">Next</a></li>
+              </ul>
+            </div>
+        {% else %}
+            <div>資料庫中沒有 RFM 資料。</div>
+        {% endif %}
 
 
     {% endif %}
@@ -165,12 +212,78 @@
 {% endblock content %}
 {% block extra_scripts %}
     <script type="text/javascript">
-        {#  TODO 處理顧客關係管理 「二元樹」、「存活率」、「RFM」點擊下去的顏色，目前因為有 redirecrt 所以有些問題  #}
-        $('#customer_rel_tab > .btn').on('click', function() {
-            $('#customer_rel_tab > .btn').removeClass('btn-dark')
-            $(this).addClass(('btn-dark'))
-        })
+        $(document).ready(function() {
+
+            $("#search_rfm_value").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#rfm_area tr").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            {# 折疊效果，選取一個 RFM 小組後，下方會顯示該 RFM 小組的 Customers #}
+            $('tr[data-toggle]').on('click', function() {
+                var rfm_id = $(this).attr('data-target').substring(4);
+                {#var new_tr = $('#rfm' + rfm_id);#}
+                {# 這裡用 length 判斷有沒有此元素 #}
+                if ($('#rfm_rows' + rfm_id + ' > tr').length) { {# 有此元素的話，就是折疊效果 #}
+                    if ($('#td_rfm' + rfm_id).hasClass('collapse')) {
+                        $('#td_rfm' + rfm_id).removeClass('collapse')
+                    } else {
+                        $('#td_rfm' + rfm_id).addClass('collapse')
+                    }
+                } else { {# 沒有此元素的話，就需要查詢對應的 customers #}
+                    {# 有點 tricky 的寫法，將 js 的 variable 作為 django template 的 URL 的參數 #}
+                    var url = "{% url 'mcdonalds:customer' rfm_id='12345' %}".replace(/12345/, rfm_id.toString());
+                    $.ajax({
+                        type: 'GET',
+                        url: url,
+                        contentType: 'application/json',
+                        success: function(data) {
+                            console.log('data', JSON.parse(data['customer_list'])); {# TODO null #}
+                            customers = JSON.parse(data['customer_list']);
+                            $('#rfm' + rfm_id).after("<td class=\"col-md-12\" colspan=\"2\" id=\"td_rfm" + rfm_id + "\">"+
+                                                "<table class=\"table table-bordered\">"+
+                                                    "<thead class=\"thead-light\">"+
+                                                        "<tr>" +
+                                                            "<th>姓名</th>" +
+                                                            "<th>性別</th>" +
+                                                            "<th>Email</th>" +
+                                                        "</tr>"+
+                                                    "</thead>"+
+                                                    "<tbody id=\"rfm_rows"+ rfm_id +"\">" +
+                                                    "</tbody>"+
+                                                "</table>"+
+                                            "</td>")
+                            for (var i = 0; i < customers.length; i++) {
+                                var gender = customers[i].fields.gender == 0 ? "女":"男"
+                                var email = customers[i].fields.email == null ? "":customers[i].fields.email
+                                $('#rfm_rows' + rfm_id).append(
+                                                    "<tr>" +
+                                                        "<td>"+ customers[i].fields.name +"</td>" +
+                                                        "<td>"+ gender +"</td>" +
+                                                        "<td>"+ email +"</td>" +
+                                                    "</tr>")
+
+                            }
+
+                        },
+                        error: function(error) {
+                            console.log('error', error)
+                        }
+                    });
+                }
+
+            });
 
 
+            {#  TODO 處理顧客關係管理 「二元樹」、「存活率」、「RFM」點擊下去的顏色，目前因為有 redirecrt 所以有些問題  #}
+{#            $('#customer_rel_tab > .btn').on('click', function() {#}
+{#                $('#customer_rel_tab > .btn').removeClass('btn-dark');#}
+{#                $(this).addClass(('btn-dark'));#}
+{#            });#}
+
+
+        });
     </script>
 {% endblock %}
