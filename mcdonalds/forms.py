@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from model_utils import Choices
 
-from .models import RawMaterial, MarketingStrategies
+from .models import RawMaterial, MarketingStrategies, Orders
 
 
 class RawMaterialModelForm(forms.ModelForm):
@@ -49,4 +49,42 @@ class MarketingStrategyForm(forms.ModelForm):
             'end_date': '結束日期',
             'status': '狀態'
         }
+
+
+class OrderForm(forms.ModelForm):
+    
+    class Meta:
+        model = Orders
+        fields = {'order_amount','material','order_date'}
+        ORDER_STATUS = Choices(
+            (0, '~'),
+            (1, '大麥克麵包222'),
+            (2, '1/10牛肉餅'),
+            (3, '吉士片'),
+            (4, '切片生菜'),
+            (5, '大麥克醬'),
+            (6, '布里歐麵包'),
+            (7, '番茄片'),
+            (8, '厚切培根'),
+            (9, '安格斯牛肉餅'),
+            (10, 'BLT燒烤醬'),
+            (11, '番茄醬'),
+            (12, '薯條'),
+            (13, '麥克雞塊'),
+            (14, '可樂'),
+
+        )
+        widgets = {
+            'order_amount': forms.TextInput(attrs={'class': 'form-control'}),
+            'material': forms.Select(attrs = {'class': 'form-control'}, choices=ORDER_STATUS),
+            #forms.Select(attrs = {'class': 'form-control'}, choices=ORDER_STATUS),
+            #choices=RawMaterial.objects.all().values_list('material_id', 'material_name'),
+            'order_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
+        }
+        labels = {
+            'order_amount':'訂購數量',
+            'material':'訂購商品',
+            'order_date':'訂購日期'
+        }
+
 

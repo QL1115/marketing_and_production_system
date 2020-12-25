@@ -3,9 +3,10 @@ from django.http import HttpResponse, JsonResponse
 from plotly.graph_objs import Scatter
 from plotly.offline import plot
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # 分頁功能
+from datetime import date
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
-from .forms import RawMaterialModelForm, MarketingStrategyForm
+from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm
 import plotly.graph_objects as go
 from django.core import serializers
 
@@ -230,12 +231,88 @@ def get_edit_page(request, material_id):
     return render(request,'mcdonalds/update_raw_materials.html', {'raw_materials':raw_materials}) 
 
 
-def save_update(request, material_id):  
+def save_update_raw_materials(request, material_id):  
     raw_materials = RawMaterial.objects.get(material_id=material_id)  
     form = RawMaterialModelForm(request.POST, instance = raw_materials)  
-    print('here~~~~~~')
+    
     if form.is_valid():  
         form.save()  
         return redirect("/mcdonalds/raw_materials")  
     return render(request, 'mcdonalds/update_raw_materials.html', {'raw_materials': raw_materials}) 
+
+
+def receive_store_demand(request):
+
+    store_id = request.POST.get('store_id', False)
+    product_id = request.POST.get('product_id', False)
+    product_num = request.POST.get('product_num', False)
+    create_store_demand(store_id,product_id,product_num)#建立store_demand＆store_demand_detail
+    list_of_number_and_material_id=turn_produtcts_to_raw_materials(product_id)#撈出相關raw_material_id及相對應消耗量
+    #print(list)
+    for item in range(len(list_of_number_and_material_id)):
+        print('id',list_of_number_and_material_id[item][0])
+        print('number',list_of_number_and_material_id[item][1])
+        m_id=list_of_number_and_material_id[item][0]
+        number=list_of_number_and_material_id[item][1]
+        #先選取出目前的庫存
+        current_on_hand_inventory=RawMaterial.objects.values('on_hand_inventory').get(material_id=m_id)['on_hand_inventory']#type int
+        product_num=int(product_num)
+        #一建立訂單，庫存就被扣，算出新的庫存
+        new_on_hand_inventory=current_on_hand_inventory-product_num*number
+        #print('new_on_hand_inventory',new_on_hand_inventory)
+        #更新庫存
+        RawMaterial.objects.filter(material_id=m_id).update(on_hand_inventory = new_on_hand_inventory)
+        #撈出庫存及安全庫存
+        RawMaterial.objects.filter(material_id=1).update(security_numbers = 30000000000)
+        on_hand_inventory=RawMaterial.objects.values('on_hand_inventory').get(material_id=m_id)['on_hand_inventory']
+        security_numbers=RawMaterial.objects.values('security_numbers').get(material_id=m_id)['security_numbers']
+        if on_hand_inventory<security_numbers:
+            create_EOQ_orders(m_id)
+        else:
+            print('no')
+
+    return render(request,'mcdonalds/store_send_demand.html', {})
+
+def go_to_store_send_demand_page(request):
+    return render(request,'mcdonalds/store_send_demand.html', {})
+
+def create_store_demand(store_id,product_id,product_num):
+    # call by receive_store_demand
+    #建立門市需求單
+    product_num=product_num
+    today = str(date.today())
+    store_demand = StoreDemand.objects.create(store_id=store_id,status=0,created_date=today)
+    bigest_id=StoreDemand.objects.latest('store_demand_id').store_demand_id
+    #建立門市需求單detail
+    store_demand_detail=StoreDemandDetails.objects.create(product_id=product_id,store_demand_id=bigest_id,prod_numbers=product_num)
+
+def turn_produtcts_to_raw_materials(product_id):
+    list=ProductMaterialRel.objects.values_list('material_id','numbers').filter(product_id=product_id)#return<QuerySet [(1, 1), (2, 2), (1, 3), (2, 4), (1, 5)]>
+    #a[2]=(1, 3) a[2][0]=1 a[2][1]=3
+    return list
+
+def create_EOQ_orders(m_id):
+    eoq=RawMaterial.objects.values('quantity').get(material_id=m_id)['quantity']
+    print('eoq',eoq)
+    today = str(date.today())
+    Orders.objects.create(order_date=today,status=0,order_amount=eoq,material_id=m_id)
+    print('done')
+
+
+def add_order(request):
+    '''新增order'''
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        print('here!')
+        if form.is_valid():
+            new_order = form.save()
+            print('new_order >>> ', new_order)
+            # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
+            return render(request, 'mcdonalds/raw_materials_order_create.html', {'form': form, 'isAdded':True})
+    else:
+        form = OrderForm()
+        return render(request, 'mcdonalds/raw_materials_order_create.html', {'form': form})
+
+
+
 

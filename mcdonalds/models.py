@@ -95,6 +95,11 @@ class RawMaterial(models.Model):
     supplier = models.ForeignKey('Suppliers', on_delete=models.CASCADE)
     class Meta:
         db_table = 'raw_material'
+    def __unicode__(self):
+        return '%s' % self.material_name
+    
+    def __str__(self):
+        return self.material_name
 
 class StrategyProductRel(models.Model):
     '''行銷策略與商品之間的關係'''
@@ -126,7 +131,7 @@ class StoreDemand(models.Model):
     created_date = models.DateField(default=date.today)
     status = models.PositiveSmallIntegerField(choices=DEMAND_STATUS, default=DEMAND_STATUS.RECEIVED) # 需求單狀態
     # FK Store
-    store = models.ForeignKey('Stores', on_delete=models.CASCADE)
+    store = models.ForeignKey('Stores', on_delete=models.CASCADE,db_constraint=False)
 
     class Meta:
         ordering = ['created_date', 'status']
@@ -135,10 +140,10 @@ class StoreDemand(models.Model):
 class StoreDemandDetails(models.Model):
     '''門市需求單內容'''
     store_demand_details_id = models.AutoField(primary_key=True)
-    prod_numbers = models.PositiveSmallIntegerField() # 所需商品數量
+    prod_numbers = models.PositiveSmallIntegerField( blank=True, null=True) # 所需商品數量
     # FK RawMaterial, Stores
-    product = models.ForeignKey('Products', on_delete=models.CASCADE)
-    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE, blank=True, null=True) # TODO 不知道為什麼這裡它要預設值或者要允許 null
+    product = models.ForeignKey('Products', on_delete=models.CASCADE,db_constraint=False)
+    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE, blank=True, null=True,db_constraint=False) # TODO 不知道為什麼這裡它要預設值或者要允許 null
 
     class Meta:
         db_table = 'store_demand_details'
