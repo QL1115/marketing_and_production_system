@@ -6,9 +6,11 @@ from datetime import date
 
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
-from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm
+from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm, LoginForm
 import plotly.graph_objects as go
 import pandas as pd
+
+from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 def index(request):
@@ -291,4 +293,16 @@ def add_order(request):
 
 
 
-
+def sign_in(request):
+    form = LoginForm()
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return render(request, 'mcdonalds/index.html', {})  #重新導向到首頁
+    context = {
+        'form': form
+    }
+    return render(request, 'mcdonalds/login.html', context)
