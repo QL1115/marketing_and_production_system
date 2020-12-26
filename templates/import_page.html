@@ -94,19 +94,6 @@
             {% if count_Depositaccount_list.0 == 789  %}
             <div class="row justify-content-start">
                     <div class="col-2 align-self-center">定期存款：</div>
-                    <div class="col-6">
-                        {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
-
-                        <form action='./import' method="post">
-                            <div class="custom-file" style="width: 80%">
-                                <input type="text" hidden name="table_name" value="deposit_account"/>
-                                <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadDepositAccount"
-                                    name='file'/>
-                                <label class="custom-file-label text-left" for="customFile"></label>
-                            </div>
-                            
-                        </form>
-                    </div>
                     <div class="col-2 align-self-center">
                         <button class="btn btn-primary" id="del_Depositaccount">del</button> 
                     </div>
@@ -139,18 +126,6 @@
             {% if count_CashInBank_list.0 == 123 %}
             <div class="row justify-content-start">
                     <div class="col-2 align-self-center">銀行存款：</div>
-                    <div class="col-6">
-                        {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
-
-                        <form action='./import' method="post">
-                            <div class="custom-file" style="width: 80%">
-                                <input type="text" hidden name="table_name" value="cash_in_bank"/>
-                                <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadCashInBank"
-                                    name='file'/>
-                                <label class="custom-file-label text-left" for="customFile"></label>
-                            </div>
-                        </form>
-                    </div>
                     <div class="col-2 align-self-center">
                     <button class="btn btn-primary" id="del_CashInBank" >del</button>
                     </div>
@@ -202,160 +177,70 @@
 
 <script src="test3.js"></script>
 <script type="text/javascript">
-    document.getElementById("UploadCashInBank").addEventListener('change', function (e) {
-        var fileName = document.getElementById("UploadCashInBank").files[0].name;
-        var nextSibling = e.target.nextElementSibling
-        nextSibling.innerText = fileName
+    $(document).ready(function() {
+
+        {% if count_Depositaccount_list.0 == 999 %}
+            document.getElementById("UploadDepositAccount").addEventListener('change', function (e) {
+                var fileName = document.getElementById("UploadDepositAccount").files[0].name;
+                var nextSibling = e.target.nextElementSibling
+                nextSibling.innerText = fileName
+            })
+        {% endif %}
+
+        {% if count_CashInBank_list.0 == 789 %}
+            document.getElementById("UploadCashInBank").addEventListener('change', function (e) {
+                var fileName = document.getElementById("UploadCashInBank").files[0].name;
+                var nextSibling = e.target.nextElementSibling
+                nextSibling.innerText = fileName
+            })
+        {% endif %}
+
+        $("#del_CashInBank").on('click',function () {
+                alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
+                var statu = confirm("確定要刪除銀行存款嗎?");
+                if (!statu) { return false; }
+                $.ajax({
+                    type: "GET",
+                    url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
+                    //data: "BookID=" + $(this).next().val(),
+                    //dataType: "json",
+                    success: function (response) {
+                        {#window.location.reload();#}
+                        console.log(response)
+                    }, error: function (error) {
+                        {#window.location.reload();#}
+                        console.log(error);
+                    },
+                    complete: function(XMLHttpRequest, textStatus) {
+                        window.location = window.location.href;
+                    }
+                });
+        });
+
+        $("#del_Depositaccount").on('click', function () {
+            console.log('in')
+                alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");
+                var statu = confirm("確定要刪除銀行存款嗎?");
+                if (!statu) { return false; }
+                $.ajax({
+
+                    type: "GET",
+                    url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
+                    //data: "BookID=" + $(this).next().val(),
+                    //dataType: "json",
+                    success: function (response) {
+                        {#window.location.reload();#}
+                    }, error: function (error) {
+                        {#window.location.reload();#}
+                        console.log(error);
+                    },
+                    complete: function(XMLHttpRequest, textStatus) {
+                        window.location = window.location.href;
+                    }
+                });
+        });
     })
 
-    document.getElementById("UploadDepositAccount").addEventListener('change', function (e) {
-        var fileName = document.getElementById("UploadDepositAccount").files[0].name;
-        var nextSibling = e.target.nextElementSibling
-        nextSibling.innerText = fileName
-    })
-
-    
-    $("#del_CashInBank").on('click',function () {
-            alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
-            var statu = confirm("確定要刪除銀行存款嗎?");
-            if (!statu) { return false; }
-            $.ajax({
-              
-                type: "GET",
-                url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
-                //data: "BookID=" + $(this).next().val(),
-                //dataType: "json",
-                success: function (response) {
-                    window.location.reload();
-                }, error: function (error) {
-                    window.location.reload();
-                    console.log(error);
-                }
-            });
-    });
-
-    $("#del_Depositaccount").click(function () {
-            alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");
-            var statu = confirm("確定要刪除銀行存款嗎?");
-            if (!statu) { return false; }
-            $.ajax({
-              
-                type: "GET",
-                url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
-                //data: "BookID=" + $(this).next().val(),
-                //dataType: "json",
-                success: function (response) {
-                    window.location.reload();
-                }, error: function (error) {
-                    window.location.reload();
-                    console.log(error);
-                }
-            });
-    });
-
-    
-    $(function() {
-
-    var defaultData = [
-    {
-    text: '資產',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '負債',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '損益',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '權益',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '其他',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-
-
-    ];
-    $('#treeview1').treeview({
-    levels:1,
-    data: defaultData
-    });
-
-    var search = function(e) {
-    var pattern = $('#input-search').val();
-    var options = {
-        ignoreCase: $('#chk-ignore-case').is(':checked'),
-        exactMatch: $('#chk-exact-match').is(':checked'),
-        revealResults: $('#chk-reveal-results').is(':checked')
-    };
-    var results = $searchableTree.treeview('search', [ pattern, options ]);
-
-    var output = '<p>' + results.length + ' matches found</p>';
-    $.each(results, function (index, result) {
-        output += '<p>- ' + result.text + '</p>';
-    });
-    $('#search-output').html(output);
-    }
-    $('#btn-clear-search').on('click', function (e) {
-    $searchableTree.treeview('clearSearch');
-    $('#input-search').val('');
-    $('#search-output').html('');
-    });
-});
 </script>
 </body>
 </html>
