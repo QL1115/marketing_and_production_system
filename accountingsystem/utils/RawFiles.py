@@ -106,6 +106,7 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
     try:
         with transaction.atomic():
             for i in range(1, sheet.nrows):
+                print('check_and_save_deposit_account11111111')
                 # row_values = sheet.row_values(i, )
                 type = Account.objects.filter(acc_name = sheet.cell_value(rowx=i, colx=2)).first()
                 currency = Systemcode.objects.filter(code_type='幣別', code_name=sheet.cell_value(rowx=i, colx=3)).first().system_code # currency欄位存所屬幣別的system_code
@@ -113,6 +114,7 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
                     raise ObjectDoesNotExist
                 if currency is None:
                     raise ObjectDoesNotExist
+                print('check_and_save_deposit_account222222')
                 record = Depositaccount.objects.create(
                                                      bank_name = sheet.cell_value(rowx=i, colx=0),
                                                      # 帳號欄位若讀成了「數字」型態，則去掉 .0，否則直接存入 DB
@@ -127,6 +129,7 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
                                                      end_date = datetime(*xlrd.xldate_as_tuple(sheet.cell_value(rowx=i, colx=8), 0)),
                                                      rpt = rpt)
                 record.save()
+
         return {"status_code": 200, "msg": "檔案上傳/更新成功。"}
     except Exception as e:
         print('check_and_save_deposit_account >>> ', e)

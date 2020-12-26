@@ -12,7 +12,7 @@
         <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
         <!--tree things -->
         <link href="test.css" rel="stylesheet">
-
+        
         <script type="text/javascript" src="/static/js/jquery.js"></script>
 
         </head>
@@ -73,7 +73,6 @@
             {% if  count_Depositaccount_list.0 == 999 %}
             <div class="row justify-content-start">
 
-
                     <div class="col-2 align-self-center">定期存款：</div>
                     <div class="col-6">
                         {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
@@ -90,12 +89,10 @@
                     </div>
             </div>
             {% endif %}
-
+            
             <!--如果上傳過定期存款，顯示這個 789-->
             {% if count_Depositaccount_list.0 == 789  %}
             <div class="row justify-content-start">
-
-
                     <div class="col-2 align-self-center">定期存款：</div>
                     <div class="col-6">
                         {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
@@ -107,11 +104,11 @@
                                     name='file'/>
                                 <label class="custom-file-label text-left" for="customFile"></label>
                             </div>
-
+                            
                         </form>
                     </div>
                     <div class="col-2 align-self-center">
-                        <button class="btn btn-primary" id="del_Depositaccount">del</button>
+                        <button class="btn btn-primary" id="del_Depositaccount">del</button> 
                     </div>
                     </div>
             {% endif %}
@@ -119,7 +116,7 @@
             <!--如果沒上傳過銀行存款，顯示這個-->
             {% if  count_CashInBank_list.0 == 456 %}
             <div class="row justify-content-start">
-
+                
 
                     <div class="col-2 align-self-center">銀行存款：</div>
                     <div class="col-6">
@@ -137,8 +134,8 @@
                     </div>
                     </div>
             {% endif %}
-
-            <!--如果上傳過銀行存款，顯示這個-->
+            
+            <!--如果上傳過銀行存款，顯示這個-->   
             {% if count_CashInBank_list.0 == 123 %}
             <div class="row justify-content-start">
                     <div class="col-2 align-self-center">銀行存款：</div>
@@ -163,9 +160,6 @@
 
 
 
-
-
-
             {% if import_related_list.count != 0 and import_related_list.0 != 200 %}
                 <div class="row justify-content-center">
                     <div class="col-8">上傳失敗，原因：{{ import_related_list.1 }}</div>
@@ -178,7 +172,7 @@
                 </div>
             {% endif %}
         </div>
-    </div>
+    </div> 
 </div>
 <!--upload section end-->
 <!-- </div> -->
@@ -220,13 +214,13 @@
         nextSibling.innerText = fileName
     })
 
-
+    
     $("#del_CashInBank").on('click',function () {
             alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
             var statu = confirm("確定要刪除銀行存款嗎?");
             if (!statu) { return false; }
             $.ajax({
-
+              
                 type: "GET",
                 url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
                 //data: "BookID=" + $(this).next().val(),
@@ -245,7 +239,7 @@
             var statu = confirm("確定要刪除銀行存款嗎?");
             if (!statu) { return false; }
             $.ajax({
-
+              
                 type: "GET",
                 url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
                 //data: "BookID=" + $(this).next().val(),
@@ -259,7 +253,7 @@
             });
     });
 
-
+    
     $(function() {
 
     var defaultData = [
