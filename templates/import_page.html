@@ -13,7 +13,6 @@
         <!--tree things -->
         <link href="test.css" rel="stylesheet">
         
-        <script type="text/javascript" src="/static/js/jquery.js"></script>
         
         </head>
 <body>
@@ -161,12 +160,6 @@
                     </div>
             {% endif %}
 
-
-
-
-
-
-
             {% if import_related_list.count != 0 and import_related_list.0 != 200 %}
                 <div class="row justify-content-center">
                     <div class="col-8">上傳失敗，原因：{{ import_related_list.1 }}</div>
@@ -223,6 +216,7 @@
 
     
     $("#del_CashInBank").on('click',function () {
+            console.log("in");
             alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
             var statu = confirm("確定要刪除銀行存款嗎?");
             if (!statu) { return false; }
@@ -233,15 +227,18 @@
                 //data: "BookID=" + $(this).next().val(),
                 //dataType: "json",
                 success: function (response) {
-                    window.location.reload();
+                    //window.location.reload();
+                    window.location = window.location.href;
                 }, error: function (error) {
-                    window.location.reload();
+                    //window.location.reload();
+                    window.location = window.location.href;
                     console.log(error);
                 }
             });
     });
 
     $("#del_Depositaccount").click(function () {
+            console.log("in");
             alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");
             var statu = confirm("確定要刪除銀行存款嗎?");
             if (!statu) { return false; }
@@ -252,13 +249,18 @@
                 //data: "BookID=" + $(this).next().val(),
                 //dataType: "json",
                 success: function (response) {
-                    window.location.reload();
+                    //window.location.reload();
+                    window.location = window.location.href;
                 }, error: function (error) {
-                    window.location.reload();
+                    //window.location.reload();
+                    window.location = window.location.href;
                     console.log(error);
                 }
             });
     });
+
+
+    
 
     
     $(function() {
