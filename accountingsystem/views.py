@@ -52,13 +52,34 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
         print('upload_file exception >>> ', e)
         # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
         return {"status_code": 500, "msg": "發生不明錯誤。"}
+    return render (request, 'import_page.html', { 'acc_id': acc_id})
 
+def get_check_page(request, comp_id, rpt_id, acc_id):
+    table_name = 'cash_in_banks'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    cibSummary = 0
+    if uploadFile.get('status_code') == 200:
+        cibData = uploadFile.get('returnObject')
+        for i in cibData:
+            cibSummary += (i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
 
-@require_http_methods(["DELETE"])
-@csrf_exempt # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
-def delete_file(request, comp_id, rpt_id, acc_id, table_name):
-    result = delete_uploaded_file(rpt_id, table_name)
-    return HttpResponse(result) # TODO: for test
+    table_name = 'deposit_account'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    depositSummary = 0
+    if uploadFile.get('status_code') == 200:
+        depositData = uploadFile.get('returnObject')
+        # cauclate summary
+
+        for i in depositData:
+            depositSummary += int(i.ntd_amount)
+    else:
+        msg = uploadFile.get('msg')
+        # 這裡要傳errorPage回去嗎
+        return render(request, 'checking_page.html', {'acc_id':acc_id, 'msg':msg})
+    return render(request, 'checking_page.html', {'acc_id': acc_id, 'cibData': cibData, 'depositData':depositData,
+                                                 'cibSummary':cibSummary, 'depositSummary':depositSummary})
 
 @csrf_exempt
 def get_import_page(request,comp_id, rpt_id, acc_id):
