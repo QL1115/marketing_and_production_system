@@ -317,6 +317,8 @@ def add_order(request):
         form = OrderForm()
         return render(request, 'mcdonalds/raw_materials_order_create.html', {'form': form})
 
+def store_demand(request):
+    return render(request, 'mcdonalds/store_demand.html', {'store_demand': store_demand})
 
 
 

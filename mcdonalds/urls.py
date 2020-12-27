@@ -22,5 +22,6 @@ urlpatterns = [
     path('send_store_demend', views.receive_store_demand, name='receive_store_demand'),
     path('go_to_store_send_demand_page',views.go_to_store_send_demand_page, name='go_to_store_send_demand_page'),
     path('orders/add/', views.add_order, name='add_order'),
+    path('store_demand', views.store_demand, name='store_demand'),
 ]
 app_name='mcdonalds'
