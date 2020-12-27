@@ -1,14 +1,14 @@
 from django.shortcuts import render,redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from plotly.graph_objs import Scatter
 from plotly.offline import plot
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # 分頁功能
 from datetime import date
-
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
 from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm
 import plotly.graph_objects as go
-import pandas as pd
+from django.core import serializers
 
 # Create your views here.
 def index(request):
@@ -133,7 +133,8 @@ def binary_tree(request):
     return render(request, 'mcdonalds/customer_relationship.html', context)
 
 def survival_rate(request):
-    # TODO 存活率 & 留存率
+    '''存活率 & 留存率'''
+    # TODO 留存率
     all_marketing_data = MarketingData.objects.all()
     month_list = [item.date.strftime('%Y-%m-%d') for item in all_marketing_data]
     survival_rate_list = [item.survival_rate for item in all_marketing_data]
@@ -196,10 +197,33 @@ def survival_rate(request):
     }
     return render(request, 'mcdonalds/customer_relationship.html', context)
 
+def customer(request, rfm_id):
+    '''透過 rfm_id 查詢對應的 customer list'''
+    customer_list_serialized = serializers.serialize('json', Customers.objects.filter(rfm__rfm_id=rfm_id))
+    # customer_list = Customers.objects.filter(rfm__rfm_id=rfm_id)
+    context = {
+        'rfm_id': rfm_id,
+        'customer_list': customer_list_serialized
+    }
+    return JsonResponse(context)
+
+
 def rfm(request):
     # TODO rfm
+    rfm_qry_set = RFM.objects.all().order_by('rfm_value')
+    # 分頁功能
+    paginator = Paginator(rfm_qry_set, 10)
+    page = request.GET.get('page', 1)
+
+    if page:
+        rfm_list = paginator.page(page).object_list
+    else:
+        rfm_list = paginator.page(1).object_list
+
+
     context = {
-        'tab_selected': 'rfm'
+        'tab_selected': 'rfm',
+        'rfm_list': rfm_list
     }
     return render(request, 'mcdonalds/customer_relationship.html', context)
 

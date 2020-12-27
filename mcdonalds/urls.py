@@ -16,6 +16,7 @@ urlpatterns = [
     path('customer_rel/binary_tree/', views.binary_tree, name='binary_tree'),
     path('customer_rel/survival_rate/', views.survival_rate, name='survival_rate'),
     path('customer_rel/rfm/', views.rfm, name='rfm'),
+    path('customer_rel/rfm/<int:rfm_id>', views.customer, name='customer'),
     path('edit/<int:material_id>/', views.get_edit_page, name='get_edit_page'),
     path('update/<int:material_id>/', views.save_update_raw_materials, name='save_update_raw_materials'),
     path('send_store_demend', views.receive_store_demand, name='receive_store_demand'),
