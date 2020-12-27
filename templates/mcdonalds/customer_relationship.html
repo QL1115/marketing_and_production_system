@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %} 顧客關係管理 {% endblock title %}
+
+{#{% block extra_reference_link %}#}
+{#    <script type="text/javascript" src="{% static 'decision_tree.js' %}"></script>#}
+{#{% endblock %}#}
+{% block extra_css %}
+    <style>
+        .tree ul {
+            padding-top: 20px; position: relative;
+
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+
+        .tree li {
+            float: left; text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+
+        .tree li::before, .tree li::after{
+            content: '';
+            position: absolute; top: 0; right: 50%;
+            border-top: 1px solid #ccc;
+            width: 50%; height: 20px;
+        }
+        .tree li::after{
+            right: auto; left: 50%;
+            border-left: 1px solid #ccc;
+        }
+
+        .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+        }
+
+        .tree li:only-child{ padding-top: 0;}
+
+        .tree li:first-child::before, .tree li:last-child::after{
+            border: 0 none;
+        }
+        .tree li:last-child::before{
+            border-right: 1px solid #ccc;
+            border-radius: 0 5px 0 0;
+            -webkit-border-radius: 0 5px 0 0;
+            -moz-border-radius: 0 5px 0 0;
+        }
+        .tree li:first-child::after{
+            border-radius: 5px 0 0 0;
+            -webkit-border-radius: 5px 0 0 0;
+            -moz-border-radius: 5px 0 0 0;
+        }
+        .tree ul ul::before{
+            content: '';
+            position: absolute; top: 0; left: 50%;
+            border-left: 1px solid #ccc;
+            width: 0; height: 20px;
+        }
+        .tree li div{
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            text-decoration: none;
+            color: #666;
+            font-family: arial, verdana, tahoma;
+            font-size: 11px;
+            display: inline-block;
+
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+        .tree li div:hover, .tree li div:hover+ul li div {
+            background: #c8e4f8; color: #000; border: 1px solid #94a0b4;
+        }
+        .tree li div:hover+ul li::after,
+        .tree li div:hover+ul li::before,
+        .tree li div:hover+ul::before,
+        .tree li div:hover+ul ul::before{
+            border-color:  #94a0b4;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!--  -->
+    <div class="col-md-12">
+        <div id="customer_rel_tab" class="btn-group" role="group" aria-label="Basic example">
+            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:binary_tree' %}" role="button">二元樹</a>
+            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:survival_rate' %}" role="button">存活率</a>
+            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:rfm' %}" role="button">RFM</a>
+        </div>
+    </div>
+
+    {# TODO 尚未完成顧客關係管理 #}
+    {% if tab_selected == 'binary_tree' %}<!-- 二元樹 -->
+{#        <div class="tree">#}
+{#            <ul>#}
+{#                <li>#}
+{#                    <div><input type="checkbox"> Main <br/> <button> Test Btn </button></div>#}
+{#                    <ul>#}
+{#                        <li><div><input type="checkbox"> Sub-1</div></li>#}
+{#                        <li>#}
+{#                            <div><input type="checkbox"> Sub-2</div>#}
+{#                            <ul>#}
+{#                                <li><div><input type="checkbox"> Sub-2-1</div></li>#}
+{#                                <li><div><input type="checkbox"> Sub-2-2</div></li>#}
+{#                            </ul>#}
+{#                        </li>#}
+{#                    </ul>#}
+{#                </li>#}
+{#            </ul>#}
+{#        </div>#}
+        <h5>還要再找找看合適的 decision tree</h5>
+        <div class="tree">
+            <ul>
+                <li>
+                    <div>Main</div>
+                    <ul>
+                        <li><div>Sub-1</div></li>
+                        <li>
+                            <div>Sub-2</div>
+                            <ul>
+                                <li><div>Sub-2-1</div></li>
+                                <li><div>Sub-2-2</div></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+
+    {% elif tab_selected == 'survival_rate' %}<!-- 存活率 -->
+
+        <div style="min-height:70vh;min-width: 80vw">
+            {% if survival_rate_graph %}
+                {% autoescape off %}
+                {{ survival_rate_graph|safe }}
+                {% endautoescape %}
+            {% else %}
+                <h5>存活率圖表無法顯示</h5>
+            {% endif %}
+        </div>
+    {% elif tab_selected == 'rfm' %}<!-- RFM -->
+        <p>RFM</p>
+
+
+    {% endif %}
+
+
+
+
+{% endblock content %}
+{% block extra_scripts %}
+    <script type="text/javascript">
+        {#  TODO 處理顧客關係管理 「二元樹」、「存活率」、「RFM」點擊下去的顏色，目前因為有 redirecrt 所以有些問題  #}
+        $('#customer_rel_tab > .btn').on('click', function() {
+            $('#customer_rel_tab > .btn').removeClass('btn-dark')
+            $(this).addClass(('btn-dark'))
+        })
+
+
+    </script>
+{% endblock %}

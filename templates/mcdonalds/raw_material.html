@@ -6,13 +6,16 @@
 
 
 <div class="col-md-12">
-    <br>
-    <br><br>
  
     <!-- <input type="button" value="原物料訂購預估" onclick="location.href='raw_materials_predict'">
     <input type="button" value="原物料實際訂購單" onclick="location.href='要前往的網頁連結'">
     <h4>原物料訂購預估</h4> -->
     <h4>原物料庫存</h4>
+    <br>
+    <div class="col-md-2" style='float:right;'>
+        <a class="btn btn-info" href="{% url 'mcdonalds:add_order' %}" role="button" >新增原物料訂單</a>
+    </div>
+    <br>
     <br>
     <table class="table table-bordered table-striped">
         <thead class="thead-dark">
@@ -35,7 +38,7 @@
                     <td>{{ raw_material.security_numbers }}</td>
                     <td>{{ raw_material.supplier_name }}</td>
                     <td>
-                        <a href="edit/{{ raw_material.material_id }}" class="btn btn-info">修改</a>
+                        <a href="{% url 'mcdonalds:get_edit_page' material_id=raw_material.material_id %}" class="btn btn-info">修改</a>
                     </td>
                 </tr>
             {% endfor %}

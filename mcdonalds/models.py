@@ -31,6 +31,7 @@ class Customers(models.Model):
     cid = models.AutoField(primary_key=True)
     name = models.CharField(max_length=30)
     gender = models.IntegerField(choices = GENDER)
+    email = models.EmailField(max_length=30, blank=True, null=True)
     # FK RFM
     rfm = models.ForeignKey('RFM', on_delete=models.CASCADE)
 
@@ -74,6 +75,7 @@ class Products(models.Model):
     product_id = models.AutoField(primary_key=True)
     product_name = models.CharField(max_length=30) # 商品名稱
     amount = models.PositiveSmallIntegerField() # 商品售價
+    category = models.CharField(blank=True, max_length=10) # 商品類別
     class Meta:
         db_table = 'products'
 
@@ -93,6 +95,11 @@ class RawMaterial(models.Model):
     supplier = models.ForeignKey('Suppliers', on_delete=models.CASCADE)
     class Meta:
         db_table = 'raw_material'
+    def __unicode__(self):
+        return '%s' % self.material_name
+    
+    def __str__(self):
+        return self.material_name
 
 class StrategyProductRel(models.Model):
     '''行銷策略與商品之間的關係'''
@@ -124,7 +131,7 @@ class StoreDemand(models.Model):
     created_date = models.DateField(default=date.today)
     status = models.PositiveSmallIntegerField(choices=DEMAND_STATUS, default=DEMAND_STATUS.RECEIVED) # 需求單狀態
     # FK Store
-    store = models.ForeignKey('Stores', on_delete=models.CASCADE)
+    store = models.ForeignKey('Stores', on_delete=models.CASCADE,db_constraint=False)
 
     class Meta:
         ordering = ['created_date', 'status']
@@ -133,10 +140,10 @@ class StoreDemand(models.Model):
 class StoreDemandDetails(models.Model):
     '''門市需求單內容'''
     store_demand_details_id = models.AutoField(primary_key=True)
-    prod_numbers = models.PositiveSmallIntegerField() # 所需商品數量
+    prod_numbers = models.PositiveSmallIntegerField( blank=True, null=True) # 所需商品數量
     # FK RawMaterial, Stores
-    product = models.ForeignKey('Products', on_delete=models.CASCADE)
-    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE)
+    product = models.ForeignKey('Products', on_delete=models.CASCADE,db_constraint=False)
+    store_demand = models.ForeignKey('StoreDemand', on_delete=models.CASCADE, blank=True, null=True,db_constraint=False) # TODO 不知道為什麼這裡它要預設值或者要允許 null
 
     class Meta:
         db_table = 'store_demand_details'
@@ -145,10 +152,8 @@ class MarketingData(models.Model):
     '''行銷數據，資料來源：由我們系統算出結果後存入。'''
     md_id = models.AutoField(primary_key=True)
     date = models.DateField() # 只需要其中的 year, month
-    cvr = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
-                                                                     MaxValueValidator(100)])
-    breakeven_rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
-                                                       MaxValueValidator(100)]) # 損益平衡率
+    cvr = models.DecimalField(max_digits=5, decimal_places=2)
+    breakeven_rate = models.DecimalField(max_digits=5, decimal_places=2) # 損益平衡率
     survival_rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(0),
                                                                      MaxValueValidator(100)]) # 存活率
     class Meta:
@@ -187,7 +192,7 @@ class Stores(models.Model):
     store_name = models.CharField(max_length=30) # 門市名稱
     store_address = models.CharField(max_length=255) # 門市地址
     store_phone = models.CharField(max_length=30) # 門市電話，存成 CharField
-
+    store_region = models.CharField(blank=True, max_length=2) # 門市地區
     class Meta:
         db_table = 'stores'
 

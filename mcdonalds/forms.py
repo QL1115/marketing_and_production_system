@@ -1,5 +1,9 @@
+from datetime import date
+
 from django import forms
-from .models import RawMaterial
+from model_utils import Choices
+
+from .models import RawMaterial, MarketingStrategies, Orders
 
 
 class RawMaterialModelForm(forms.ModelForm):
@@ -15,11 +19,72 @@ class RawMaterialModelForm(forms.ModelForm):
 
         }
         # labels = {
-        #     'material_id': 'id',
         #     'material_name': '原物料名稱',
         #     'amount': '單位成本',
-        #     'on_hand_inventory': '庫存', 
+        #     'on_hand_inventory': '庫存',
         #     'security_numbers':'安全存量'
         # }
+
+class MarketingStrategyForm(forms.ModelForm):
+    class Meta:
+        model = MarketingStrategies
+        fields = ('strategy_name', 'description', 'start_date', 'end_date', 'status')
+        STRATEGY_STATUS = Choices(
+            (0, 'ENABLED'),
+            (1, 'DISABLED')
+        )
+        widgets = {
+            # 'strategy_id': forms.NumberInput(attrs= {'class': 'form-control'}),
+            'strategy_name': forms.TextInput(attrs = {'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
+            'end_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
+            'status': forms.Select(attrs = {'class': 'form-control'}, choices=STRATEGY_STATUS)
+
+        }
+        labels = {
+            'strategy_name': '策略名稱',
+            'description': '策略內容',
+            'start_date': '開始日期',
+            'end_date': '結束日期',
+            'status': '狀態'
+        }
+
+
+class OrderForm(forms.ModelForm):
+    
+    class Meta:
+        model = Orders
+        fields = {'order_amount','material','order_date'}
+        ORDER_STATUS = Choices(
+            (0, '~'),
+            (1, '大麥克麵包222'),
+            (2, '1/10牛肉餅'),
+            (3, '吉士片'),
+            (4, '切片生菜'),
+            (5, '大麥克醬'),
+            (6, '布里歐麵包'),
+            (7, '番茄片'),
+            (8, '厚切培根'),
+            (9, '安格斯牛肉餅'),
+            (10, 'BLT燒烤醬'),
+            (11, '番茄醬'),
+            (12, '薯條'),
+            (13, '麥克雞塊'),
+            (14, '可樂'),
+
+        )
+        widgets = {
+            'order_amount': forms.TextInput(attrs={'class': 'form-control'}),
+            'material': forms.Select(attrs = {'class': 'form-control'}, choices=ORDER_STATUS),
+            #forms.Select(attrs = {'class': 'form-control'}, choices=ORDER_STATUS),
+            #choices=RawMaterial.objects.all().values_list('material_id', 'material_name'),
+            'order_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
+        }
+        labels = {
+            'order_amount':'訂購數量',
+            'material':'訂購商品',
+            'order_date':'訂購日期'
+        }
 
 
