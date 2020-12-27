@@ -11,6 +11,9 @@
         <button id="rawmaterialspredict" type="button" class="btn btn-light" onclick="location.href='{% url 'mcdonalds:raw_materials_predict' %}'">原物料訂購預估</button>
         <button id="rawmaterialsorder" type="button" class="btn btn-dark" onclick="location.href='{% url 'mcdonalds:raw_materials_order' %}'">原物料實際訂購單</button>
     </div>
+    <div class="col-md-5" style='float:right;'>
+        <a class="btn btn-info" href="{% url 'mcdonalds:add_order' %}" role="button" >新增原物料訂單</a>
+    </div>
 
    <br>
    <br>
