@@ -6,9 +6,11 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # 分�
 from datetime import date
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
-from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm, StoresContactForm
+from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm, StoresContactForm, LoginForm
 import plotly.graph_objects as go
 from django.core import serializers
+
+from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 def index(request):
@@ -452,3 +454,17 @@ def raw_material_arrived_center(request, order_id):
         else:
             i['status']='已完成'
     return render(request,'mcdonalds/raw_materials_order.html', {'raw_materials_order': raw_materials_order})
+
+def sign_in(request):
+    form = LoginForm()
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return render(request, 'mcdonalds/index.html', {})  #重新導向到首頁
+    context = {
+        'form': form
+    }
+    return render(request, 'mcdonalds/login.html', context)

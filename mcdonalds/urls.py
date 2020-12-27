@@ -31,5 +31,6 @@ urlpatterns = [
     path('store_demand/', views.store_demand, name='store_demand'),
     path('raw_material_arrived_store/<int:store_demand_id>', views.raw_material_arrived_store, name='raw_material_arrived_store'),
     path('raw_material_arrived_center/<int:order_id>', views.raw_material_arrived_center, name='raw_material_arrived_center'),
+    path('login/', views.sign_in, name='Login')
 ]
 app_name='mcdonalds'
