@@ -410,7 +410,7 @@ def add_order(request):
 
 def store_demand(request):
     cursor = connection.cursor()
-    cursor.execute("SELECT store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+    cursor.execute("SELECT store_name, created_date, status, prod_numbers, product_name FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id INNER JOIN Products on Products.product_id=store_demand_details.product_id")
     store_demand = dictfetchall(cursor)
     for i in store_demand:
         if i['status']==0:

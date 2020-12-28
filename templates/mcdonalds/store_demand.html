@@ -24,6 +24,8 @@
                 <th>門市名稱</th>
                 <th>下訂日期</th>
                 <th>訂單狀態</th>
+                <th>下訂商品</th>
+                <th>下訂數量</th>
             </thead>
             <tbody>
 
@@ -32,6 +34,8 @@
                     <td>{{ store_demand.store_name }}</td>
                     <td>{{ store_demand.created_date }}</td>
                     <td>{{ store_demand.status }}</td>
+                    <td>{{ store_demand.product_name}}</td>
+                    <td>{{ store_demand.prod_numbers}}</td>
                 </tr>  
             {% endfor %} 
             </tbody>
