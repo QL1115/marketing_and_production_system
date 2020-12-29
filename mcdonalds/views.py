@@ -366,10 +366,15 @@ def receive_store_demand(request):
         else:
             print('no')
 
-    return render(request,'mcdonalds/store_send_demand.html', {})
+    stores=Stores.objects.all()
+    products=Products.objects.all()
+    return render(request,'mcdonalds/store_send_demand.html', {'stores':stores,'products':products})
+    #return render(request,'mcdonalds/store_send_demand.html', {})
+
 
 def go_to_store_send_demand_page(request):
-    return render(request,'mcdonalds/store_send_demand.html', {})
+    return render(request,'mcdonalds/store_send_demand.html')
+
 
 def create_store_demand(store_id,product_id,product_num):
     # call by receive_store_demand

@@ -19,6 +19,42 @@
 
         <input type="submit" value="發送">
     </form>
+    <table>
+        <tr>
+           
+            <th>門市 ID</th>
+            <th>門市名稱</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for store in stores %}
+            <tr>
+                <td>{{ store.store_id }}</td>
+                <td>{{ store.store_name }}</td>
+                
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<table>
+    <tr>
+       
+        <th>Product ID</th>
+        <th>Product 名稱</th>
+    </tr>
+</thead>
+<tbody>
+    {% for product in products %}
+        <tr>
+            <td>{{ product.product_id }}</td>
+            <td>{{ product.product_name }}</td>
+            
+        </tr>
+    {% endfor %}
+</tbody>
+
+</table>
 </body>
 </html>
 
