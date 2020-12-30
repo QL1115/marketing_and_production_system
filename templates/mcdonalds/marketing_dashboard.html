@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %} 行銷Dashboard {% endblock title %}
+{% block extra_css %}
+    <style>
+        .modal{
+            max-width: 1200px;
+            max-height: 800px;
+            width: 60%;
+            height: 80%;
+        }
+        .inner {
+          width: 50%;
+          height: 50%;
+          float: left;
+          text-align: center;
+        }
+    </style>
+{% endblock %}
+{% block extra_scripts %}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            <!-- 前期比較 -->
+            $("#ComparisonWithPrevious rect.nsewdrag.drag").click(function (){
+                $("#window1").modal({
+                    closeClass: 'icon-remove',
+                    closeText: '!'
+                });
+                $("#ComparisonHamburger").click();
+            });
+
+            $("#ComparisonHamburger").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'hamburger' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window1 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#ComparisonSnack").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'snack' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window1 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#ComparisonBeverageNSoup").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'beverageNsoup' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window1 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            <!-- 銷售排行 -->
+            $("#SalesRanking rect.nsewdrag.drag").click(function (){
+                $("#window2").modal({
+                    closeClass: 'icon-remove',
+                    closeText: '!'
+                });
+                $("#SalesRankingHamburger").click();
+            });
+
+            $("#SalesRankingHamburger").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'SalesRanking', "category": 'hamburger' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window2 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#SalesRankingSnack").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'SalesRanking', "category": 'snack' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window2 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#SalesRankingBeverageNSoup").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'SalesRanking', "category": 'beverageNsoup' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window2 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            <!-- 各區銷售表現 -->
+            $("#StorePerformance rect.nsewdrag.drag").click(function (){
+                $("#window3").modal({
+                    closeClass: 'icon-remove',
+                    closeText: '!'
+                });
+                $("#StorePerformanceNorth").click();
+            });
+
+            $("#StorePerformanceNorth").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'StorePerformance', "region": 'north' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window3 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#StorePerformanceCentral").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'StorePerformance', "region": 'central' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window3 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#StorePerformanceSouth").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'StorePerformance', "region": 'south' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window3 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#StorePerformanceEast").click(function(){
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'StorePerformance', "region": 'east' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window3 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            
+            <!-- CVR -->
+            $("#CVR rect.nsewdrag.drag").click(function (){
+                $("#window4").modal({
+                    closeClass: 'icon-remove',
+                    closeText: '!'
+                });
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'CVR' },
+                    <!-- dataType: "json", -->
+                    success: function (response) {
+                        $('#window4 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+         });
+    </script>
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="inner" id="ComparisonWithPrevious">
+        {% if ComparisonWithPrevious_graph %}
+            {% autoescape off %}
+            {{ ComparisonWithPrevious_graph|safe }}
+            {% endautoescape %}
+        {% else %}
+            <h5>No graph to show.</h5>
+        {% endif %}
+    </div>
+    <div class="inner" id="SalesRanking">
+        {% if SalesRanking_graph %}
+            {% autoescape off %}
+            {{ SalesRanking_graph|safe }}
+            {% endautoescape %}
+        {% else %}
+            <h5>No graph to show.</h5>
+        {% endif %}
+    </div>
+    <div class="inner" id="StorePerformance">
+        {% if StorePerformance_graph %}
+            {% autoescape off %}
+            {{ StorePerformance_graph|safe }}
+            {% endautoescape %}
+        {% else %}
+            <h5>No graph to show.</h5>
+        {% endif %}
+    </div>
+    <div class="inner" id="CVR">
+        {% if cvr_graph %}
+            {% autoescape off %}
+            {{ cvr_graph|safe }}
+            {% endautoescape %}
+        {% else %}
+            <h5>No graph to show.</h5>
+        {% endif %}
+    </div>
+    
+    <div id="window1" class="modal">
+        <button class="btn btn-info" id="ComparisonHamburger">漢堡</button>
+        <button class="btn btn-info" id="ComparisonSnack">點心</button>
+        <button class="btn btn-info" id="ComparisonBeverageNSoup">飲料/湯品</button>
+        <div class="graphArea">
+        </div>
+      <!-- <a href="#" rel="modal:close">Close</a> -->
+    </div>
+    
+    <div id="window2" class="modal">
+        <button class="btn btn-info" id="SalesRankingHamburger">漢堡</button>
+        <button class="btn btn-info" id="SalesRankingSnack">點心</button>
+        <button class="btn btn-info" id="SalesRankingBeverageNSoup">飲料/湯品</button>
+        <div class="graphArea">
+        </div>
+      <!-- <a href="#" rel="modal:close">Close</a> -->
+    </div>
+    
+    <div id="window3" class="modal">
+        <button class="btn btn-info" id="StorePerformanceNorth">北區</button>
+        <button class="btn btn-info" id="StorePerformanceCentral">中區</button>
+        <button class="btn btn-info" id="StorePerformanceSouth">南區</button>
+        <button class="btn btn-info" id="StorePerformanceEast">東區</button>
+        <div class="graphArea">
+        </div>
+      <!-- <a href="#" rel="modal:close">Close</a> -->
+    </div>
+    
+    <div id="window4" class="modal">
+        <div class="graphArea" style="margin-top: 5%">
+        </div>
+      <!-- <a href="#" rel="modal:close">Close</a> -->
+    </div>
+
+    
+{% endblock content %}
+
