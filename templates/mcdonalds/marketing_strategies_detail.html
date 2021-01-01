@@ -4,48 +4,124 @@
 
 {% block extra_css %}
     <style type="text/css">
-        .hidden{
+        .hidden {
             display: none;
         }
     </style>
 {% endblock %}
 
 {% block content %}
-    {% if isAdded %}
-        <div id="popup" class="col-md-10 offset-1 alert alert-success alert-dismissible fade show col-md-8">
+    {#  是否成功新增行銷策略  #}
+{#    {% if isUpdated and isUpdated == 'SUCCESS' %}#}
+        <div id="popup-success" class="hidden col-md-10 mx-sm-4  alert alert-success alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <strong>成功!</strong> 指定操作成功提示信息。
         </div>
-    {% endif %}
+{#    {% elif isUpdated and isUpdated == 'ERROR' %}#}
+        <div id="popup-error" class="hidden col-md-10 mx-sm-4  alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>失敗!</strong> 指定操作成功提示信息。
+        </div>
+{#    {% endif %}#}
 
-    <h1 class="col-md-12">行銷策略詳細資訊</h1>
+
     <div class="col-md-12">
-        {% if form and strategy_id %}
-            <form action="{% url 'mcdonalds:update_strategy' strategy_id=strategy_id %}" method="POST">
+        {# 修改現有的行銷策略 #}
+{#        {% if form and strategy_id %}#}
+{#            <h3 class="col-md-12">行銷策略詳細資訊</h3>#}
+{#            <form action="{% url 'mcdonalds:update_strategy' strategy_id=strategy_id %}" method="POST">#}
+{#                {% csrf_token %}#}
+{#                <div class="form-group">#}
+{#                    <div class="form-group col-md-6">#}
+{##}
+{#                        {{ form }}#}
+{##}
+{#                        <input class="btn btn-success" type="submit" value="儲存"/>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </form>#}
+{#            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:delete_strategy' strategy_id=strategy_id %}"#}
+{#               role="button">刪除</a>#}
+{#        {% else %} {# 新增行銷策略  #}
+            <h3 class="col-md-12">行銷策略詳細資訊</h3>
+            <form id="strategy_form" >
                 {% csrf_token %}
+                <input type="hidden" name="strategy_id" value="{{ strategy.strategy_id|default_if_none:None }}">
+                <br>
                 <div class="form-group">
-                    <div class="form-group col-md-6">
-
-                        {{ form }}
-
-                        <input class="btn btn-success" type="submit" value="儲存" />
+                    <div class="form-inline col-md-12">
+                        <div class="form-group col-md-6">
+                            <label>策略名稱</label>
+{#                                {{ form.strategy_name }}#}
+                            <input class="form-control mx-sm-3 col-md-6" type="text" name="strategy_name" value="{{ strategy.strategy_name|default_if_none:"" }}">
+{#                            <small  class="text-muted">Must be 8-20 characters long.</small>#}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>策略狀態</label>
+{#                                {{ form.status }}#}
+                            <select class="form-control mx-sm-3 col-md-6" name="status">
+                                <option value="0" {% if strategy and strategy.status == 0 %} selected="selected" {% endif %} >ENABLED</option>
+                                <option value="1" {% if strategy and strategy.status == 1 %} selected="selected" {% endif %}>DISABLED</option>
+                            </select>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="form-inline col-md-12">
+                         <div class="form-group col-md-6">
+                            <label>開始日期</label>
+{#                                {{ form.start_date }}#}
+                             <input class="form-control mx-sm-3 col-md-6" type="date" name="start_date" value="{{ strategy.start_date|date:"Y-m-d" }}" />
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>結束日期</label>
+{#                                {{ form.end_date }}#}
+                            <input class="form-control mx-sm-3 col-md-6" type="date" name="end_date" value="{{  strategy.end_date|date:"Y-m-d" }}" />
+                        </div>
+                    </div>
+                    <br>
+                    <div class="form-group col-md-10  mx-sm-3">
+                        <label>簡介</label>
+{#                        {{ form.description }}#}
+                        <textarea class="form-control" name="description" value="{{ strategy.description|default_if_none:"" }}" rows="3" ></textarea>
                     </div>
                 </div>
             </form>
-            <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:delete_strategy' strategy_id=strategy_id %}" role="button">刪除</a>
-        {% else %}
-            <form action="{% url 'mcdonalds:add_strategy'%}" method="POST">
-                {% csrf_token %}
-                <div class="form-group">
-                    <div class="form-group col-md-6">
-
-                        {{ form }}
-
-                        <input class="btn btn-success" type="submit" value="確認新增" />
+                    <br><hr><br>
+                    <h3 class="col-md-12">行銷策略與商品的關係</h3><br>
+                    <button id="add_product_btn" type="button" class="mx-sm-3 col-md-1 btn btn-outline-dark">新增商品</button>
+                    <br><br>
+                    <div id="strategy_product_area">
+                        <div class="form-row col-md-11 strategy_product_fields">
+                            <div class="form-group col">
+                              <label>商品類別</label>
+                              <select name="prod_category" class="form-control">
+                                  <option selected>--</option>
+                                  <option value="1">漢堡</option>
+                                  <option value="2">點心</option>
+                                  <option value="3">飲料/湯品</option>
+                              </select>
+                            </div>
+                            <div class="form-group col">
+                                <label> 商品名稱</label>
+                                <select name="prod_id" class="form-control">
+                                    <option value="--" selected>--</option>
+                                </select>
+                            </div>
+                            <div class="form-group col">
+                                <label>預計數量</label>
+                                <input name="prod_num" type="number" min="1" value="1" class="form-control" placeholder="0">
+                            </div>
+                            <div class="form-group col align-self-end">
+                                <button type="button" class="del_product_btn form-control btn btn-danger">刪除商品</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </form>
-        {% endif %}
+
+                <br>
+
+                <input id="add_strategy" class="mx-sm-3 col-md-2 btn btn-info" value="確認"/>
+
+{#        {% endif %}#}
     </div>
 
 {% endblock content %}
@@ -53,9 +129,160 @@
 
 {% block extra_scripts %}
     <script type="text/javascript">
-        $('#popup').removeClass("hidden")
-        $(".close").on('click', function() {
-            $('#popup').addClass("hidden")
+        $(document).ready(function() {
+
+            {# 顯示是否成功新增行銷策略 #}
+            $('#popup').removeClass("hidden")
+            $(".close").on('click', function () {
+                $('#popup').addClass("hidden")
+            });
+
+            {# 新增一項與行銷策略相關的商品 #}
+            $('#add_product_btn').on('click', function() {
+                var strategy_product_fields = '<div class="form-row col-md-11 strategy_product_fields">' +
+                        '                        <div class="form-group col">' +
+                        '                          <label>商品類別</label>' +
+                        '                          <select name="prod_category" class="form-control">' +
+                        '                              <option selected>--</option>' +
+                        '                              <option value="1">漢堡</option>' +
+                        '                              <option value="2">點心</option>' +
+                        '                              <option value="3">飲料/湯品</option>' +
+                        '                          </select>' +
+                        '                        </div>' +
+                        '                        <div class="form-group col">' +
+                        '                            <label> 商品名稱</label>' +
+                        '                            <select name="prod_id" class="form-control">' +
+                        '                                <option selected>--</option>' +
+                        '                            </select>' +
+                        '                        </div>' +
+                        '                        <div class="form-group col">' +
+                        '                            <label>預計數量</label>' +
+                        '                            <input type="number" min="1" value="1" name="prod_num" class="form-control" placeholder="0">' +
+                        '                        </div>' +
+                        '                        <div class="form-group col align-self-end">' +
+                        '                            <button type="button" class="del_product_btn form-control btn btn-danger">刪除商品</button>' +
+                        '                        </div>' +
+                        '                    </div>';
+
+                if ($('.strategy_product_fields').length) {
+                    $('.strategy_product_fields').last().after(strategy_product_fields);
+                } else {
+                    $('#strategy_product_area').append(strategy_product_fields);
+                }
+            });
+
+
+            {# ⚠️ 注意寫法，這裡寫成 $('.del_product_btn').on('click', function() {...}) 不知道為什麼第二個開始的刪除button會沒有反應 #}
+            {# 刪除一項與行銷策略相關的商品 #}
+            $(document).on('click','.del_product_btn', function() {
+                console.log('>>', $('.del_product_btn'));
+                console.log('>>', $(this).closest('.strategy_product_fields'));
+                $(this).closest('.strategy_product_fields').remove()
+            });
+
+            {# 依據商品分類顯示可選的商品名稱 #}
+            $(document).on('change', "select[name='prod_category']", function() {
+                var product_category_num = parseInt($(this).val())
+                {# 判斷是不是現有的商品分類。1：漢堡，2：點心，3：飲料/湯品 #}
+                var prod_name_list = $(this).parent().next().children("select[name='prod_id']");
+                if (product_category_num === 1 || product_category_num === 2 || product_category_num === 3){
+                    console.log('prod_name_list', prod_name_list)
+                    console.log('prod name', $(this).parent().next().children("select[name='prod_id']").val());
+                    $.ajax({
+                        type: 'GET',
+                        url: '{% url 'mcdonalds:search_prod_by_category' prod_category_num='12345' %}'.replace('12345', product_category_num),
+                        dataType: 'json',
+                        success: function(data) {
+                            {# 取得該商品類別下的所有商品，顯示在 select tag 中 #}
+                            var product_list = JSON.parse(data['product_list']);
+                            prod_name_list.empty();
+                            for (index in product_list) {
+                                prod_name_list.append("<option value='"+ product_list[index].pk +"'>"+ product_list[index].fields.product_name +"</option>")
+                            }
+
+                        },
+                        error: function(error) {
+                            console.log('error', error)
+                        }
+                    })
+                } else {
+                    {# 沒有選擇商品類別時，商品名稱欄位只會有 "--" #}
+                    prod_name_list.empty();
+                    prod_name_list.append("<option>--</option>")
+
+                }
+            })
+
+            $('#add_strategy').on('click', function(event) {
+                {# 防止點擊按鈕後馬上提交，需進行以下處理再提交至後端 #}
+                event.preventDefault();
+                all_product_fields = $('#strategy_product_area .strategy_product_fields');
+                console.log('all_product_fields', all_product_fields)
+                {# 將關聯的所有商品包裝成 JSON 格式 [{},{},{},...]，送至後端處理，一筆筆塞入 StrategyProductRel 資料表 #}
+                var product_list = all_product_fields.map(function() {
+                    return {
+                        prod_category: $(this).find('select[name="prod_category"]').val(),
+                        prod_id: $(this).find('select[name="prod_id"]').val(),
+                        prod_num: $(this).find('input[name="prod_num"]').val()
+                    };
+                }).get();
+                console.log('product_list >>> ', product_list);
+
+                var data = {
+                            {% if strategy_id %} 'strategy_id': $('#strategy_form input[name="strategy_id"]').val(), {% endif %}
+                            'strategy_name': $('#strategy_form input[name="strategy_name"]').val().trim(),
+                            'status': $('#strategy_form select[name="status"]').val(),
+                            'start_date': $('#strategy_form input[name="start_date"]').val(),
+                            'end_date': $('#strategy_form input[name="end_date"]').val(),
+                            'description': $('#strategy_form textarea[name="description"]').val(),
+                            'product_list': product_list
+                }
+                console.log('data', data)
+
+                {# 將原本的 行銷策略 欄位和 product 欄位整合在一起 #}
+                {#var form = $('#strategy_form');#}
+                {#form = form.serialize();#}
+                {#form = form.concat({'name': 'product_list',#}
+                {#                    'value': data});#}
+                {#console.log('form', JSON.stringify(form));#}
+
+                $.post('{% url 'mcdonalds:add_strategy' %}', JSON.stringify(data), function(d) {
+                    console.log('d', d)
+                    if (d == True) {
+                        $('#popup-error').addClass('hidden')
+                        $('#popup-success').removeClass('hidden')
+                    } else {
+                        $('#popup-error').removeClass('hidden')
+                        $('#popup-success').addClass('hidden')
+                    }
+                    {#if (d.error) {#}
+                    {#    alert('新增/更新失敗！')#}
+                //    {#} else {#}
+                    {#    window.location = {% url 'mcdonalds:strategies_list' %}#}
+                //    {#}#}
+                });
+
+                {#$.ajax({#}
+                {#    type: 'POST',#}
+                {#        url: '{% url 'mcdonalds:add_strategy' %}',#}
+                {#        dataType: 'json',#}
+                {#        success: function(data) {#}
+                            {# 取得該商品類別下的所有商品，顯示在 select tag 中 #}
+                {#            var product_list = JSON.parse(data['product_list']);#}
+                {#            prod_name_list.empty();#}
+                {#            for (index in product_list) {#}
+                {#                prod_name_list.append("<option value='"+ product_list[index].pk +"'>"+ product_list[index].fields.product_name +"</option>")#}
+                {#            }#}
+                {##}
+                {#        },#}
+                {#        error: function(error) {#}
+                {#            console.log('error', error)#}
+                {#        }#}
+            //    {#})#}
+
+
+            })
+
         })
     </script>
 {% endblock %}

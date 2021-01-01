@@ -42,7 +42,7 @@
 		         </li>
                 <li class="nav-item">
                     <!-- 顧客關係管理預設是二元樹 -->
-		            <a class="nav-link" href="{% url 'mcdonalds:binary_tree' %}" tabindex="-1" aria-disabled="true">顧客關係管理</a>
+		            <a class="nav-link" href="{% url 'mcdonalds:survival_rate' %}" tabindex="-1" aria-disabled="true">顧客關係管理</a>
 		         </li>
                 <li class="nav-item">
 		            <a class="nav-link" href="{% url 'mcdonalds:strategies_list' %}"  aria-disabled="true">行銷策略</a>
@@ -52,13 +52,13 @@
 		            <a class="nav-link" href="{% url 'mcdonalds:raw_materials' %}" tabindex="-1" aria-disabled="true">庫存</a>
 		         </li>
 		         <li class="nav-item dropdown">
-		            <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">各門市需求單</a>
+		            <a class="nav-link" href="{% url 'mcdonalds:store_demand' %}" tabindex="-1" aria-disabled="true">各門市需求單</a>
 		         </li>
 		         <li class="nav-item dropdown">
 		            <a class="nav-link" href="{% url 'mcdonalds:raw_materials_order' %}" tabindex="-1" aria-disabled="true">原物料訂單</a>
 		         </li>
 		         <li class="nav-item">
-		            <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">通訊錄</a>
+		            <a class="nav-link" href="{% url 'mcdonalds:suppliers_contact' %}" tabindex="-1" aria-disabled="true">通訊錄</a>
 		         </li>
 		    </ul>
 		</div>

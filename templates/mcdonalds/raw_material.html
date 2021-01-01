@@ -17,13 +17,14 @@
     </div>
     <br>
     <br>
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped" data-toggle="table">
         <thead class="thead-dark">
             <tr>
+                <th data-sortable="true">原物料ID</th>
                 <th>原物料名稱</th>
-                <th>單位成本</th>
-                <th>庫存</th>
-                <th>安全存量</th>
+                <th data-sortable="true">單位成本</th>
+                <th data-sortable="true">庫存</th>
+                <th data-sortable="true">安全存量</th>
                 <th>供應商</th>
                 <th></th>
             </tr>
@@ -31,7 +32,7 @@
         <tbody>
             {% for raw_material in raw_materials %}
                 <tr>
-                    
+                    <td>{{ raw_material.material_id }}</td>
                     <td>{{ raw_material.material_name }}</td>
                     <td>{{ raw_material.amount }}</td>
                     <td>{{ raw_material.on_hand_inventory }}</td>

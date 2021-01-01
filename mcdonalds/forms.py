@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from model_utils import Choices
 
-from .models import RawMaterial, MarketingStrategies, Orders
+from .models import RawMaterial, MarketingStrategies, Orders, StrategyProductRel, Stores
 
 
 class RawMaterialModelForm(forms.ModelForm):
@@ -26,6 +26,9 @@ class RawMaterialModelForm(forms.ModelForm):
         # }
 
 class MarketingStrategyForm(forms.ModelForm):
+
+    # product_json = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control mx-sm-3', 'type': 'hidden', 'name': 'product_list'}))
+
     class Meta:
         model = MarketingStrategies
         fields = ('strategy_name', 'description', 'start_date', 'end_date', 'status')
@@ -35,19 +38,12 @@ class MarketingStrategyForm(forms.ModelForm):
         )
         widgets = {
             # 'strategy_id': forms.NumberInput(attrs= {'class': 'form-control'}),
-            'strategy_name': forms.TextInput(attrs = {'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
-            'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
-            'end_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
-            'status': forms.Select(attrs = {'class': 'form-control'}, choices=STRATEGY_STATUS)
+            'strategy_name': forms.TextInput(attrs = {'class': 'form-control mx-sm-3', 'name': 'strategy_name'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'name': 'description', 'rows': 3}),
+            'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker mx-sm-3', 'name':'start_date'}),
+            'end_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker mx-sm-3', 'name': 'end_date'}),
+            'status': forms.Select(attrs = {'class': 'form-control mx-sm-3', 'name': 'status'}, choices=STRATEGY_STATUS),
 
-        }
-        labels = {
-            'strategy_name': '策略名稱',
-            'description': '策略內容',
-            'start_date': '開始日期',
-            'end_date': '結束日期',
-            'status': '狀態'
         }
 
 
@@ -87,4 +83,32 @@ class OrderForm(forms.ModelForm):
             'order_date':'訂購日期'
         }
 
+class StoresContactForm(forms.ModelForm):
+    class Meta:
+        model = Stores
+        fields = ('store_name', 'store_address', 'store_phone', 'store_region')
+        widgets = {
+            # 'strategy_id': forms.NumberInput(attrs= {'class': 'form-control'}),
+            'store_name': forms.TextInput(attrs = {'class': 'form-control'}),
+            'store_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'store_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'store_region':  forms.TextInput(attrs={'class': 'form-control'})
+        }
+        labels = {
+            'store_name': '分店名稱',
+            'store_address': '地址',
+            'store_phone': '連絡電話',
+            'store_region': '區域',
+        }
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(
+        label="帳號",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    password = forms.CharField(
+        label="密碼",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
 

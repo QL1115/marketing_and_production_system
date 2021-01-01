@@ -41,7 +41,7 @@
                     <td>{{ strategy.status|yesno:'X,O,?' }}</td>
 
                     <td>
-                        <a href="{% url 'mcdonalds:update_strategy' strategy_id=strategy.strategy_id %}" class="btn btn-info">修改</a>
+                        <a href="{% url 'mcdonalds:add_strategy' %}?strategy_id={{ strategy.strategy_id }}" class="btn btn-info">修改</a>
 {#                        <a href="{% url 'mcdonalds:strategies_detail' strategy_id=strategy.strategy_id %}" class="btn btn-danger">刪除</a>#}
                     </td>
                 </tr>
