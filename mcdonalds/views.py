@@ -665,7 +665,6 @@ def marketing_dashboard(request):
     )
     cvr_graph = cvr_fig.to_html()
     returnDict = {'ComparisonWithPrevious_graph': comparisonwithprevious_graph, 'SalesRanking_graph': salesranking_graph, 'StorePerformance_graph': storeperformance_graph, 'cvr_graph': cvr_graph}
-    # returnDict = {'ComparisonWithPrevious_graph': comparisonwithprevious_graph, 'SalesRanking_graph': salesranking_graph, 'StorePerformance_graph': storeperformance_graph, 'cvr_graph': cvr_graph}
     return render(request, 'mcdonalds/marketing_dashboard.html', returnDict)
     
 # 行銷Dashboard視窗
@@ -678,30 +677,44 @@ def marketing_dashboard_windows(request):
     
     # 前期比較
     if graph == 'ComparisonWithPrevious':
-        pre_month_list = ['2019-01-31', '2019-02-28', '2019-03-31', '2019-04-30', '2019-05-31', '2019-06-30', '2019-07-31', '2019-08-31', '2019-09-30', '2019-10-31', '2019-11-30', '2019-12-31']
-        cur_month_list = ['2020-01-31', '2020-02-29', '2020-03-31', '2020-04-30', '2020-05-31', '2020-06-30', '2020-07-31', '2020-08-31', '2020-09-30', '2020-10-31', '2020-11-30', '2020-12-31']
-        monthList = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
+        hamburgerDict = {'1': '大麥克', '2': '雙層牛肉吉事堡', '3': '嫩煎雞腿堡', '4': '麥香雞', '5': '勁辣雞腿堡', '6': '黃金起司豬排堡', '7': '麥香魚', '8': '煙燻雞肉長堡', '9': '薑燒豬肉長堡', '10': 'BLT 安格斯黑牛堡',
+                    '11': 'BLT 辣脆雞腿堡', '12': 'BLT 嫩煎雞腿堡', '13': '蕈菇安格斯黑牛堡', '14': '金銀招財薯來堡 (牛)', '15': '金銀招財薯來堡 (雞)', '16': '金銀招財福堡', '17': '法式芥末香雞堡', '18': '漢堡', '19': '吉事漢堡'}
+        snackDict = {'1': '麥克雞塊', '2': '麥脆雞腿', '3': '麥脆雞翅', '4': '凱薩脆雞沙拉', '5': '義式烤雞沙拉', '6': '快樂兒童餐', '7': '搖搖樂雞腿排', '8': '勁辣香雞翅', '9': '酥嫩雞翅', '10': '蘋果派',
+                     '11': '水果袋', '12': '薯餅', '13': '海苔搖搖粉', '14': '蔥辣搖搖粉', '15': '薯條', '16': '四季沙拉', '17': 'OREO冰炫風', '18': '蛋捲冰淇淋', '19': '大蛋捲冰淇淋'}
+        beverageNsoupDict = {'1': '玉米湯', '2': '熱紅茶', '3': '熱奶茶', '4': '鮮乳', '5': '可口可樂', '6': '可口可樂 zero', '7': '雪碧', '8': '冰紅茶 (檸檬風味)', '9': '冰紅茶 (無糖)', '10': '冰綠茶 (無糖)', '11': '冰奶茶', '12': '柳橙汁'}
         
         category = request.GET['category']
-        title = categoryDict.get(category)
+        selectedItem = request.GET['selectedItem']
+        
+        if category == 'hamburger':
+            selected = hamburgerDict.get(selectedItem)
+        elif category == 'snack':
+            selected = snackDict.get(selectedItem)
+        elif category == 'beverageNsoup':
+            selected = beverageNsoupDict.get(selectedItem)
+        
+        # 前期比較 
+        pre_month_list = ['2019-01-31', '2019-02-28', '2019-03-31', '2019-04-30', '2019-05-31', '2019-06-30', '2019-07-31', '2019-08-31', '2019-09-30', '2019-10-31', '2019-11-30', '2019-12-31']
+        cur_month_list = ['2020-01-31', '2020-02-29', '2020-03-31', '2020-04-30', '2020-05-31', '2020-06-30', '2020-07-31', '2020-08-31', '2020-09-30', '2020-10-31', '2020-11-30', '2020-12-31']
+        month_list = pre_month_list + cur_month_list
         
         # 2019各月銷售量
-        pre_sales_num_list = [pre_sales_data.select_related('product').filter(date__contains=mon, product__category__exact=categoryDict.get(category)).aggregate(Sum('numbers'))['numbers__sum'] for mon in pre_month_list]
+        pre_sales_num_list = [pre_sales_data.select_related('product').filter(date__contains=mon, product__product_name__contains=selected).aggregate(Sum('numbers'))['numbers__sum'] for mon in pre_month_list]
         # 2020各月銷售量
-        cur_sales_num_list = [cur_sales_data.select_related('product').filter(date__contains=mon, product__category__exact=categoryDict.get(category)).aggregate(Sum('numbers'))['numbers__sum'] for mon in cur_month_list]
+        cur_sales_num_list = [cur_sales_data.select_related('product').filter(date__contains=mon, product__product_name__contains=selected).aggregate(Sum('numbers'))['numbers__sum'] for mon in cur_month_list]
         
         # plotly
         # Create figure
         comparison_window_fig = go.Figure()
 
         comparison_window_fig.add_trace(
-            go.Scatter(x=monthList, y=pre_sales_num_list, name="2019")) # name -> legend title
+            go.Scatter(x=month_list, y=pre_sales_num_list, name="2019")) # name -> legend title
         comparison_window_fig.add_trace(
-            go.Scatter(x=monthList, y=cur_sales_num_list, name="2020"))
+            go.Scatter(x=month_list, y=cur_sales_num_list, name="2020"))
 
         # Set title
         comparison_window_fig.update_layout(
-            title_text=title
+            title_text=selected
         )
 
         # comparison_fig.update_traces(

@@ -15,6 +15,51 @@
           float: left;
           text-align: center;
         }
+        box {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
+
+        .box select {
+          background-color: #15a2b9;
+          color: white;
+          padding: 5px;
+          width: 170px;
+          height: 40px;
+          border: none;
+          font-size: 15px;
+          box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+          -webkit-appearance: button;
+          appearance: button;
+          outline: none;
+        }
+
+        .box::before {
+          content: "\f13a";
+          font-family: FontAwesome;
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 20%;
+          height: 100%;
+          text-align: center;
+          font-size: 28px;
+          line-height: 45px;
+          color: rgba(255, 255, 255, 0.5);
+          background-color: rgba(255, 255, 255, 0.1);
+          pointer-events: none;
+        }
+
+        .box:hover::before {
+          color: rgba(255, 255, 255, 0.6);
+          background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .box select option {
+          padding: 30px;
+        }
     </style>
 {% endblock %}
 {% block extra_scripts %}
@@ -26,15 +71,11 @@
                     closeClass: 'icon-remove',
                     closeText: '!'
                 });
-                $("#ComparisonHamburger").click();
-            });
-
-            $("#ComparisonHamburger").click(function(){
+                $("#ComparisonHamburger_select").val("1");
                 $.ajax({
-                    type: "GET",
                     url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
-                    data: { "graph": 'ComparisonWithPrevious', "category": 'hamburger' },
-                    <!-- dataType: "json", -->
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'hamburger', "selectedItem": 1},
+                    type:"GET",
                     success: function (response) {
                         $('#window1 .graphArea').html(response.WindowGraph);
                     }, error: function (error) {
@@ -43,12 +84,14 @@
                     }
                 });
             });
-            $("#ComparisonSnack").click(function(){
+            $("#ComparisonHamburger_select").change(function(){
+                $("#ComparisonSnack_select").val("");
+                $("#ComparisonBeverageNSoup_select").val("");
+                var select_op=$('#ComparisonHamburger_select').val();
                 $.ajax({
-                    type: "GET",
                     url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
-                    data: { "graph": 'ComparisonWithPrevious', "category": 'snack' },
-                    <!-- dataType: "json", -->
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'hamburger', "selectedItem": select_op},
+                    type:"GET",
                     success: function (response) {
                         $('#window1 .graphArea').html(response.WindowGraph);
                     }, error: function (error) {
@@ -57,12 +100,30 @@
                     }
                 });
             });
-            $("#ComparisonBeverageNSoup").click(function(){
+            $("#ComparisonSnack_select").change(function(){
+                $("#ComparisonHamburger_select").val("");
+                $("#ComparisonBeverageNSoup_select").val("");
+                var select_op=$('#ComparisonSnack_select').val();
                 $.ajax({
-                    type: "GET",
                     url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
-                    data: { "graph": 'ComparisonWithPrevious', "category": 'beverageNsoup' },
-                    <!-- dataType: "json", -->
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'snack', "selectedItem": select_op},
+                    type:"GET",
+                    success: function (response) {
+                        $('#window1 .graphArea').html(response.WindowGraph);
+                    }, error: function (error) {
+                        alert('Error to show graph!');
+                        console.log(error);
+                    }
+                });
+            });
+            $("#ComparisonBeverageNSoup_select").change(function(){
+                $("#ComparisonHamburger_select").val("");
+                $("#ComparisonSnack_select").val("");
+                var select_op=$('#ComparisonBeverageNSoup_select').val();
+                $.ajax({
+                    url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
+                    data: { "graph": 'ComparisonWithPrevious', "category": 'beverageNsoup', "selectedItem": select_op},
+                    type:"GET",
                     success: function (response) {
                         $('#window1 .graphArea').html(response.WindowGraph);
                     }, error: function (error) {
@@ -252,10 +313,68 @@
     </div>
     
     <div id="window1" class="modal">
-        <button class="btn btn-info" id="ComparisonHamburger">漢堡</button>
-        <button class="btn btn-info" id="ComparisonSnack">點心</button>
-        <button class="btn btn-info" id="ComparisonBeverageNSoup">飲料/湯品</button>
-        <div class="graphArea">
+        <div class="box">
+            <select  id="ComparisonHamburger_select">
+                <option value="" selected="selected">漢堡</option>
+                <option value="1">大麥克</option>
+                <option value="2">雙層牛肉吉事堡</option>
+                <option value="3">嫩煎雞腿堡</option>
+                <option value="4">麥香雞</option>
+                <option value="5">勁辣雞腿堡</option>
+                <option value="6">黃金起司豬排堡</option>
+                <option value="7">麥香魚</option>
+                <option value="8">煙燻雞肉長堡</option>
+                <option value="9">薑燒豬肉長堡</option>
+                <option value="10">BLT 安格斯黑牛堡</option>
+                <option value="11">BLT 辣脆雞腿堡</option>
+                <option value="12">BLT 嫩煎雞腿堡</option>
+                <option value="13">蕈菇安格斯黑牛堡</option>
+                <option value="14">金銀招財薯來堡 (牛)</option>
+                <option value="15">金銀招財薯來堡 (雞)</option>
+                <option value="16">金銀招財福堡</option>
+                <option value="17">法式芥末香雞堡</option>
+                <option value="18">漢堡</option>
+                <option value="19">吉事漢堡</option>
+            </select>
+            <select  id="ComparisonSnack_select">
+                <option value="" selected="selected">點心</option>
+                <option value="1">麥克雞塊</option>
+                <option value="2">麥脆雞腿</option>
+                <option value="3">麥脆雞翅</option>
+                <option value="4">凱薩脆雞沙拉</option>
+                <option value="5">義式烤雞沙拉</option>
+                <option value="6">快樂兒童餐</option>
+                <option value="7">搖搖樂雞腿排</option>
+                <option value="8">勁辣香雞翅</option>
+                <option value="9">酥嫩雞翅</option>
+                <option value="10">蘋果派</option>
+                <option value="11">水果袋</option>
+                <option value="12">薯餅</option>
+                <option value="13">海苔搖搖粉</option>
+                <option value="14">蔥辣搖搖粉</option>
+                <option value="15">薯條</option>
+                <option value="16">四季沙拉</option>
+                <option value="17">OREO冰炫風</option>
+                <option value="18">蛋捲冰淇淋</option>
+                <option value="19">大蛋捲冰淇淋</option>
+            </select>
+            <select  id="ComparisonBeverageNSoup_select">
+                <option value="" selected="selected">飲料/湯品</option>
+                <option value="1">玉米湯</option>
+                <option value="2">熱紅茶</option>
+                <option value="3">熱奶茶</option>
+                <option value="4">鮮乳</option>
+                <option value="5">可口可樂</option>
+                <option value="6">可口可樂 zero</option>
+                <option value="7">雪碧</option>
+                <option value="8">冰紅茶 (檸檬風味)</option>
+                <option value="9">冰紅茶 (無糖)</option>
+                <option value="10">冰綠茶 (無糖)</option>
+                <option value="11">冰奶茶</option>
+                <option value="12">柳橙汁</option>
+            </select>
+            <div class="graphArea">
+            </div>
         </div>
       <!-- <a href="#" rel="modal:close">Close</a> -->
     </div>
