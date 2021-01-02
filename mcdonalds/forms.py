@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from model_utils import Choices
 
-from .models import RawMaterial, MarketingStrategies, Orders, StrategyProductRel, Stores
+from .models import RawMaterial, MarketingStrategies, Orders, Stores
 
 
 class RawMaterialModelForm(forms.ModelForm):

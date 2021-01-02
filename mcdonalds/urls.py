@@ -28,11 +28,13 @@ urlpatterns = [
     path('edit/<int:material_id>/', views.get_edit_page, name='get_edit_page'),
     path('update/<int:material_id>/', views.save_update_raw_materials, name='save_update_raw_materials'),
     path('send_store_demend', views.receive_store_demand, name='receive_store_demand'),
-    path('go_to_store_send_demand_page',views.go_to_store_send_demand_page, name='go_to_store_send_demand_page'),
+    #path('go_to_store_send_demand_page',views.go_to_store_send_demand_page, name='go_to_store_send_demand_page'),
     path('orders/add/', views.add_order, name='add_order'),
     path('store_demand/', views.store_demand, name='store_demand'),
     path('raw_material_arrived_store/<int:store_demand_id>', views.raw_material_arrived_store, name='raw_material_arrived_store'),
     path('raw_material_arrived_center/<int:order_id>', views.raw_material_arrived_center, name='raw_material_arrived_center'),
-    path('login/', views.sign_in, name='Login')
+    path('login/', views.sign_in, name='Login'),
+    path('marketing_dashboard/', views.marketing_dashboard, name='marketing_dashboard'),
+    path('marketing_dashboard_windows', views.marketing_dashboard_windows, name='marketing_dashboard_windows'),
 ]
 app_name='mcdonalds'
