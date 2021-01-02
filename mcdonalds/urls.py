@@ -29,6 +29,7 @@ urlpatterns = [
     #path('go_to_store_send_demand_page',views.go_to_store_send_demand_page, name='go_to_store_send_demand_page'),
     path('orders/add/', views.add_order, name='add_order'),
     path('store_demand/', views.store_demand, name='store_demand'),
+    path('store_demand_detail/<int:store_demand_id>', views.store_demand_detail, name='store_demand_detail'),
     path('raw_material_arrived_store/<int:store_demand_id>', views.raw_material_arrived_store, name='raw_material_arrived_store'),
     path('raw_material_arrived_center/<int:order_id>', views.raw_material_arrived_center, name='raw_material_arrived_center'),
     path('login/', views.sign_in, name='Login'),

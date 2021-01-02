@@ -416,7 +416,7 @@ def add_order(request):
 
 def store_demand(request):
     cursor = connection.cursor()
-    cursor.execute("SELECT store_name, created_date, status, prod_numbers, product_name FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id INNER JOIN Products on Products.product_id=store_demand_details.product_id")
+    cursor.execute("SELECT * FROM store_demand INNER JOIN stores WHERE store_demand.store_id = stores.store_id")
     store_demand = dictfetchall(cursor)
     for i in store_demand:
         if i['status']==0:
@@ -425,6 +425,15 @@ def store_demand(request):
         else:
             i['status']='已完成'
     return render(request, 'mcdonalds/store_demand.html', {'store_demand': store_demand})
+
+def store_demand_detail(request, store_demand_id):
+    store_demand = StoreDemandDetails.objects.select_related('product').prefetch_related('store_demand').filter(store_demand_id=store_demand_id)
+    store = StoreDemand.objects.filter(store_demand_id = store_demand_id).prefetch_related('stores')
+    context = {
+        'store_demand': store_demand,
+        'store': store
+    }
+    return render(request, 'mcdonalds/store_demand_detail.html', context)
 
 #待完成，是否發送通知?
 #有沒有更好的辦法呼叫原頁面?
