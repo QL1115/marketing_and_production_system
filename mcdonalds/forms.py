@@ -26,6 +26,9 @@ class RawMaterialModelForm(forms.ModelForm):
         # }
 
 class MarketingStrategyForm(forms.ModelForm):
+
+    # product_json = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control mx-sm-3', 'type': 'hidden', 'name': 'product_list'}))
+
     class Meta:
         model = MarketingStrategies
         fields = ('strategy_name', 'description', 'start_date', 'end_date', 'status')
@@ -35,19 +38,12 @@ class MarketingStrategyForm(forms.ModelForm):
         )
         widgets = {
             # 'strategy_id': forms.NumberInput(attrs= {'class': 'form-control'}),
-            'strategy_name': forms.TextInput(attrs = {'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
-            'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
-            'end_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker'}),
-            'status': forms.Select(attrs = {'class': 'form-control'}, choices=STRATEGY_STATUS)
+            'strategy_name': forms.TextInput(attrs = {'class': 'form-control mx-sm-3', 'name': 'strategy_name'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'name': 'description', 'rows': 3}),
+            'start_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker mx-sm-3', 'name':'start_date'}),
+            'end_date': forms.DateInput(format=('%Y-%m-%d'), attrs={'class': 'form-control datepicker mx-sm-3', 'name': 'end_date'}),
+            'status': forms.Select(attrs = {'class': 'form-control mx-sm-3', 'name': 'status'}, choices=STRATEGY_STATUS),
 
-        }
-        labels = {
-            'strategy_name': '策略名稱',
-            'description': '策略內容',
-            'start_date': '開始日期',
-            'end_date': '結束日期',
-            'status': '狀態'
         }
 
 
