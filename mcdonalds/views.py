@@ -2,10 +2,10 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pandas._libs import json
-from plotly.graph_objs import Scatter
-from plotly.offline import plot
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # 分頁功能
 from datetime import date
+
+from plotly.subplots import make_subplots
+
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
 from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm, StoresContactForm, LoginForm
@@ -131,6 +131,7 @@ def raw_materials_order(request):
     cursor2 = connection.cursor()
     cursor2.execute("SELECT material_name, order_amount, order_date, status FROM orders INNER JOIN raw_material ON orders.material_id=raw_material.material_id;")
     raw_materials_order = dictfetchall(cursor2)
+    print('raw_materials_order >>> ', raw_materials_order)
 
     for i in raw_materials_order:
         if i['status']==0:
@@ -185,8 +186,15 @@ def strategies_list(request):
     }
     return render(request, 'mcdonalds/marketing_strategies_list.html', context)
 
+# def find_strategy_product_rel_by_strid(reqeust, strategy_id):
+#     '''由行銷策略 id 尋找對應的「行銷策略與商品」的紀錄'''
+#     strtg_prod_rel_list = StrategyProductRel.objects.filter(strategy_id=strategy_id)
+#     strtg_prod_rel_list = serializers.serialize('json', strtg_prod_rel_list)
+#     print('strtg_prod_rel_list >>> ', strtg_prod_rel_list)
+#     return JsonResponse(strtg_prod_rel_list)
+
 @csrf_exempt
-def add_strategy(request):
+def store_strategy(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         print('data', data)
@@ -194,88 +202,60 @@ def add_strategy(request):
         start_date = data['start_date']
         end_date = data['end_date']
         status = data['status']
+        description = data['description']
         product_list = data['product_list']
 
-        form = MarketingStrategyForm()
+        # TODO check POST data
+        if not strategy_name or not description:
+            return HttpResponse(False)
+
         strategy = None
         if 'strategy_id' in data:
             strategy_id = data['strategy_id'] # 可能沒有，沒有的話代表是新增行銷策略，若有的話，代表是修改現有的行銷策略
-            strategy = MarketingStrategies.objects.filter(strategy_id=strategy_id).first()
-            if strategy:
-                form = MarketingStrategyForm(instance=strategy)
+            strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
+        if strategy is None:
+            strategy = MarketingStrategies.objects.create(start_date=start_date, end_date=end_date, strategy_name=strategy_name, status=status, description=description)
+        try:
+            for item in product_list:
+                product = Products.objects.get(product_id=item['prod_id'])
 
-        #
-        form.strategy_name = strategy_name
-        form.start_date = start_date
-        form.end_date = end_date
-        form.status = status
-        if form.is_valid():
-            try:
-                strategy = form.save()
-                for item in product_list:
-
-                    str_prod = StrategyProductRel.objects.filter(product=Products.objects.get(item['prod_id']),
-                                                      strategy=strategy.strategy_id).first()
+                if 'spr_id' in item:
+                    str_prod = StrategyProductRel.objects.filter(spr_id=item['spr_id']).first()
                     if str_prod: # 已經有對應的 「商品」- 「行銷策略」了
+                        print('有對應的 spr')
                         str_prod.numbers = item['prod_num']
                         str_prod.save()
-                    else: # 沒有對應的 「商品」-「行銷策略」
-                        StrategyProductRel.objects.create(product=Products.objects.get(item['prod_id']),
-                                                                strategy=strategy.strategy_id,
-                                                                numbers=item['prod_num']).save()
-                return HttpResponse(True)
-                # return render(request, 'mcdonalds/marketing_strategies_detail.html', {'strategy': strategy, 'isUpdated': 'SUCCESS'})
-            except:
-                return HttpResponse(False)
-                # return render(request, 'mcdonalds/marketing_strategies_detail.html',
-                #               {'strategy': strategy, 'isUpdated': 'ERROR'})
-        # return render(request, 'mcdonalds/marketing_strategies_detail.html', {'strategy': strategy, 'isUpdated': 'ERROR'})
-        return HttpResponse(False)
-    else:
-        if request.GET.get('strategy_id'):
+                    else:
+                        print('沒有對應的 spr')
+                        StrategyProductRel.objects.create(product=product,
+                                                          strategy=strategy,
+                                                          numbers=item['prod_num'])
+                else: # 沒有對應的 「商品」-「行銷策略」
+                    print('沒有 item[\'spr_id\']')
+                    StrategyProductRel.objects.create(product=product,
+                                                            strategy=strategy,
+                                                            numbers=item['prod_num'])
+            return HttpResponse(True)
+        except Exception as e:
+            # return JsonResponse(serializers.serialize('json', {'isStored': 'ERROR'}))
+            print('error >>> ', e)
+            return HttpResponse(False)
+    elif request.method == 'GET':
+        strategy_id = request.GET.get('strategy_id')
+
+        if strategy_id:
             try:
-                strategy = MarketingStrategies.objects.get(strategy_id=request.GET.get('strategy_id'))
-                product_list = StrategyProductRel.objects.filter(strategy=strategy)
+                strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
+                strt_prod_list = StrategyProductRel.objects.filter(strategy_id=strategy_id)
+                product_list = Products.objects.filter(pk__in=strt_prod_list)
+                # product_list = StrategyProductRel.objects.select_related('product_id').all() #.filter(strategy=strategy)
+                data = zip(strt_prod_list, product_list)
+                return render(request, 'mcdonalds/marketing_strategies_detail.html', {'strategy': strategy, 'data': data})
             except:
                 print('error')
-            return render(request, 'mcdonalds/marketing_strategies_detail.html', {'strategy': strategy, 'product_list': product_list})
+                return render(request, 'mcdonalds/marketing_strategies_detail.html', {'strategy': strategy})
         else:
             return render(request, 'mcdonalds/marketing_strategies_detail.html')
-    # '''新增行銷策略'''
-    # if request.method == 'POST':
-    #     form = MarketingStrategyForm(request.POST)
-    #     if form.is_valid():
-    #         new_strategy = form.save()
-    #         print('new_strategy >>> ', new_strategy)
-    #         # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
-    #         return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form, 'isAdded':True})
-    # else:
-    #     form = MarketingStrategyForm()
-    #     return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form})
-
-def update_strategy(request, strategy_id):
-    '''查看及修改行銷策略詳細資訊'''
-    if request.method == 'POST':
-        form = MarketingStrategyForm(request.POST)
-        if form.is_valid():
-            strategy = MarketingStrategies.objects.get(pk=strategy_id)
-            form = MarketingStrategyForm(request.POST, instance=strategy)
-            updated_strategy = form.save()
-            print('updated_strategy >>> ', updated_strategy)
-            # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
-            return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form, 'isAdded':True})
-    else:
-        try:
-            strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
-            form = MarketingStrategyForm(instance=strategy)
-            context = {
-                'strategy_id': strategy.strategy_id,
-                'form': form
-            }
-        except MarketingStrategies.DoesNotExist:
-            # context['form'] = form
-            return redirect('/mcdonalds/strategy/add/')
-        return render(request, 'mcdonalds/marketing_strategies_detail.html', context)
 
 
 
@@ -285,49 +265,62 @@ def delete_strategy(request, strategy_id):
     print('deleted_strategy >>> ', deleted_strategy)
     return redirect('/mcdonalds/strategies_list')
 
-def binary_tree(request):
-    '''二元樹'''
-    # TODO 二元樹
-    context = {
-        'tab_selected': 'binary_tree'
-    }
-    return render(request, 'mcdonalds/customer_relationship.html', context)
+def delete_spr(request, spr_id):
+    print('spr_id >>> ', spr_id)
+    deleted_spr = StrategyProductRel.objects.get(spr_id=spr_id).delete()
+    print('deleted spr >>> ', deleted_spr)
+    if deleted_spr:
+        return HttpResponse('SUCCESS')
+    else:
+        return HttpResponse('ERROR')
+
+# def binary_tree(request):
+#     '''二元樹'''
+#     # TODO 二元樹
+#     context = {
+#         'tab_selected': 'binary_tree'
+#     }
+#     return render(request, 'mcdonalds/customer_relationship.html', context)
 
 def survival_rate(request):
     '''存活率 & 留存率'''
     # TODO 留存率
     all_marketing_data = MarketingData.objects.all()
     month_list = [item.date.strftime('%Y-%m-%d') for item in all_marketing_data]
+    # 存活率
     survival_rate_list = [item.survival_rate for item in all_marketing_data]
-    print('month_list >>> ', month_list)
-    print('survival_rate_list >>> ', survival_rate_list)
+    temp_sr_list = [100] + survival_rate_list # 為了計算留存率，故往後移動一個
+    # 留存率
+    rr_list = [ round(x/y*100, 2) for x, y in zip(survival_rate_list,temp_sr_list)]
+    # print('temp_sr_list', temp_sr_list)
+    # print('sr list', survival_rate_list)
+    # print('rr list', rr_list)
+    # print('size', len(survival_rate_list), len(rr_list))
 
-    # Load data
-    # df = pd.read_csv(
-    #     "https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
-    # df.columns = [col.replace("AAPL.", "") for col in df.columns]
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     # Create figure
-    fig = go.Figure()
+    # fig = go.Figure()
 
     fig.add_trace(
-        go.Scatter(x=month_list, y=survival_rate_list))
+        go.Scatter(x=month_list, y=survival_rate_list, name='存活率'), secondary_y=False)
+
+    fig.add_trace(
+        go.Scatter(x=month_list, y=rr_list, name="留存率"),
+        secondary_y=True,
+    )
 
     # Set title
     fig.update_layout(
-        title_text="存活率"
+        title_text="存活率 & 留存率"
     )
 
     # Add range slider
     fig.update_layout(
         xaxis=dict(
-            title='時間',
+            title='<b>時間</b>',
             rangeselector=dict(
                 buttons=list([
-                    dict(count=1,
-                         label="1m",
-                         step="month",
-                         stepmode="backward"),
                     dict(count=3,
                          label="3m",
                          step="month",
@@ -348,8 +341,11 @@ def survival_rate(request):
             ),
             type="date"
         ),
-        yaxis=dict(title='存活率 (%)')
+        # yaxis=dict(title='存活率 (%)')
     )
+    # Set y-axes titles
+    fig.update_yaxes(title_text="<b>存活率</b> (%)", secondary_y=False)
+    fig.update_yaxes(title_text="<b>留存率</b> (%)", secondary_y=True)
     graph = fig.to_html()
 
     context = {
@@ -371,6 +367,9 @@ def customer(request, rfm_id):
 
 def rfm(request):
     rfm_qry_set = RFM.objects.all().order_by('rfm_value')
+    # rfm_qry_set = serializers.serialize('json', RFM.objects.all().order_by('rfm_value'),
+    #                              fields=('rfm_id', 'actual_resp_rate', 'rfm_value'))
+
     # # 分頁功能
     # paginator = Paginator(rfm_qry_set, 10)
     # page = request.GET.get('page', 1)
@@ -380,9 +379,17 @@ def rfm(request):
     # else:
     #     rfm_list = paginator.page(1).object_list
 
+    # TODO for dataTable
+    # rfm_list = []
+    # for rfm in rfm_qry_set:
+    #     rfm_list.append({'rfm_id': rfm.rfm_id, 'actual_resp_rate': rfm.actual_resp_rate, 'rfm_value': rfm.rfm_value})
+    # # rfm_list = serializers.serialize('json', rfm_list)
+    # print('rfm_qry_set >>> ', rfm_list)
+
     context = {
         'tab_selected': 'rfm',
-        'rfm_list': rfm_qry_set
+        # "rfm_list": rfm_list
+        "rfm_list": rfm_qry_set
     }
     return render(request, 'mcdonalds/customer_relationship.html', context)
 
