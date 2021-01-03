@@ -9,18 +9,21 @@
                 <h3>需求單細項</h3>
                 <br>
             </div>
-            {% for context in context %}
+            {% for store in store %}
             <div class="col-md-12">
-                <h5>門市名稱：{{ store_name }}</h5>
+                <h5>門市名稱：{{ store.store_name }}</h5>
+            </div>
+            {% endfor %}
+            {% for demand_detail in demand_detail %}
+            <div class="col-md-12">
+                <h5>建立日期：{{ demand_detail.created_date }}</h5>
             </div>
             <div class="col-md-12">
-                <h5>建立日期：{{ created_date }}</h5>
-            </div>
-            <div class="col-md-12">
-                <h5>訂單狀態：{{ status }}</h5>
+                <h5>訂單狀態：{{ demand_detail.status }}</h5>
                 <br>
             </div>
             {% endfor %}
+
 
                 <div class="table-responsive">
                     <table id="bootstrapdatatable" class="table table-striped table-bordered" width="60%">

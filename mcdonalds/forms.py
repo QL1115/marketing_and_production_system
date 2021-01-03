@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from model_utils import Choices
 
-from .models import RawMaterial, MarketingStrategies, Orders, Stores
+from .models import RawMaterial, MarketingStrategies, Orders, Stores, Suppliers
 
 
 class RawMaterialModelForm(forms.ModelForm):
@@ -103,6 +103,22 @@ class StoresContactForm(forms.ModelForm):
             'store_address': '地址',
             'store_phone': '連絡電話',
             'store_region': '區域',
+        }
+
+class SuppliersContactForm(forms.ModelForm):
+    class Meta:
+        model = Suppliers
+        fields = ('supplier_name', 'supplier_address', 'supplier_phone')
+        widgets = {
+            # 'strategy_id': forms.NumberInput(attrs= {'class': 'form-control'}),
+            'supplier_name': forms.TextInput(attrs = {'class': 'form-control'}),
+            'supplier_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'supplier_phone': forms.TextInput(attrs={'class': 'form-control'})
+        }
+        labels = {
+            'supplier_name': '供應商名稱',
+            'supplier_address': '地址',
+            'supplier_phone': '連絡電話',
         }
 
 
