@@ -3,7 +3,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pandas._libs import json
-from datetime import date
+from datetime import date, timedelta
 
 from plotly.subplots import make_subplots
 
@@ -17,6 +17,9 @@ from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 def index(request):
+    for i in range(1,6):
+        calculate_EOQ(i)
+        calculate_ROP(i)
     return render(request, 'mcdonalds/index.html', {})
 
 def stores_contact(request):
@@ -1000,18 +1003,24 @@ def marketing_dashboard_windows(request):
         window_graph = cvr_fig.to_html()
     return JsonResponse({'WindowGraph': window_graph})
 
-def calculate_EOQ(request, material_id):
+def calculate_EOQ(material_id):
     #經濟訂貨量=（2×年需求量×訂貨成本/(單價×儲存成本百分數)）^0.5
+    #假設儲存成本百分數=30%，訂貨成本為購買成本為(單價*2000)元
+    year = timedelta(days=365)
+    four_years_ago = str(date.today()- 3 * year)
+    two_years_ago = str(date.today())
+
     cursor = connection.cursor()
-    cursor.execute('SELECT SUM(quantity) FROM raw_material BETWEEN YEAR(CURDATE())-3 AND YEAR(CURDATE())-1 WHERE material_id = %s'%material_id)
+    cursor.execute('SELECT SUM(order_amount) FROM orders WHERE order_date BETWEEN "%s" AND "%s" AND material_id = %s'%(four_years_ago, two_years_ago, material_id))
     year_demand = dictfetchall(cursor)
     amount = RawMaterial.objects.values_list('amount').get(material_id=material_id)
 
-    EOQ = math.pow(((2 * year_demand[0]['year_demand']/3) * (amount[0] * 2)) / (amount[0] * 0.3), 0.5)
+    EOQ = math.pow(((2 * year_demand[0]['SUM(order_amount)']/3) * (amount[0]*2000)) / (amount[0] * 0.3), 0.5)
     RawMaterial.objects.filter(material_id=material_id).update(quantity=EOQ)
+    print("material id:",material_id, "EOQ:", EOQ)
     return EOQ
 
-def calculate_ROP(request, material_id):
+def calculate_ROP(material_id):
     #再訂貨點=平均日需求×訂貨天數+安全儲備量
     consumption_rate = RawMaterial.objects.values_list('consumption_rate').get(material_id=material_id)
     lead_time = RawMaterial.objects.values_list('lead_time').get(material_id=material_id)
@@ -1019,4 +1028,5 @@ def calculate_ROP(request, material_id):
 
     ROP = consumption_rate[0] * lead_time[0] + security_numbers[0]
     RawMaterial.objects.filter(material_id=material_id).update(reorder_point=ROP)
+    print("ROP:", ROP)
     return ROP
