@@ -17,8 +17,8 @@ from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 def index(request):
+    calculate_EOQ(1)
     for i in range(1,6):
-        calculate_EOQ(i)
         calculate_ROP(i)
     return render(request, 'mcdonalds/index.html', {})
 
