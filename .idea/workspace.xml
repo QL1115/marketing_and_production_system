@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="cb85c1da-0c4b-413a-890c-66b4ae99034b" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mcdonalds/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/mcdonalds/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -100,6 +99,7 @@
       <workItem from="1609228193704" duration="1202000" />
       <workItem from="1609391779555" duration="41535000" />
       <workItem from="1609751975914" duration="10226000" />
+      <workItem from="1609768205778" duration="3519000" />
     </task>
     <servers />
   </component>

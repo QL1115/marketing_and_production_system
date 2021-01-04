@@ -1003,7 +1003,7 @@ def marketing_dashboard_windows(request):
         window_graph = cvr_fig.to_html()
     return JsonResponse({'WindowGraph': window_graph})
 
-def calculate_EOQ(material_id):
+def calculate_EOQ(product_id):
     #經濟訂貨量=（2×年需求量×訂貨成本/(單價×儲存成本百分數)）^0.5
     #假設儲存成本百分數=30%，訂貨成本為購買成本為(單價*2000)元
     year = timedelta(days=365)
@@ -1011,13 +1011,22 @@ def calculate_EOQ(material_id):
     two_years_ago = str(date.today())
 
     cursor = connection.cursor()
-    cursor.execute('SELECT SUM(order_amount) FROM orders WHERE order_date BETWEEN "%s" AND "%s" AND material_id = %s'%(four_years_ago, two_years_ago, material_id))
-    year_demand = dictfetchall(cursor)
-    amount = RawMaterial.objects.values_list('amount').get(material_id=material_id)
+    cursor.execute('SELECT SUM(prod_numbers) FROM store_demand_details INNER JOIN store_demand ON store_demand_details.store_demand_id = store_demand.store_demand_id WHERE created_date BETWEEN "%s" AND "%s" AND product_id = %s'%(four_years_ago, two_years_ago, product_id))
+    year_product_demand = dictfetchall(cursor)
+    list_of_number_and_material_id = turn_produtcts_to_raw_materials(product_id)
 
-    EOQ = math.pow(((2 * year_demand[0]['SUM(order_amount)']/3) * (amount[0]*2000)) / (amount[0] * 0.3), 0.5)
-    RawMaterial.objects.filter(material_id=material_id).update(quantity=EOQ)
-    print("material id:",material_id, "EOQ:", EOQ)
+    for item in range(len(list_of_number_and_material_id)):
+        print('material_id',list_of_number_and_material_id[item][0])
+        print('quantity',list_of_number_and_material_id[item][1])
+        material_id=list_of_number_and_material_id[item][0]
+        quantity=list_of_number_and_material_id[item][1]
+
+        amount = RawMaterial.objects.values_list('amount').get(material_id=material_id)# 一個原料多少錢
+        year_material_demand = quantity * year_product_demand[0]['SUM(prod_numbers)']
+        EOQ = math.pow(((2 * year_material_demand/3) * (amount[0]*2000)) / (amount[0] * 0.3), 0.5)
+        RawMaterial.objects.filter(material_id=material_id).update(quantity=EOQ)
+        print("material id:",material_id, "EOQ:", EOQ)
+
     return EOQ
 
 def calculate_ROP(material_id):
