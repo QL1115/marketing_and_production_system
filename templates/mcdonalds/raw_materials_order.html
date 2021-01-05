@@ -21,7 +21,8 @@
 
     <div class="table-responsive">
         <table id="bootstrapdatatable" class="table table-striped table-bordered" width="60%">
-            <thead>
+            <thead class="thead-dark">
+                <th>訂單ID</th>
                 <th>原物料名稱</th>
                 <th>訂購量</th>
                 <th>下訂日期</th>
@@ -31,6 +32,7 @@
 
             {% for raw_material_order in raw_materials_order %}  
                 <tr>
+                    <td>{{ raw_material_order.order_id }}</td> 
                     <td>{{ raw_material_order.material_name }}</td> 
                     <td>{{ raw_material_order.order_amount }}</td>
                     <td>{{ raw_material_order.order_date }}</td>

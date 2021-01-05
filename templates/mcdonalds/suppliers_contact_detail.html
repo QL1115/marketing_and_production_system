@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %} 分店詳細資訊 {% endblock title %}
+{% block title %} 供應商詳細資訊 {% endblock title %}
 
 {% block extra_css %}
     <style type="text/css">
@@ -15,12 +15,13 @@
         <div id="popup" class="col-md-10 offset-1 alert alert-success alert-dismissible fade show col-md-8">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <strong>成功!</strong>
+        </div>
     {% endif %}
 
-    <h1 class="col-md-12">分店詳細資訊</h1>
+    <h1 class="col-md-12">供應商詳細資訊</h1>
     <div class="col-md-12">
-        {% if form and store_id %}
-            <form action="{% url 'mcdonalds:update_stores_contact' store_id=store_id %}" method="POST">
+        {% if form and supplier_id %}
+            <form action="{% url 'mcdonalds:update_suppliers_contact' supplier_id=supplier_id %}" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
                     <div class="form-group col-md-6">
@@ -28,12 +29,11 @@
                         {{ form }}
 
                         <input class="btn btn-success" type="submit" value="儲存" />
-                        <a class="btn btn-primary btn-light" href="{% url 'mcdonalds:delete_stores_contact' store_id=store_id %}" role="button">刪除</a>
                     </div>
                 </div>
             </form>
         {% else %}
-            <form action="{% url 'mcdonalds:add_stores_contact'%}" method="POST">
+            <form action="{% url 'mcdonalds:add_suppliers_contact'%}" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
                     <div class="form-group col-md-6">

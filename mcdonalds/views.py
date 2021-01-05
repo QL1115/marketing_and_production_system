@@ -1,24 +1,24 @@
+import math
 from django.shortcuts import render,redirect
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pandas._libs import json
-from datetime import date, datetime
-
+from datetime import date, timedelta
 from plotly.subplots import make_subplots
 
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
-from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm, StoresContactForm, LoginForm
+from .forms import RawMaterialModelForm, MarketingStrategyForm, OrderForm, StoresContactForm, LoginForm, SuppliersContactForm
 import plotly.graph_objects as go
 from django.core import serializers
 from django.db.models import Sum
-
-from django.contrib.auth import authenticate, login, logout
-
 from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 def index(request):
+    calculate_EOQ(1)
+    for i in range(1,6):
+        calculate_ROP(i)
     return render(request, 'mcdonalds/index.html', {})
 
 def stores_contact(request):
@@ -29,7 +29,7 @@ def stores_contact(request):
     return render(request,'mcdonalds/stores_contact.html', context)
 
 def add_stores_contact(request):
-    '''新增行銷策略'''
+    '''新增分店聯絡資訊'''
     if request.method == 'POST':
         form = StoresContactForm(request.POST)
         if form.is_valid():
@@ -42,7 +42,7 @@ def add_stores_contact(request):
         return render(request, 'mcdonalds/stores_contact_detail.html', {'form': form})
 
 def update_stores_contact(request, store_id):
-    '''查看及修改行銷策略詳細資訊'''
+    '''查看及修改分店聯絡資訊'''
     if request.method == 'POST':
         form = StoresContactForm(request.POST)
         if form.is_valid():
@@ -66,59 +66,62 @@ def update_stores_contact(request, store_id):
         return render(request, 'mcdonalds/stores_contact_detail.html', context)
 
 def delete_stores_contact(request, store_id):
-    '''刪除單一行銷策略，最後會回到行銷策略列表'''
+    '''刪除單一分店聯絡資訊，最後會回到分店聯絡資訊列表'''
     deleted_stores_contact = Stores.objects.get(store_id=store_id).delete()
     print('deleted_stores_contact >>> ', deleted_stores_contact)
     return redirect('/mcdonalds/stores_contact')
 
 def suppliers_contact(request):
-    suppliers=Suppliers.objects.values()
+    #suppliers=Suppliers.objects.values()
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM raw_material INNER JOIN suppliers ON raw_material.supplier_id = suppliers.supplier_id')
+    suppliers = dictfetchall(cursor)
     return render(request,'mcdonalds/suppliers_contact.html', {'suppliers': suppliers})
 
 #TBD
 def add_suppliers_contact(request):
     '''新增供應商通訊錄'''
     if request.method == 'POST':
-        form = MarketingStrategyForm(request.POST)
+        form = SuppliersContactForm(request.POST)
         if form.is_valid():
-            new_strategy = form.save()
-            print('new_strategy >>> ', new_strategy)
+            new_contact = form.save()
+            print('new_contact >>> ', new_contact)
             # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
-            return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form, 'isAdded':True})
+            return render(request, 'mcdonalds/suppliers_contact_detail.html', {'form': form, 'isAdded':True})
     else:
-        form = MarketingStrategyForm()
-        return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form})
+        form = SuppliersContactForm()
+        return render(request, 'mcdonalds/suppliers_contact_detail.html', {'form': form})
 #TBD
-def update_suppliers_contact(request, strategy_id):
+def update_suppliers_contact(request, supplier_id):
     '''查看及修改供應商通訊錄'''
     if request.method == 'POST':
-        form = MarketingStrategyForm(request.POST)
+        form = SuppliersContactForm(request.POST)
         if form.is_valid():
-            strategy = MarketingStrategies.objects.get(pk=strategy_id)
-            form = MarketingStrategyForm(request.POST, instance=strategy)
-            updated_strategy = form.save()
-            print('updated_strategy >>> ', updated_strategy)
+            suppliers_contact = Suppliers.objects.get(pk=supplier_id)
+            form = SuppliersContactForm(request.POST, instance=suppliers_contact)
+            updated_suppliers_contact = form.save()
+            print('updated_strategy >>> ', updated_suppliers_contact)
             # return redirect('/mcdonalds/strategy/update/' + str(new_strategy.strategy_id) + '/')
-            return render(request, 'mcdonalds/marketing_strategies_detail.html', {'form': form, 'isAdded':True})
+            return render(request, 'mcdonalds/suppliers_contact_detail.html', {'form': form, 'isAdded':True})
     else:
         try:
-            strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
-            form = MarketingStrategyForm(instance=strategy)
+            suppliers_contact = Suppliers.objects.get(pk=supplier_id)
+            form = SuppliersContactForm(instance=suppliers_contact)
             context = {
-                'strategy_id': strategy.strategy_id,
+                'supplier_id': suppliers_contact.supplier_id,
                 'form': form
             }
-        except MarketingStrategies.DoesNotExist:
+        except Suppliers.DoesNotExist:
             # context['form'] = form
-            return redirect('/mcdonalds/strategy/add/')
-        return render(request, 'mcdonalds/marketing_strategies_detail.html', context)
+            return redirect('/mcdonalds/suppliers_contact/add/')
+        return render(request, 'mcdonalds/suppliers_contact_detail.html', context)
 
 #TBD
-def delete_suppliers_contact(request, strategy_id):
+def delete_suppliers_contact(request, supplier_id):
     '''刪除單一供應商通訊錄'''
-    deleted_strategy = MarketingStrategies.objects.get(strategy_id=strategy_id).delete()
-    print('deleted_strategy >>> ', deleted_strategy)
-    return redirect('/mcdonalds/strategies_list')
+    deleted_supplier_contact = Suppliers.objects.get(supplier_id=supplier_id).delete()
+    print('deleted_supplier_contact>>> ', deleted_supplier_contact)
+    return redirect('/mcdonalds/suppliers_contact')
 
 def raw_materials_predict(request):
     raw_materials_predict=RawMaterial.objects.values('material_name', 'quantity', 'reorder_point').order_by('reorder_point')
@@ -132,7 +135,7 @@ def raw_materials_order(request):
     # raw_materials_order=Orders.objects.all().prefetch_related('material').values('material_name','order_amount','status','order_date')\
     # #>>> raw_materials_order=Orders.objects.values('order_id','order_amount','status','order_date').filter(order_id=1)
     cursor2 = connection.cursor()
-    cursor2.execute("SELECT material_name, order_amount, order_date, status FROM orders INNER JOIN raw_material ON orders.material_id=raw_material.material_id;")
+    cursor2.execute("SELECT order_id,material_name, order_amount, order_date, status FROM orders INNER JOIN raw_material ON orders.material_id=raw_material.material_id;")
     raw_materials_order = dictfetchall(cursor2)
     print('raw_materials_order >>> ', raw_materials_order)
 
@@ -154,7 +157,7 @@ def dictfetchall(cursor):
 
 def raw_materials(request):
     cursor = connection.cursor()
-    cursor.execute("SELECT material_id,material_name, amount, on_hand_inventory, security_numbers,supplier_name FROM raw_material INNER JOIN suppliers ON raw_material.supplier_id=suppliers.supplier_id;")
+    cursor.execute("SELECT material_id,material_name, amount, on_hand_inventory, security_numbers,supplier_name, quantity,reorder_point FROM raw_material INNER JOIN suppliers ON raw_material.supplier_id=suppliers.supplier_id;")
     raw_materials = dictfetchall(cursor)
     return render(request,'mcdonalds/raw_material.html', {'raw_materials': raw_materials})
 
@@ -445,7 +448,7 @@ def save_update_raw_materials(request, material_id):
         return redirect("/mcdonalds/raw_materials")
     return render(request, 'mcdonalds/update_raw_materials.html', {'raw_materials': raw_materials})
 
-
+@csrf_exempt
 def receive_store_demand(request):
 
     store_id = request.POST.get('store_id', False)
@@ -470,8 +473,8 @@ def receive_store_demand(request):
         #撈出庫存及安全庫存
         RawMaterial.objects.filter(material_id=1).update(security_numbers = 30000000000)
         on_hand_inventory=RawMaterial.objects.values('on_hand_inventory').get(material_id=m_id)['on_hand_inventory']
-        security_numbers=RawMaterial.objects.values('security_numbers').get(material_id=m_id)['security_numbers']
-        if on_hand_inventory<security_numbers:
+        reorder_point=RawMaterial.objects.values('reorder_point').get(material_id=m_id)['reorder_point']
+        if on_hand_inventory<reorder_point:
             create_EOQ_orders(m_id)
         else:
             print('no')
@@ -481,11 +484,11 @@ def receive_store_demand(request):
     return render(request,'mcdonalds/store_send_demand.html', {'stores':stores,'products':products})
     #return render(request,'mcdonalds/store_send_demand.html', {})
 
-
+@csrf_exempt
 def go_to_store_send_demand_page(request):
     return render(request,'mcdonalds/store_send_demand.html')
 
-
+@csrf_exempt
 def create_store_demand(store_id,product_id,product_num):
     # call by receive_store_demand
     #建立門市需求單
@@ -525,7 +528,7 @@ def add_order(request):
 
 def store_demand(request):
     cursor = connection.cursor()
-    cursor.execute("SELECT store_name, created_date, status, prod_numbers, product_name FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id INNER JOIN Products on Products.product_id=store_demand_details.product_id")
+    cursor.execute("SELECT * FROM store_demand INNER JOIN stores WHERE store_demand.store_id = stores.store_id")
     store_demand = dictfetchall(cursor)
     for i in store_demand:
         if i['status']==0:
@@ -534,6 +537,32 @@ def store_demand(request):
         else:
             i['status']='已完成'
     return render(request, 'mcdonalds/store_demand.html', {'store_demand': store_demand})
+
+def store_demand_detail(request, store_demand_id):
+    #store_demand = StoreDemandDetails.objects.select_related('product').select_related('store_demand').filter(store_demand_id=store_demand_id)
+    #store = StoreDemand.objects.filter(store_demand_id = store_demand_id).select_related('stores')
+    cursor = connection.cursor()
+    cursor.execute('SELECT product_name, prod_numbers FROM store_demand_details INNER JOIN products INNER JOIN store_demand ON store_demand_details.store_demand_id = store_demand.store_demand_id AND store_demand_details.product_id = products.product_id WHERE store_demand_details.store_demand_id = %d'%store_demand_id)
+    cursor2 = connection.cursor()
+    cursor2.execute('SELECT store_name FROM stores INNER JOIN store_demand ON store_demand.store_id=stores.store_id WHERE store_demand.store_demand_id=%d'%store_demand_id)
+    cursor3 = connection.cursor()
+    cursor3.execute('SELECT status, created_date FROM store_demand INNER JOIN store_demand_details ON store_demand.store_demand_id=store_demand_details.store_demand_id WHERE store_demand.store_demand_id=%d LIMIT 1' % store_demand_id)
+
+    store_demand = dictfetchall(cursor)
+    store = dictfetchall(cursor2)
+    demand_detail = dictfetchall(cursor3)
+    for i in demand_detail:
+        if i['status']==0:
+            i['status']='未完成'
+            print(i['status'])
+        else:
+            i['status']='已完成'
+    context = {
+        'store_demand': store_demand,
+        'store': store,
+        'demand_detail': demand_detail
+    }
+    return render(request, 'mcdonalds/store_demand_detail.html', context)
 
 #待完成，是否發送通知?
 #有沒有更好的辦法呼叫原頁面?
@@ -544,7 +573,17 @@ def raw_material_arrived_store(request, store_demand_id):
     StoreDemand.objects.filter(store_demand_id=store_demand_id).update(status=1)
     cursor = connection.cursor()
     cursor.execute(
-        "SELECT store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+        "SELECT store_demand.store_demand_id, store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+    store_demand = dictfetchall(cursor)
+    for i in store_demand:
+        if i['status'] == 0:
+            i['status'] = '未完成'
+            print(i['status'])
+        else:
+            i['status'] = '已完成'
+
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM store_demand INNER JOIN stores WHERE store_demand.store_id = stores.store_id")
     store_demand = dictfetchall(cursor)
     for i in store_demand:
         if i['status'] == 0:
@@ -569,7 +608,7 @@ def raw_material_arrived_center(request, order_id):
         else:
             i['status']='已完成'
     return render(request,'mcdonalds/raw_materials_order.html', {'raw_materials_order': raw_materials_order})
-
+@csrf_exempt
 def sign_in(request):
     form = LoginForm()
     if request.method == "POST":
@@ -920,7 +959,7 @@ def marketing_dashboard_windows(request):
         total_2019 = [x.get('total') for x in product_sales_2019]
         store_2019 = [x.get('store__store_name') for x in product_sales_2019]
         
-        product_sales_2020 = [pre_sales_data.select_related('store').filter(store__store_region=regionDict.get(region)).values('store__store_name').annotate(total=Sum('numbers'))][0]
+        product_sales_2020 = [cur_sales_data.select_related('store').filter(store__store_region=regionDict.get(region)).values('store__store_name').annotate(total=Sum('numbers'))][0]
         total_2020 = [x.get('total') for x in product_sales_2020]
         store_2020 = [x.get('store__store_name') for x in product_sales_2020]
         
@@ -1004,3 +1043,40 @@ def marketing_dashboard_windows(request):
         )
         window_graph = cvr_fig.to_html()
     return JsonResponse({'WindowGraph': window_graph})
+
+def calculate_EOQ(product_id):
+    #經濟訂貨量=（2×年需求量×訂貨成本/(單價×儲存成本百分數)）^0.5
+    #假設儲存成本百分數=30%，訂貨成本為購買成本為(單價*2000)元
+    year = timedelta(days=365)
+    four_years_ago = str(date.today()- 3 * year)
+    two_years_ago = str(date.today())
+
+    cursor = connection.cursor()
+    cursor.execute('SELECT SUM(prod_numbers) FROM store_demand_details INNER JOIN store_demand ON store_demand_details.store_demand_id = store_demand.store_demand_id WHERE created_date BETWEEN "%s" AND "%s" AND product_id = %s'%(four_years_ago, two_years_ago, product_id))
+    year_product_demand = dictfetchall(cursor)
+    list_of_number_and_material_id = turn_produtcts_to_raw_materials(product_id)
+
+    for item in range(len(list_of_number_and_material_id)):
+        print('material_id',list_of_number_and_material_id[item][0])
+        print('quantity',list_of_number_and_material_id[item][1])
+        material_id=list_of_number_and_material_id[item][0]
+        quantity=list_of_number_and_material_id[item][1]
+
+        amount = RawMaterial.objects.values_list('amount').get(material_id=material_id)# 一個原料多少錢
+        year_material_demand = quantity * year_product_demand[0]['SUM(prod_numbers)']
+        EOQ = math.pow(((2 * year_material_demand/3) * (amount[0]*2000)) / (amount[0] * 0.3), 0.5)
+        RawMaterial.objects.filter(material_id=material_id).update(quantity=EOQ)
+        print("material id:",material_id, "EOQ:", EOQ)
+
+    return EOQ
+
+def calculate_ROP(material_id):
+    #再訂貨點=平均日需求×訂貨天數+安全儲備量
+    consumption_rate = RawMaterial.objects.values_list('consumption_rate').get(material_id=material_id)
+    lead_time = RawMaterial.objects.values_list('lead_time').get(material_id=material_id)
+    security_numbers = RawMaterial.objects.values_list('security_numbers').get(material_id=material_id)
+
+    ROP = consumption_rate[0] * lead_time[0] + security_numbers[0]
+    RawMaterial.objects.filter(material_id=material_id).update(reorder_point=ROP)
+    print("ROP:", ROP)
+    return ROP
