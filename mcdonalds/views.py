@@ -542,7 +542,17 @@ def raw_material_arrived_store(request, store_demand_id):
     StoreDemand.objects.filter(store_demand_id=store_demand_id).update(status=1)
     cursor = connection.cursor()
     cursor.execute(
-        "SELECT store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+        "SELECT store_demand.store_demand_id, store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+    store_demand = dictfetchall(cursor)
+    for i in store_demand:
+        if i['status'] == 0:
+            i['status'] = '未完成'
+            print(i['status'])
+        else:
+            i['status'] = '已完成'
+
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM store_demand INNER JOIN stores WHERE store_demand.store_id = stores.store_id")
     store_demand = dictfetchall(cursor)
     for i in store_demand:
         if i['status'] == 0:

@@ -20,6 +20,7 @@
     <div class="table-responsive">
         <table id="bootstrapdatatable" class="table table-striped table-bordered" width="60%">
             <thead>
+                <th>需求單ID</th>
                 <th>門市名稱</th>
                 <th>下訂日期</th>
                 <th>訂單狀態</th>
@@ -28,6 +29,7 @@
             <tbody>
             {% for store_demand in store_demand %}
                 <tr>
+                    <td>{{ store_demand.store_demand_id }}</td>
                     <td>{{ store_demand.store_name }}</td>
                     <td>{{ store_demand.created_date }}</td>
                     <td>{{ store_demand.status }}</td>
