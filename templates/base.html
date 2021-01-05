@@ -78,15 +78,22 @@
     $(document).ready(function() {
         $('#bootstrapdatatable').DataTable({
           "aLengthMenu": [[3, 5, 10, 25, -1], [3, 5, 10, 25, "All"]],
-            "iDisplayLength": 3
+            "iDisplayLength": 3,
+            "searching": false
            }
         );
         $('.datepicker').datepicker({
             dateFormat: 'yy-mm-dd'
         });
+        $('#bootstrapdatatable_filter').addClass('justify-content-end')
     } );
 
     </script>
 {% endblock %}
+<style>
+    a span {
+        color: blue;
+    }
+</style>
 </body>
 </html>

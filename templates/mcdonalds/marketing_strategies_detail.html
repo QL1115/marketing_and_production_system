@@ -157,7 +157,7 @@
                     '                          </select>' +
                     '                        </div>' +
                     '                        <div class="form-group col">' +
-                    '                            <label> 商品名稱</label>' +
+                    '                            <label>商品名稱</label>' +
                     '                            <select name="prod_id" class="form-control">' +
                     '                                <option selected>--</option>' +
                     '                            </select>' +
@@ -215,8 +215,8 @@
                             {# 取得該商品類別下的所有商品，顯示在 select tag 中 #}
                             var product_list = JSON.parse(data['product_list']);
                             prod_name_list.empty();
-                            for (index in product_list) {
-                                prod_name_list.append("<option value='" + product_list[index].pk + "'>" + product_list[index].fields.product_name + "</option>")
+                            for (i in product_list) {
+                                prod_name_list.append("<option value='" + product_list[i].pk + "'>" + product_list[i].fields.product_name + "</option>")
                             }
 
                         },
