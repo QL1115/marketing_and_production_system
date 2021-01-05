@@ -4,7 +4,6 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pandas._libs import json
 from datetime import date, timedelta
-
 from plotly.subplots import make_subplots
 
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
@@ -211,6 +210,7 @@ def store_strategy(request):
         status = data['status']
         description = data['description']
         product_list = data['product_list']
+        print('product_list >>> ', product_list)
 
         # TODO check POST data
         if not strategy_name or not description:
@@ -219,19 +219,21 @@ def store_strategy(request):
         strategy = None
         if 'strategy_id' in data:
             strategy_id = data['strategy_id'] # 可能沒有，沒有的話代表是新增行銷策略，若有的話，代表是修改現有的行銷策略
-            strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
+            strategy = MarketingStrategies.objects.filter(strategy_id=strategy_id).update(strategy_name=strategy_name, start_date=start_date, end_date=end_date, status=status, description=description)
         if strategy is None:
             strategy = MarketingStrategies.objects.create(start_date=start_date, end_date=end_date, strategy_name=strategy_name, status=status, description=description)
         try:
             for item in product_list:
                 product = Products.objects.get(product_id=item['prod_id'])
-
+                prod_num = 0
+                old_prod_id = 0
                 if 'spr_id' in item:
-                    str_prod = StrategyProductRel.objects.filter(spr_id=item['spr_id']).first()
+                    str_prod = StrategyProductRel.objects.filter(pk=item['spr_id'])
                     if str_prod: # 已經有對應的 「商品」- 「行銷策略」了
+                        prod_num = str_prod.first().numbers
+                        old_prod_id = str_prod.first().product_id
+                        str_prod.update(product=product, numbers=item['prod_num'])
                         print('有對應的 spr')
-                        str_prod.numbers = item['prod_num']
-                        str_prod.save()
                     else:
                         print('沒有對應的 spr')
                         StrategyProductRel.objects.create(product=product,
@@ -242,6 +244,20 @@ def store_strategy(request):
                     StrategyProductRel.objects.create(product=product,
                                                             strategy=strategy,
                                                             numbers=item['prod_num'])
+                # 如果行銷策略是 enabled 的，則更新安全存量
+                if status == 0:
+                    # 判斷修改前後是不是同一種商品，是同一種商品再計算改變的數量
+                    if old_prod_id == product.product_id:
+                        prod_num = item['prod_num'] - prod_num
+                    material_list = turn_produtcts_to_raw_materials(product.product_id)
+                    for item in material_list:
+                        material = RawMaterial.objects.get(material_id=item[0])
+                        print('修改商品前 material 安全存量 >>> ', material.security_numbers)
+                        material.security_numbers = material.security_numbers + prod_num * item[1]
+                        print('修改商品後 material 安全存量 >>> ', material.security_numbers)
+                        material.save()
+
+
             return HttpResponse(True)
         except Exception as e:
             # return JsonResponse(serializers.serialize('json', {'isStored': 'ERROR'}))
@@ -253,10 +269,16 @@ def store_strategy(request):
         if strategy_id:
             try:
                 strategy = MarketingStrategies.objects.get(strategy_id=strategy_id)
-                strt_prod_list = StrategyProductRel.objects.filter(strategy_id=strategy_id)
-                product_list = Products.objects.filter(pk__in=strt_prod_list)
-                # product_list = StrategyProductRel.objects.select_related('product_id').all() #.filter(strategy=strategy)
+                strt_prod_list = StrategyProductRel.objects.filter(strategy_id=strategy_id).order_by('strategy_id', 'product_id')
+                # print('pid list', [spr.product_id for spr in strt_prod_list])
+                product_list = Products.objects.filter(pk__in=[spr.product_id for spr in strt_prod_list]).order_by('product_id')
+                # for spr in strt_prod_list:
+                #     print('spr >>> ', spr.spr_id, spr.product_id)
+                # for prod in product_list:
+                #     print('prod >>> ', prod.product_id)
+
                 data = zip(strt_prod_list, product_list)
+
                 return render(request, 'mcdonalds/marketing_strategies_detail.html', {'strategy': strategy, 'data': data})
             except:
                 print('error')
@@ -274,9 +296,21 @@ def delete_strategy(request, strategy_id):
 
 def delete_spr(request, spr_id):
     print('spr_id >>> ', spr_id)
-    deleted_spr = StrategyProductRel.objects.get(spr_id=spr_id).delete()
+    deleted_spr = StrategyProductRel.objects.get(spr_id=spr_id)
     print('deleted spr >>> ', deleted_spr)
+
     if deleted_spr:
+        strategy = MarketingStrategies.objects.get(strategy_id=deleted_spr.strategy_id)
+        if strategy.status == 0:
+            product = Products.objects.get(product_id=deleted_spr.product_id)
+            material_list = turn_produtcts_to_raw_materials(product.product_id)
+            for item in material_list:
+                material = RawMaterial.objects.get(material_id=item[0])
+                print('刪除商品前 material 安全存量 >>> ', material.security_numbers)
+                material.security_numbers = material.security_numbers - deleted_spr.numbers * item[1]
+                print('刪除後 material 安全存量 >>> ', material.security_numbers)
+                material.save()
+        deleted_spr.delete()
         return HttpResponse('SUCCESS')
     else:
         return HttpResponse('ERROR')
@@ -291,7 +325,6 @@ def delete_spr(request, spr_id):
 
 def survival_rate(request):
     '''存活率 & 留存率'''
-    # TODO 留存率
     all_marketing_data = MarketingData.objects.all()
     month_list = [item.date.strftime('%Y-%m-%d') for item in all_marketing_data]
     # 存活率
@@ -313,9 +346,7 @@ def survival_rate(request):
         go.Scatter(x=month_list, y=survival_rate_list, name='存活率'), secondary_y=False)
 
     fig.add_trace(
-        go.Scatter(x=month_list, y=rr_list, name="留存率"),
-        secondary_y=True,
-    )
+        go.Scatter(x=month_list, y=rr_list, name="留存率"),secondary_y=False)
 
     # Set title
     fig.update_layout(
@@ -348,11 +379,11 @@ def survival_rate(request):
             ),
             type="date"
         ),
-        # yaxis=dict(title='存活率 (%)')
+        yaxis=dict(title='百分比 (%)')
     )
     # Set y-axes titles
-    fig.update_yaxes(title_text="<b>存活率</b> (%)", secondary_y=False)
-    fig.update_yaxes(title_text="<b>留存率</b> (%)", secondary_y=True)
+    # fig.update_yaxes(title_text="<b>存活率</b> (%)", secondary_y=False)
+    # fig.update_yaxes(title_text="<b>留存率</b> (%)", secondary_y=True)
     graph = fig.to_html()
 
     context = {
@@ -617,7 +648,8 @@ def marketing_dashboard(request):
 
     # Set title
     comparison_fig.update_layout(
-        title_text="前期比較(漢堡)"
+        title_text="前期比較(漢堡)",
+        title_font_size=22
     )
 
     # comparison_fig.update_traces(
@@ -674,8 +706,8 @@ def marketing_dashboard(request):
         name='2019',
         orientation='h',
         marker=dict(
-            color='rgba(246, 78, 139, 0.6)',
-            line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+            color='#95DBE5',
+            line=dict(color='#95DBE5', width=0)
         )
     ))
     salesranking_fig.add_trace(go.Bar(
@@ -684,14 +716,15 @@ def marketing_dashboard(request):
         name='2020',
         orientation='h',
         marker=dict(
-            color='rgba(58, 71, 80, 0.6)',
-            line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+            color='#F0E1B9',
+            line=dict(color='#F0E1B9', width=0)
         )
     ))
 
     salesranking_fig.update_layout(
         barmode='stack',
-        title_text='銷售排行'
+        title_text='銷售排行',
+        title_font_size=22
     ) 
     salesranking_graph = salesranking_fig.to_html()
     
@@ -709,8 +742,8 @@ def marketing_dashboard(request):
         name='2019',
         orientation='h',
         marker=dict(
-            color='rgba(246, 78, 139, 0.6)',
-            line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+            color='#95DBE5',
+            line=dict(color='#95DBE5', width=0)
         )
     ))
     storeperformance_fig.add_trace(go.Bar(
@@ -719,14 +752,15 @@ def marketing_dashboard(request):
         name='2020',
         orientation='h',
         marker=dict(
-            color='rgba(58, 71, 80, 0.6)',
-            line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+            color='#F0E1B9',
+            line=dict(color='#F0E1B9', width=0)
         )
     ))
 
     storeperformance_fig.update_layout(
         barmode='stack',
-        title_text='各區銷售表現'
+        title_text='各區銷售表現',
+        title_font_size=22
     ) 
     storeperformance_graph = storeperformance_fig.to_html()
     
@@ -746,7 +780,8 @@ def marketing_dashboard(request):
 
     # Set title
     cvr_fig.update_layout(
-        title_text="CVR"
+        title_text="CVR",
+        title_font_size=25
     )
 
     # Add range slider
@@ -831,7 +866,8 @@ def marketing_dashboard_windows(request):
 
         # Set title
         comparison_window_fig.update_layout(
-            title_text=selected
+            title_text=selected,
+            title_font_size=20
         )
 
         # comparison_fig.update_traces(
@@ -894,8 +930,8 @@ def marketing_dashboard_windows(request):
             name='2019',
             orientation='h',
             marker=dict(
-                color='rgba(246, 78, 139, 0.6)',
-                line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+                color='#95DBE5',
+                line=dict(color='#95DBE5', width=0)
             )
         ))
         salesranking_window_fig.add_trace(go.Bar(
@@ -904,14 +940,15 @@ def marketing_dashboard_windows(request):
             name='2020',
             orientation='h',
             marker=dict(
-                color='rgba(58, 71, 80, 0.6)',
-                line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+                color='#F0E1B9',
+                line=dict(color='#F0E1B9', width=0)
             )
         ))
 
         salesranking_window_fig.update_layout(
             barmode='stack',
             title_text='銷售排行',
+            title_font_size=20,
             autosize=False,
             width=800,
             height=550,
@@ -940,8 +977,8 @@ def marketing_dashboard_windows(request):
             name='2019',
             orientation='h',
             marker=dict(
-                color='rgba(246, 78, 139, 0.6)',
-                line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+                color='#95DBE5',
+                line=dict(color='#95DBE5', width=0)
             )
         ))
         storeperformance_window_fig.add_trace(go.Bar(
@@ -950,14 +987,15 @@ def marketing_dashboard_windows(request):
             name='2020',
             orientation='h',
             marker=dict(
-                color='rgba(58, 71, 80, 0.6)',
-                line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+                color='#F0E1B9',
+                line=dict(color='#F0E1B9', width=0)
             )
         ))
 
         storeperformance_window_fig.update_layout(
             barmode='stack',
-            title_text='各店銷售表現'
+            title_text='各店銷售表現',
+            title_font_size=20
         ) 
         window_graph = storeperformance_window_fig.to_html()
         
@@ -976,7 +1014,8 @@ def marketing_dashboard_windows(request):
 
         # Set title
         cvr_fig.update_layout(
-            title_text="CVR"
+            title_text="CVR",
+            title_font_size=20
         )
 
         # Add range slider

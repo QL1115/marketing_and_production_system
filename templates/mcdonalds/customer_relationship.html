@@ -3,7 +3,10 @@
 {% block title %} 顧客關係管理 {% endblock title %}
 
 {% block content %}
-    <!--  -->
+    <div class="col-md-12">
+        <br>
+        <h4>顧客關係管理</h4>
+    </div>
     <br><br>
     <div class="col-md-12">
         <div id="customer_rel_tab" class="btn-group" role="group" aria-label="Basic example">
@@ -80,8 +83,8 @@
 
 {% endblock content %}
 {% block extra_scripts %}
-    <script type="text/javascript">
-        $(document).ready(function() {
+{#    <script type="text/javascript">#}
+        {#$(document).ready(function() {#}
 
             $("#search_rfm_value").on("keyup", function() {
                 var value = $(this).val().toLowerCase();
@@ -156,6 +159,6 @@
 
 
 
-        });
-    </script>
+     //   {#});#}
+{#    </script>#}
 {% endblock %}

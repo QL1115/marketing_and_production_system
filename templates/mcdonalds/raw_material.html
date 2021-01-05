@@ -10,24 +10,25 @@
     <!-- <input type="button" value="原物料訂購預估" onclick="location.href='raw_materials_predict'">
     <input type="button" value="原物料實際訂購單" onclick="location.href='要前往的網頁連結'">
     <h4>原物料訂購預估</h4> -->
-    <h4>原物料庫存</h4>
-    <br>
+    <div class="row">
+    <h4 class="col-md-10">原物料庫存</h4>
     <div class="col-md-2" style='float:right;'>
-        <a class="btn btn-info" href="{% url 'mcdonalds:add_order' %}" role="button" >新增原物料訂單</a>
+        <a class="btn " href="{% url 'mcdonalds:add_order' %}" role="button" style="background-color: #ffd480;">新增原物料訂單</a>
+    </div>
     </div>
     <br>
     <br>
     <table class="table table-bordered table-striped" data-toggle="table">
-        <thead class="thead-dark">
+        <thead style="background-color:  #7d7d7c;">
             <tr>
-                <th data-sortable="true">原物料ID</th>
-                <th>原物料名稱</th>
-                <th data-sortable="true">單位成本</th>
-                <th data-sortable="true">庫存</th>
-                <th data-sortable="true">安全存量</th>
-                <th data-sortable="true">經濟訂購量</th>
-                <th data-sortable="true">再訂購點</th>
-                <th>供應商</th>
+                <th data-sortable="true"><span style="color:white;">原物料ID</span></th>
+                <th><span style="color:white;">原物料名稱</span></th>
+                <th data-sortable="true"><span style="color:white;">單位成本</span></th>
+                <th data-sortable="true"><span style="color:white;">庫存</span></th>
+                <th data-sortable="true"><span style="color:white;">安全存量</span></th>
+                <th data-sortable="true"><span style="color:white;">經濟訂購量</span></th>
+                <th data-sortable="true"><span style="color:white;">再訂購點</span></th>
+                <th data-sortable="true"><span style="color:white;">供應商</span></th>
                 <th></th>
             </tr>
         </thead>
@@ -43,7 +44,7 @@
                     <td>{{ raw_material.reorder_point }}</td>
                     <td>{{ raw_material.supplier_name }}</td>
                     <td>
-                        <a href="{% url 'mcdonalds:get_edit_page' material_id=raw_material.material_id %}" class="btn btn-info">修改</a>
+                        <a href="{% url 'mcdonalds:get_edit_page' material_id=raw_material.material_id %}" class="btn" style="background-color: #ffd480;">修改</a>
                     </td>
                 </tr>
             {% endfor %}
