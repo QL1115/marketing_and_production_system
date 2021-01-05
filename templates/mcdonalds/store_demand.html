@@ -27,6 +27,7 @@
             <tbody>
             {% for store_demand in store_demand %}
                 <tr>
+                    <td>{{ store_demand.store_demand_id }}</td>
                     <td>{{ store_demand.store_name }}</td>
                     <td>{{ store_demand.created_date }}</td>
                     <td>{{ store_demand.status }}</td>

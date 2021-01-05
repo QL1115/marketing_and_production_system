@@ -542,7 +542,17 @@ def raw_material_arrived_store(request, store_demand_id):
     StoreDemand.objects.filter(store_demand_id=store_demand_id).update(status=1)
     cursor = connection.cursor()
     cursor.execute(
-        "SELECT store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+        "SELECT store_demand.store_demand_id, store_name, created_date, status FROM store_demand INNER JOIN store_demand_details INNER JOIN stores ON store_demand.store_demand_id=store_demand_details.store_demand_id AND store_demand.store_id=stores.store_id")
+    store_demand = dictfetchall(cursor)
+    for i in store_demand:
+        if i['status'] == 0:
+            i['status'] = '未完成'
+            print(i['status'])
+        else:
+            i['status'] = '已完成'
+
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM store_demand INNER JOIN stores WHERE store_demand.store_id = stores.store_id")
     store_demand = dictfetchall(cursor)
     for i in store_demand:
         if i['status'] == 0:
@@ -918,7 +928,7 @@ def marketing_dashboard_windows(request):
         total_2019 = [x.get('total') for x in product_sales_2019]
         store_2019 = [x.get('store__store_name') for x in product_sales_2019]
         
-        product_sales_2020 = [pre_sales_data.select_related('store').filter(store__store_region=regionDict.get(region)).values('store__store_name').annotate(total=Sum('numbers'))][0]
+        product_sales_2020 = [cur_sales_data.select_related('store').filter(store__store_region=regionDict.get(region)).values('store__store_name').annotate(total=Sum('numbers'))][0]
         total_2020 = [x.get('total') for x in product_sales_2020]
         store_2020 = [x.get('store__store_name') for x in product_sales_2020]
         
