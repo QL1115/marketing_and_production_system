@@ -72,6 +72,8 @@
                     closeText: '!'
                 });
                 $("#ComparisonHamburger_select").val("1");
+                $("#ComparisonSnack_select").val("");
+                $("#ComparisonBeverageNSoup_select").val("");
                 $.ajax({
                     url: "{% url 'mcdonalds:marketing_dashboard_windows' %}",
                     data: { "graph": 'ComparisonWithPrevious', "category": 'hamburger', "selectedItem": 1},
