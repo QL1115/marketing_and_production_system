@@ -84,9 +84,41 @@
         $('.datepicker').datepicker({
             dateFormat: 'yy-mm-dd'
         });
-    } );
 
+        var path = $('h4').text();
+
+        if(path == '通訊錄'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(6)').addClass('active');}
+        else if(path == '原物料訂單'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(5)').addClass('active');}
+        else if(path == '門市需求單'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(4)').addClass('active');}
+        else if(path == '原物料庫存'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(3)').addClass('active');}
+        else if(path == '行銷策略列表'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(2)').addClass('active');}
+        else if(path == '顧客關係管理'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(1)').addClass('active');}
+        else if(path == '顧客關係管理'){
+            $('li.nav-item').removeClass('');
+            $('li.nav-item:eq(0)').addClass('active');}
+    });
+    var activeNavItem = $('.nav-item');
+
+    activeNavItem.click(function(){
+      activeNavItem.removeClass('active');
+      $(this).addClass('active');
+    });
     </script>
+
+
 {% endblock %}
+
 </body>
 </html>
