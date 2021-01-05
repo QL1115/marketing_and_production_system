@@ -10,10 +10,16 @@
             height: 80%;
         }
         .inner {
-          width: 50%;
-          height: 50%;
+          width: 48%;
+          height: 48%;
           float: left;
+          margin: 1%;
           text-align: center;
+          border-width: 1px;
+          border-style: solid;
+          border-color: #e6e3e3;
+          box-shadow:0 0 5px 5px #edebeb;
+          border-radius: 5px;
         }
         box {
           position: absolute;
@@ -23,7 +29,7 @@
         }
 
         .box select {
-          background-color: #15a2b9;
+          background-color: #ffc94a;
           color: white;
           padding: 5px;
           width: 170px;
@@ -59,6 +65,13 @@
 
         .box select option {
           padding: 30px;
+        }
+        
+        .btn,
+        .btn:focus,
+        .btn:hover,
+        .btn:active{
+            color: white;
         }
     </style>
 {% endblock %}
@@ -382,19 +395,19 @@
     </div>
     
     <div id="window2" class="modal">
-        <button class="btn btn-info" id="SalesRankingHamburger">漢堡</button>
-        <button class="btn btn-info" id="SalesRankingSnack">點心</button>
-        <button class="btn btn-info" id="SalesRankingBeverageNSoup">飲料/湯品</button>
+        <button class="btn btn-warning" id="SalesRankingHamburger">漢堡</button>
+        <button class="btn btn-warning" id="SalesRankingSnack">點心</button>
+        <button class="btn btn-warning" id="SalesRankingBeverageNSoup">飲料/湯品</button>
         <div class="graphArea">
         </div>
       <!-- <a href="#" rel="modal:close">Close</a> -->
     </div>
     
     <div id="window3" class="modal">
-        <button class="btn btn-info" id="StorePerformanceNorth">北區</button>
-        <button class="btn btn-info" id="StorePerformanceCentral">中區</button>
-        <button class="btn btn-info" id="StorePerformanceSouth">南區</button>
-        <button class="btn btn-info" id="StorePerformanceEast">東區</button>
+        <button class="btn btn-warning" id="StorePerformanceNorth">北區</button>
+        <button class="btn btn-warning" id="StorePerformanceCentral">中區</button>
+        <button class="btn btn-warning" id="StorePerformanceSouth">南區</button>
+        <button class="btn btn-warning" id="StorePerformanceEast">東區</button>
         <div class="graphArea">
         </div>
       <!-- <a href="#" rel="modal:close">Close</a> -->

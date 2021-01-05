@@ -648,7 +648,8 @@ def marketing_dashboard(request):
 
     # Set title
     comparison_fig.update_layout(
-        title_text="前期比較(漢堡)"
+        title_text="前期比較(漢堡)",
+        title_font_size=22
     )
 
     # comparison_fig.update_traces(
@@ -705,8 +706,8 @@ def marketing_dashboard(request):
         name='2019',
         orientation='h',
         marker=dict(
-            color='rgba(246, 78, 139, 0.6)',
-            line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+            color='#95DBE5',
+            line=dict(color='#95DBE5', width=0)
         )
     ))
     salesranking_fig.add_trace(go.Bar(
@@ -715,14 +716,15 @@ def marketing_dashboard(request):
         name='2020',
         orientation='h',
         marker=dict(
-            color='rgba(58, 71, 80, 0.6)',
-            line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+            color='#F0E1B9',
+            line=dict(color='#F0E1B9', width=0)
         )
     ))
 
     salesranking_fig.update_layout(
         barmode='stack',
-        title_text='銷售排行'
+        title_text='銷售排行',
+        title_font_size=22
     ) 
     salesranking_graph = salesranking_fig.to_html()
     
@@ -740,8 +742,8 @@ def marketing_dashboard(request):
         name='2019',
         orientation='h',
         marker=dict(
-            color='rgba(246, 78, 139, 0.6)',
-            line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+            color='#95DBE5',
+            line=dict(color='#95DBE5', width=0)
         )
     ))
     storeperformance_fig.add_trace(go.Bar(
@@ -750,14 +752,15 @@ def marketing_dashboard(request):
         name='2020',
         orientation='h',
         marker=dict(
-            color='rgba(58, 71, 80, 0.6)',
-            line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+            color='#F0E1B9',
+            line=dict(color='#F0E1B9', width=0)
         )
     ))
 
     storeperformance_fig.update_layout(
         barmode='stack',
-        title_text='各區銷售表現'
+        title_text='各區銷售表現',
+        title_font_size=22
     ) 
     storeperformance_graph = storeperformance_fig.to_html()
     
@@ -777,7 +780,8 @@ def marketing_dashboard(request):
 
     # Set title
     cvr_fig.update_layout(
-        title_text="CVR"
+        title_text="CVR",
+        title_font_size=25
     )
 
     # Add range slider
@@ -862,7 +866,8 @@ def marketing_dashboard_windows(request):
 
         # Set title
         comparison_window_fig.update_layout(
-            title_text=selected
+            title_text=selected,
+            title_font_size=20
         )
 
         # comparison_fig.update_traces(
@@ -925,8 +930,8 @@ def marketing_dashboard_windows(request):
             name='2019',
             orientation='h',
             marker=dict(
-                color='rgba(246, 78, 139, 0.6)',
-                line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+                color='#95DBE5',
+                line=dict(color='#95DBE5', width=0)
             )
         ))
         salesranking_window_fig.add_trace(go.Bar(
@@ -935,14 +940,15 @@ def marketing_dashboard_windows(request):
             name='2020',
             orientation='h',
             marker=dict(
-                color='rgba(58, 71, 80, 0.6)',
-                line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+                color='#F0E1B9',
+                line=dict(color='#F0E1B9', width=0)
             )
         ))
 
         salesranking_window_fig.update_layout(
             barmode='stack',
             title_text='銷售排行',
+            title_font_size=20,
             autosize=False,
             width=800,
             height=550,
@@ -971,8 +977,8 @@ def marketing_dashboard_windows(request):
             name='2019',
             orientation='h',
             marker=dict(
-                color='rgba(246, 78, 139, 0.6)',
-                line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+                color='#95DBE5',
+                line=dict(color='#95DBE5', width=0)
             )
         ))
         storeperformance_window_fig.add_trace(go.Bar(
@@ -981,14 +987,15 @@ def marketing_dashboard_windows(request):
             name='2020',
             orientation='h',
             marker=dict(
-                color='rgba(58, 71, 80, 0.6)',
-                line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+                color='#F0E1B9',
+                line=dict(color='#F0E1B9', width=0)
             )
         ))
 
         storeperformance_window_fig.update_layout(
             barmode='stack',
-            title_text='各店銷售表現'
+            title_text='各店銷售表現',
+            title_font_size=20
         ) 
         window_graph = storeperformance_window_fig.to_html()
         
@@ -1007,7 +1014,8 @@ def marketing_dashboard_windows(request):
 
         # Set title
         cvr_fig.update_layout(
-            title_text="CVR"
+            title_text="CVR",
+            title_font_size=20
         )
 
         # Add range slider
