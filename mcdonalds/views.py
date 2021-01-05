@@ -136,7 +136,7 @@ def raw_materials_order(request):
     # raw_materials_order=Orders.objects.all().prefetch_related('material').values('material_name','order_amount','status','order_date')\
     # #>>> raw_materials_order=Orders.objects.values('order_id','order_amount','status','order_date').filter(order_id=1)
     cursor2 = connection.cursor()
-    cursor2.execute("SELECT material_name, order_amount, order_date, status FROM orders INNER JOIN raw_material ON orders.material_id=raw_material.material_id;")
+    cursor2.execute("SELECT order_id,material_name, order_amount, order_date, status FROM orders INNER JOIN raw_material ON orders.material_id=raw_material.material_id;")
     raw_materials_order = dictfetchall(cursor2)
     print('raw_materials_order >>> ', raw_materials_order)
 
@@ -158,7 +158,7 @@ def dictfetchall(cursor):
 
 def raw_materials(request):
     cursor = connection.cursor()
-    cursor.execute("SELECT material_id,material_name, amount, on_hand_inventory, security_numbers,supplier_name FROM raw_material INNER JOIN suppliers ON raw_material.supplier_id=suppliers.supplier_id;")
+    cursor.execute("SELECT material_id,material_name, amount, on_hand_inventory, security_numbers,supplier_name, quantity,reorder_point FROM raw_material INNER JOIN suppliers ON raw_material.supplier_id=suppliers.supplier_id;")
     raw_materials = dictfetchall(cursor)
     return render(request,'mcdonalds/raw_material.html', {'raw_materials': raw_materials})
 
@@ -417,7 +417,7 @@ def save_update_raw_materials(request, material_id):
         return redirect("/mcdonalds/raw_materials")
     return render(request, 'mcdonalds/update_raw_materials.html', {'raw_materials': raw_materials})
 
-
+@csrf_exempt
 def receive_store_demand(request):
 
     store_id = request.POST.get('store_id', False)
@@ -442,8 +442,8 @@ def receive_store_demand(request):
         #撈出庫存及安全庫存
         RawMaterial.objects.filter(material_id=1).update(security_numbers = 30000000000)
         on_hand_inventory=RawMaterial.objects.values('on_hand_inventory').get(material_id=m_id)['on_hand_inventory']
-        security_numbers=RawMaterial.objects.values('security_numbers').get(material_id=m_id)['security_numbers']
-        if on_hand_inventory<security_numbers:
+        reorder_point=RawMaterial.objects.values('reorder_point').get(material_id=m_id)['reorder_point']
+        if on_hand_inventory<reorder_point:
             create_EOQ_orders(m_id)
         else:
             print('no')
@@ -453,11 +453,11 @@ def receive_store_demand(request):
     return render(request,'mcdonalds/store_send_demand.html', {'stores':stores,'products':products})
     #return render(request,'mcdonalds/store_send_demand.html', {})
 
-
+@csrf_exempt
 def go_to_store_send_demand_page(request):
     return render(request,'mcdonalds/store_send_demand.html')
 
-
+@csrf_exempt
 def create_store_demand(store_id,product_id,product_num):
     # call by receive_store_demand
     #建立門市需求單
@@ -567,7 +567,7 @@ def raw_material_arrived_center(request, order_id):
         else:
             i['status']='已完成'
     return render(request,'mcdonalds/raw_materials_order.html', {'raw_materials_order': raw_materials_order})
-
+@csrf_exempt
 def sign_in(request):
     form = LoginForm()
     if request.method == "POST":
