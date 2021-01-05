@@ -14,7 +14,7 @@
                 <h4>行銷策略列表</h4>
             </div>
             <div class="col-md-1">
-                <a class="btn btn-info" href="{% url 'mcdonalds:store_strategy' %}" role="button">新增</a>
+                <a class="btn btn-light" href="{% url 'mcdonalds:store_strategy' %}" role="button" style="background-color: #ffd480;">新增</a>
             </div>
         </div>
     </div>
@@ -23,12 +23,12 @@
     <!--  -->
     <div class="col-md-12">
     <table class="table table-bordered table-striped text-center" data-toggle="table">
-        <thead class="thead-dark">
+        <thead style="background-color:  #7d7d7c;">
             <tr>
-                <th>策略名稱</th>
-                <th data-sortable="true">開始日期</th>
-                <th data-sortable="true">結束日期</th>
-                <th data-sortable="true">狀態</th>
+                <th><span style="color:white;">策略名稱</span></th>
+                <th data-sortable="true" ><span style="color:white;">開始日期</span></th>
+                <th data-sortable="true"><span style="color:white;">結束日期</span></th>
+                <th data-sortable="true"><span style="color:white;">狀態</span></th>
                 <th></th>
             </tr>
         </thead>
@@ -41,8 +41,8 @@
                     <td>{{ strategy.status|yesno:'X,O,?' }}</td>
 
                     <td>
-                        <a href="{% url 'mcdonalds:store_strategy' %}?strategy_id={{ strategy.strategy_id }}" class="btn btn-info">修改</a>
-{#                        <a href="{% url 'mcdonalds:strategies_detail' strategy_id=strategy.strategy_id %}" class="btn btn-danger">刪除</a>#}
+                        <a href="{% url 'mcdonalds:store_strategy' %}?strategy_id={{ strategy.strategy_id }}" class="btn " style="background-color: #ffd480;">修改</a>
+{#                        <a href="{% url 'mcdonalds:strategies_detail' strategy_id=strategy.strategy_id %}" class="btn btn-danger" >刪除</a>#}
                     </td>
                 </tr>
             {% endfor %}

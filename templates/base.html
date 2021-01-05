@@ -34,36 +34,44 @@
 {% endblock %}
 </head> 
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    
+<nav class="navbar navbar-expand-lg navbar-light " style="background-color: #ffefcc;height: 80px;font-size: 1.4em">
     <a class="navbar-brand" href="#">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/546px-McDonald%27s_Golden_Arches.svg.png" alt="Logo" style="width:40px;">
+        <img src="https://resource01-proxy.ulifestyle.com.hk/res/v3/image/content/2275000/2276895/Mcdonalds-Logo-PNG-Transparent-Image_1024.png" alt="Logo" style="width:60px;">
     </a>
-	<a class="navbar-brand" href="#">產銷系統</a>
+	<a class="navbar-brand" href="#"></a>
 		<div class="collapse navbar-collapse">
 		    <ul class="navbar-nav mr-auto">
                 {# TODO 之後要修改擺放的位置，eg. 點選行銷只會有行銷相關的出來#}
                 <!-- 行銷相關 -->
                 
                 <li class="nav-item">
-		            <a class="nav-link" href="{% url 'mcdonalds:marketing_dashboard' %}" tabindex="-1" aria-disabled="true">行銷 Dashboard</a>
-		         </li>
+		            <a class="nav-link" href="{% url 'mcdonalds:marketing_dashboard' %}" tabindex="-1" aria-disabled="true" >行銷 Dashboard</a>
+                 </li>
+                 &nbsp&nbsp&nbsp
+                
                 <li class="nav-item">
                     <!-- 顧客關係管理預設是二元樹 -->
 		            <a class="nav-link" href="{% url 'mcdonalds:survival_rate' %}" tabindex="-1" aria-disabled="true">顧客關係管理</a>
-		         </li>
+                 </li>
+                 &nbsp&nbsp&nbsp
                 <li class="nav-item">
 		            <a class="nav-link" href="{% url 'mcdonalds:strategies_list' %}"  aria-disabled="true">行銷策略</a>
-		         </li>
+                 </li>
+                 &nbsp&nbsp&nbsp
                 <!-- 作業管理相關 -->
 		        <li class="nav-item">
 		            <a class="nav-link" href="{% url 'mcdonalds:raw_materials' %}" tabindex="-1" aria-disabled="true">庫存</a>
-		         </li>
+                 </li>
+                 &nbsp&nbsp&nbsp
 		         <li class="nav-item dropdown">
 		            <a class="nav-link" href="{% url 'mcdonalds:store_demand' %}" tabindex="-1" aria-disabled="true">各門市需求單</a>
-		         </li>
+                 </li>
+                 &nbsp&nbsp&nbsp
 		         <li class="nav-item dropdown">
 		            <a class="nav-link" href="{% url 'mcdonalds:raw_materials_order' %}" tabindex="-1" aria-disabled="true">原物料訂單</a>
-		         </li>
+                 </li>
+                 &nbsp&nbsp&nbsp
 		         <li class="nav-item">
 		            <a class="nav-link" href="{% url 'mcdonalds:suppliers_contact' %}" tabindex="-1" aria-disabled="true">通訊錄</a>
 		         </li>
