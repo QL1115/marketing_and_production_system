@@ -25,6 +25,8 @@
                 <th data-sortable="true">單位成本</th>
                 <th data-sortable="true">庫存</th>
                 <th data-sortable="true">安全存量</th>
+                <th data-sortable="true">經濟訂購量</th>
+                <th data-sortable="true">再訂購點</th>
                 <th>供應商</th>
                 <th></th>
             </tr>
@@ -37,6 +39,8 @@
                     <td>{{ raw_material.amount }}</td>
                     <td>{{ raw_material.on_hand_inventory }}</td>
                     <td>{{ raw_material.security_numbers }}</td>
+                    <td>{{ raw_material.quantity }}</td>
+                    <td>{{ raw_material.reorder_point }}</td>
                     <td>{{ raw_material.supplier_name }}</td>
                     <td>
                         <a href="{% url 'mcdonalds:get_edit_page' material_id=raw_material.material_id %}" class="btn btn-info">修改</a>
