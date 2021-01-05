@@ -918,7 +918,7 @@ def marketing_dashboard_windows(request):
         total_2019 = [x.get('total') for x in product_sales_2019]
         store_2019 = [x.get('store__store_name') for x in product_sales_2019]
         
-        product_sales_2020 = [pre_sales_data.select_related('store').filter(store__store_region=regionDict.get(region)).values('store__store_name').annotate(total=Sum('numbers'))][0]
+        product_sales_2020 = [cur_sales_data.select_related('store').filter(store__store_region=regionDict.get(region)).values('store__store_name').annotate(total=Sum('numbers'))][0]
         total_2020 = [x.get('total') for x in product_sales_2020]
         store_2020 = [x.get('store__store_name') for x in product_sales_2020]
         
