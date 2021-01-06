@@ -39,7 +39,7 @@
             </div>
             <div  class="col-md-12 table-responsive">
 {#                TODO data table: Uncaught TypeError: Cannot read property 'length' of undefined#}
-                <table id="bootstrapdatatable" class="display table table-bordered text-center " data-toggle="table">
+                <table id="rfm_table" class="display table table-bordered text-center " data-toggle="table">
                     <thead class="thead-dark">
                         <tr>
 {#                            <th></th>#}
@@ -89,7 +89,7 @@
             $("#search_rfm_value").on("keyup", function() {
                 var value = $(this).val().toLowerCase();
                 {#$("#rfm_area tr").filter(function() {#}
-                $("#bootstrapdatatable tr").filter(function() {
+                $("#rfm_table tr").filter(function() {
                   $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
@@ -123,16 +123,16 @@
                         success: function(data) {
                             console.log('data', JSON.parse(data['customer_list'])); {# TODO null #}
                             customers = JSON.parse(data['customer_list']);
-                            $('#rfm' + rfm_id).after("<td class=\"col-md-12\" colspan=\"2\" id=\"td_rfm" + rfm_id + "\">"+
-                                                "<table class=\"table table-bordered\">"+
-                                                    "<thead class=\"thead-light\">"+
+                            $('#rfm' + rfm_id).after("<td class='col-md-12' colspan='2' id='td_rfm" + rfm_id + "'>"+
+                                                "<table class='table table-bordered' >"+
+                                                    "<thead class='thead-light'>"+
                                                         "<tr>" +
                                                             "<th>姓名</th>" +
                                                             "<th>性別</th>" +
                                                             "<th>Email</th>" +
                                                         "</tr>"+
                                                     "</thead>"+
-                                                    "<tbody id=\"rfm_rows"+ rfm_id +"\">" +
+                                                    "<tbody id='rfm_rows"+ rfm_id +"'>" +
                                                     "</tbody>"+
                                                 "</table>"+
                                             "</td>")

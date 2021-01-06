@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from pandas._libs import json
 from datetime import date, timedelta
 from plotly.subplots import make_subplots
+from django.utils.dateparse import parse_date
 
 from .models import Sales, RFM, Customers, ShoppingRecords, MarketingStrategies, Products, RawMaterial, StrategyProductRel, ProductMaterialRel, StoreDemand, StoreDemandDetails, MarketingData, Stores, Orders, Suppliers
 from django.db import connection
@@ -213,15 +214,26 @@ def store_strategy(request):
         print('product_list >>> ', product_list)
 
         # TODO check POST data
-        if not strategy_name or not description:
-            return HttpResponse(False)
+        # if not strategy_name or not description:
+        #     return HttpResponse(False)
 
         strategy = None
-        if 'strategy_id' in data:
+        if 'strategy_id' in data and data['strategy_id'] != '':
+            print('inin 1')
             strategy_id = data['strategy_id'] # 可能沒有，沒有的話代表是新增行銷策略，若有的話，代表是修改現有的行銷策略
-            strategy = MarketingStrategies.objects.filter(strategy_id=strategy_id).update(strategy_name=strategy_name, start_date=start_date, end_date=end_date, status=status, description=description)
+            strategy = MarketingStrategies.objects.filter(strategy_id=strategy_id).first()
+            # strategy.save(update_fields=[strategy_name=strategy_name, start_date=start_date, end_date=end_date, status=status, description=description])
+            strategy.strategy_name = strategy_name
+            strategy.start_date = parse_date(start_date)
+            strategy.end_date = parse_date(end_date)
+            strategy.status = status
+            strategy.description = description
+            strategy.save()
+            print('update strategy >>> ', strategy)
         if strategy is None:
+            print('inin 2')
             strategy = MarketingStrategies.objects.create(start_date=start_date, end_date=end_date, strategy_name=strategy_name, status=status, description=description)
+            print('create strategy >>> ', strategy)
         try:
             for item in product_list:
                 product = Products.objects.get(product_id=item['prod_id'])
@@ -236,14 +248,19 @@ def store_strategy(request):
                         print('有對應的 spr')
                     else:
                         print('沒有對應的 spr')
-                        StrategyProductRel.objects.create(product=product,
+
+                        str_prod = StrategyProductRel.objects.create(product=product,
                                                           strategy=strategy,
                                                           numbers=item['prod_num'])
+                        prod_num = str_prod.numbers
+                        print('prod_num >>> ', prod_num)
                 else: # 沒有對應的 「商品」-「行銷策略」
                     print('沒有 item[\'spr_id\']')
-                    StrategyProductRel.objects.create(product=product,
+                    print('strategy >>> ', strategy)
+                    spr = StrategyProductRel.objects.create(product=product,
                                                             strategy=strategy,
                                                             numbers=item['prod_num'])
+                    prod_num = spr.numbers
                 # 如果行銷策略是 enabled 的，則更新安全存量
                 if status == 0:
                     # 判斷修改前後是不是同一種商品，是同一種商品再計算改變的數量
@@ -252,10 +269,11 @@ def store_strategy(request):
                     material_list = turn_produtcts_to_raw_materials(product.product_id)
                     for item in material_list:
                         material = RawMaterial.objects.get(material_id=item[0])
+                        print('更新的量 >>> ', prod_num, item[1])
                         print('修改商品前 material 安全存量 >>> ', material.security_numbers)
                         material.security_numbers = material.security_numbers + prod_num * item[1]
-                        print('修改商品後 material 安全存量 >>> ', material.security_numbers)
                         material.save()
+                        print('修改商品後 material 安全存量 >>> ', material.security_numbers)
 
 
             return HttpResponse(True)
