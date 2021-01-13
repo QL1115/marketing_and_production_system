@@ -10,14 +10,11 @@ from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,c
 from django.db import connection
 from .models import Cashinbanks, Depositaccount
 from .forms import CashinbanksForm, DepositAccountForm
-from django.core import serializers
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
-
-
-
 
 @require_http_methods(["POST"])
 @csrf_exempt
@@ -73,66 +70,91 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     # return HttpResponse({"status_code": 
     # 
     # , "msg":"成功刪除檔案"})
+    print('in_del!!!!!!!!!!')
     try:
         delete_uploaded_file(rpt_id, table_name)
-        return JsonResponse(true)
     except:
-        return JsonResponse(false)
+        pass
+
+def check(rpt_id):
+    #執行原生sql，查詢CashInBanks是否已經有匯入
+    cursor1 = connection.cursor()
+    cursor1.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join CashInBanks on Report.rpt_id=CashInBanks.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
+    count_CashInBank = cursor1.fetchone()
+
+    #執行原生sql，查詢Depositaccount是否已經有匯入
+    cursor2 = connection.cursor()
+    cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
+    count_Depositaccount = cursor2.fetchone()
+    print('~~~~~~~!!!!!!!!!!')
+
+    if count_CashInBank[0]>0:
+        #銀行存款已匯入資料
+        print('銀行存款已匯入資料')
+        count_CashInBank_result={"status_code": 123, "msg": "銀行存款已匯入資料"}
+            
+    else:
+        #銀行存款沒有
+        print('銀行存款沒匯入過')
+        count_CashInBank_result={"status_code": 456, "msg": "銀行存款沒匯入過"}
+            
+
+    if count_Depositaccount[0]>0:
+        #定期存款已匯入資料
+        print('定期存款已匯入資料')
+        count_Depositaccount_result={"status_code": 789, "msg": "定期存款已匯入資料"}
+    else:
+        #定期存款沒有
+        print('定期存款沒匯入過')
+        count_Depositaccount_result={"status_code": 999, "msg": "定期存款沒匯入過"}
+    return(count_CashInBank_result,count_Depositaccount_result)
 
 @csrf_exempt
 def get_import_page(request,comp_id, rpt_id, acc_id):
 
+    print('into get_import')
     if request.method == 'GET':
-        #執行原生sql，查詢CashInBanks是否已經有匯入
-        cursor1 = connection.cursor()
-        cursor1.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join CashInBanks on Report.rpt_id=CashInBanks.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
-        count_CashInBank = cursor1.fetchone()
+        check(rpt_id)
+        print('checccccccccccck',check(rpt_id))
+        print(type(check(rpt_id)))
+        count_CashInBank_result=check(rpt_id)[0]
+        print()
+        count_Depositaccount_result=check(rpt_id)[1]
 
-        #執行原生sql，查詢Depositaccount是否已經有匯入
-        cursor2 = connection.cursor()
-        cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
-        count_Depositaccount = cursor2.fetchone()
-        print('~~~~~~~!!!!!!!!!!')
-        # if count_CashInBank[0]>0 and count_Depositaccount[0]>0:
-        #     #銀行存款跟定期存款皆已匯入資料
-        #     print('銀行存款跟定期存款皆已匯入資料')
-        #     result={"status_code": 123, "msg": "銀行存款跟定期存款皆已匯入資料"}
-        #     pass
-        # elif count_CashInBank[0]>0 and count_Depositaccount[0]==0:
-        #     #銀行存款已匯入資料 定期存款沒有
+
+
+        # #執行原生sql，查詢CashInBanks是否已經有匯入
+        # cursor1 = connection.cursor()
+        # cursor1.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join CashInBanks on Report.rpt_id=CashInBanks.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
+        # count_CashInBank = cursor1.fetchone()
+
+        # #執行原生sql，查詢Depositaccount是否已經有匯入
+        # cursor2 = connection.cursor()
+        # cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
+        # count_Depositaccount = cursor2.fetchone()
+        # print('~~~~~~~!!!!!!!!!!')
+
+        # if count_CashInBank[0]>0:
+        #     #銀行存款已匯入資料
         #     print('銀行存款已匯入資料')
-        #     result={"status_code": 456, "msg": "銀行存款已匯入資料"}
-        #     pass
-        # elif count_Depositaccount[0]>0 and count_CashInBank[0]==0:
+        #     count_CashInBank_result={"status_code": 123, "msg": "銀行存款已匯入資料"}
+            
+        # else:
+        #     #銀行存款沒有
+        #     print('銀行存款沒匯入過')
+        #     count_CashInBank_result={"status_code": 456, "msg": "銀行存款沒匯入過"}
+            
+
+        # if count_Depositaccount[0]>0:
         #     #定期存款已匯入資料
         #     print('定期存款已匯入資料')
-        #     result={"status_code": 789, "msg": "定期存款已匯入資料"}
-        #     pass
+        #     count_Depositaccount_result={"status_code": 789, "msg": "定期存款已匯入資料"}
         # else:
-        #     pass
-
-        if count_CashInBank[0]>0:
-            #銀行存款已匯入資料
-            print('銀行存款已匯入資料')
-            count_CashInBank_result={"status_code": 123, "msg": "銀行存款已匯入資料"}
+        #     #定期存款沒有
+        #     print('定期存款沒匯入過')
+        #     count_Depositaccount_result={"status_code": 999, "msg": "定期存款沒匯入過"}
             
-        else:
-            #銀行存款沒有
-            print('銀行存款沒匯入過')
-            count_CashInBank_result={"status_code": 456, "msg": "銀行存款沒匯入過"}
-            
-
-        if count_Depositaccount[0]>0:
-            #定期存款已匯入資料
-            print('定期存款已匯入資料')
-            count_Depositaccount_result={"status_code": 789, "msg": "定期存款已匯入資料"}
-        else:
-            #定期存款沒有
-            print('定期存款沒匯入過')
-            count_Depositaccount_result={"status_code": 999, "msg": "定期存款沒匯入過"}
-            
-        print(count_Depositaccount_result)
-        print(count_CashInBank_result)
+        
         return render(request, 'import_page.html',{ 'acc_id': acc_id,
                                                     'comp_id': comp_id,
                                                     'rpt_id': rpt_id ,
@@ -147,26 +169,29 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
         print(type(result))
         print(result['status_code'])
         print(type(result['status_code']))
-        if result['status_code']==200:
-            count_CashInBank_result={"status_code": 123, "msg": "銀行存款已匯入資料"}
-            count_Depositaccount_result={"status_code": 789, "msg": "定期存款已匯入資料"}
-        else:
-            count_Depositaccount_result={"status_code": 999, "msg": "定期存款沒匯入過"}
-            count_CashInBank_result={"status_code": 456, "msg": "銀行存款沒匯入過"}
+        check(rpt_id)
+        count_CashInBank_result=check(rpt_id)[0]
+        count_Depositaccount_result=check(rpt_id)[1]
+       
 
         return render(request, 'import_page.html', {'acc_id': acc_id,
                                                     'comp_id': comp_id,
                                                     'rpt_id': rpt_id,
-                                                    'import_related_list': [result['status_code'], result['msg']]})
+                                                    'import_related_list': [result['status_code'], result['msg']],
+                                                    'count_CashInBank_list': [count_CashInBank_result['status_code'], count_CashInBank_result['msg']],
+                                                    'count_Depositaccount_list':[count_Depositaccount_result['status_code'], count_Depositaccount_result['msg']]
+                                                    })
 
 def get_check_page(request, comp_id, rpt_id, acc_id):
     table_name = 'cash_in_banks'
     uploadFile = get_uploaded_file(rpt_id, table_name)
     cibSummary = 0
+    cibData = {}
     if uploadFile.get('status_code') == 200:
         cibData = uploadFile.get('returnObject')
         for i in cibData:
-            cibSummary += (i.ntd_amount)
+            cibSummary += int(i.ntd_amount)
+
     else:
         msg = uploadFile.get('msg')
 
@@ -184,7 +209,7 @@ def get_check_page(request, comp_id, rpt_id, acc_id):
         # 這裡要傳errorPage回去嗎
         return render(request, 'checking_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
     return render(request, 'checking_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id': acc_id, 'cibData': cibData, 'depositData':depositData,
-                                                 'cibSummary':cibSummary, 'depositSummary':depositSummary})
+                                                 'cibSummary': cibSummary, 'depositSummary':depositSummary})
 @csrf_exempt
 def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
     if request.method == 'POST' and request.is_ajax():
@@ -223,4 +248,3 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                     'table_name': 'deposit_account',
                     'isUpdated': False
                 })
-

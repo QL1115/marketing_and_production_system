@@ -14,7 +14,7 @@
         <link href="test.css" rel="stylesheet">
         
         <script type="text/javascript" src="/static/js/jquery.js"></script>
-        
+
         </head>
 <body>
 <!--upload section start-->
@@ -25,15 +25,14 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
+                            <a class="nav-link" href="{% url 'import' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-                               aria-haspopup="true" aria-expanded="false">檢查</a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="#">定期存款</a>
-                                <a class="dropdown-item" href="#">銀行存款</a>
-                            </div>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'check_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true"><strong>檢查</strong></a>
+{#                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">#}
+{#                                <a class="dropdown-item" href="#">定期存款</a>#}
+{#                                <a class="dropdown-item" href="#">銀行存款</a>#}
+{#                            </div>#}
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
@@ -73,42 +72,27 @@
             <!--如果沒上傳過定期存款，顯示這個-->
             {% if  count_Depositaccount_list.0 == 999 %}
             <div class="row justify-content-start">
-                    <div class="col-2 align-self-center">定期存款：</div>
-                    <div class="col-6">
-                        {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
+                <div class="col-2 align-self-center">定期存款：</div>
+                <div class="col-6">
+                    {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
 
-                        <form action='./import' method="post" enctype="multipart/form-data">
-                            <div class="custom-file" style="width: 80%">
-                                <input type="text" hidden name="table_name" value="deposit_account"/>
-                                <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadDepositAccount"
-                                    name='file'/>
-                                <label class="custom-file-label text-left" for="customFile"></label>
-                            </div>
-                            <input class="btn btn-primary" type="submit"/>
-                        </form>
-                    </div>
+                    <form action='./import' method="post" enctype="multipart/form-data">
+                        <div class="custom-file" style="width: 80%">
+                            <input type="text" hidden name="table_name" value="deposit_account"/>
+                            <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadDepositAccount"
+                                name='file'/>
+                            <label class="custom-file-label text-left" for="customFile"></label>
+                        </div>
+                        <input class="btn btn-primary" type="submit"/>
+                    </form>
+                </div>
             </div>
             {% endif %}
             
             <!--如果上傳過定期存款，顯示這個 789-->
             {% if count_Depositaccount_list.0 == 789  %}
             <div class="row justify-content-start">
-                
-                
                     <div class="col-2 align-self-center">定期存款：</div>
-                    <div class="col-6">
-                        {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
-
-                        <form action='./import' method="post">
-                            <div class="custom-file" style="width: 80%">
-                                <input type="text" hidden name="table_name" value="deposit_account"/>
-                                <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadDepositAccount"
-                                    name='file'/>
-                                <label class="custom-file-label text-left" for="customFile"></label>
-                            </div>
-                            
-                        </form>
-                    </div>
                     <div class="col-2 align-self-center">
                         <button class="btn btn-primary" id="del_Depositaccount">del</button> 
                     </div>
@@ -140,24 +124,11 @@
             {% if count_CashInBank_list.0 == 123 %}
             <div class="row justify-content-start">
                     <div class="col-2 align-self-center">銀行存款：</div>
-                    <div class="col-6">
-                        {#              '{% url "upload_file" comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name="deposit_account" %}'#}
-
-                        <form action='./import' method="post">
-                            <div class="custom-file" style="width: 80%">
-                                <input type="text" hidden name="table_name" value="cash_in_bank"/>
-                                <input type="file" accept=".xls, .xlsx" class="custom-file-input" id="UploadCashInBank"
-                                    name='file'/>
-                                <label class="custom-file-label text-left" for="customFile"></label>
-                            </div>
-                        </form>
-                    </div>
                     <div class="col-2 align-self-center">
-                    <button class="btn btn-primary" id="del_CashInBank" >del</button> 
+                    <button class="btn btn-primary" id="del_CashInBank" >del</button>
                     </div>
                     </div>
             {% endif %}
-
             {% if import_related_list.count != 0 and import_related_list.0 != 200 %}
                 <div class="row justify-content-center">
                     <div class="col-8">上傳失敗，原因：{{ import_related_list.1 }}</div>
@@ -190,7 +161,7 @@
   </div>
   <div class="col-md-1">
     <form>
-      <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/raw_files/Cashinbanks'"></a>刪除</a></button>  
+      <button><a href="'companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/raw_files/Cashinbanks'"></a>刪除</a></button>
     </form>
   </div>
 </div> -->
@@ -200,25 +171,76 @@
 
 <script src="test3.js"></script>
 <script type="text/javascript">
-    document.getElementById("UploadCashInBank").addEventListener('change', function (e) {
-        var fileName = document.getElementById("UploadCashInBank").files[0].name;
-        var nextSibling = e.target.nextElementSibling
-        nextSibling.innerText = fileName
-    })
+    $(document).ready(function() {
 
-    document.getElementById("UploadDepositAccount").addEventListener('change', function (e) {
-        var fileName = document.getElementById("UploadDepositAccount").files[0].name;
-        var nextSibling = e.target.nextElementSibling
-        nextSibling.innerText = fileName
-    })
+        {% if count_Depositaccount_list.0 == 999 %}
+            document.getElementById("UploadDepositAccount").addEventListener('change', function (e) {
+                var fileName = document.getElementById("UploadDepositAccount").files[0].name;
+                var nextSibling = e.target.nextElementSibling
+                nextSibling.innerText = fileName
+            })
+        {% endif %}
 
+        {% if count_CashInBank_list.0 == 789 %}
+            document.getElementById("UploadCashInBank").addEventListener('change', function (e) {
+                var fileName = document.getElementById("UploadCashInBank").files[0].name;
+                var nextSibling = e.target.nextElementSibling
+                nextSibling.innerText = fileName
+            })
+        {% endif %}
+
+        $("#del_CashInBank").on('click',function () {
+                alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
+                var statu = confirm("確定要刪除銀行存款嗎?");
+                if (!statu) { return false; }
+                $.ajax({
+                    type: "GET",
+                    url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
+                    //data: "BookID=" + $(this).next().val(),
+                    //dataType: "json",
+                    success: function (response) {
+                        {#window.location.reload();#}
+                        console.log(response)
+                    }, error: function (error) {
+                        {#window.location.reload();#}
+                        console.log(error);
+                    },
+                    complete: function(XMLHttpRequest, textStatus) {
+                        window.location = window.location.href;
+                    }
+                });
+        });
+
+        $("#del_Depositaccount").on('click', function () {
+            console.log('in')
+                alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");
+                var statu = confirm("確定要刪除銀行存款嗎?");
+                if (!statu) { return false; }
+                $.ajax({
+
+                    type: "GET",
+                    url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
+                    //data: "BookID=" + $(this).next().val(),
+                    //dataType: "json",
+                    success: function (response) {
+                        {#window.location.reload();#}
+                    }, error: function (error) {
+                        {#window.location.reload();#}
+                        console.log(error);
+                    },
+                    complete: function(XMLHttpRequest, textStatus) {
+                        window.location = window.location.href;
+                    }
+                });
+        });
+    })
 
     $("#del_CashInBank").on('click',function () {
             alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
             var statu = confirm("確定要刪除銀行存款嗎?");
             if (!statu) { return false; }
             $.ajax({
-              
+
                 type: "GET",
                 url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
                 //data: "BookID=" + $(this).next().val(),
@@ -237,7 +259,7 @@
             var statu = confirm("確定要刪除銀行存款嗎?");
             if (!statu) { return false; }
             $.ajax({
-              
+
                 type: "GET",
                 url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
                 //data: "BookID=" + $(this).next().val(),
@@ -251,7 +273,7 @@
             });
     });
 
-    
+
     $(function() {
 
     var defaultData = [

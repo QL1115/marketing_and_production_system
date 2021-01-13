@@ -18,21 +18,22 @@
             border: none;
         }
     </style>
+
+
     <!--start of navbar-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">OurLogo</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">匯入</a>
+                    <a class="nav-link" href="{% url 'import' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><strong>檢查</strong></a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="#">定期存款</a>
-                        <a class="dropdown-item" href="#">銀行存款</a>
-                    </div>
+                    <a class="nav-link" href="{% url 'check_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}"  tabindex="-1" aria-disabled="true"><strong>檢查</strong></a>
+{#                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">#}
+{#                        <a class="dropdown-item" href="#">定期存款</a>#}
+{#                        <a class="dropdown-item" href="#">銀行存款</a>#}
+{#                    </div>#}
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
@@ -94,13 +95,11 @@
                     <div>
                         <div>
                             <div class="float-right">
-                                <label for="totalforCheckDepositAccount">合計:</label>
+                                <label for="totalforCheckDepositAccount">合計(NTD):</label>
                                 <input id="totalforCheckDepositAccount" type="text" placeholder="{{ depositSummary }}" readonly/>
-
-
                             </div>
                         </div>
-                        <table class="" id="deposit_account_table" style="width:1000px;">
+                        <table class="w-auto" id="deposit_account_table">
                             <thead>
                                 <tr class="table-active">
                                     <th style="padding:8px;">銀行別</th>
@@ -126,10 +125,10 @@
                                                value="{{ row.foreign_currency_amount|default_if_none:"--" }}" disabled/></td>
                                     <td><input type="number" name="ntd_amount" value="{{ row.ntd_amount }}" disabled required/>
                                     </td>
-                                    <td><input type="number" name="plege" value="{{ row.plege }}" disabled/></td>
-                                    <td><input type="date" name="start_date" value="{{ row.start_date|date:"Y-m-d" }}" disabled/>
+                                    <td><input type="number" max="1" min="0" name="plege" value="{{ row.plege }}" disabled required/></td>
+                                    <td><input type="date" name="start_date" value="{{ row.start_date|date:"Y-m-d" }}" disabled required/>
                                     </td>
-                                    <td><input type="date" name="end_date" value="{{ row.end_date|date:"Y-m-d" }}" disabled/></td>
+                                    <td><input type="date" name="end_date" value="{{ row.end_date|date:"Y-m-d" }}" disabled required/></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -140,12 +139,11 @@
                 <div id="tableforCheckCashInBank">
                     <div>
                         <div class="float-right">
-                            <label for="totalforCheckCashInBank">合計:</label>
-                            <input id="totalforCheckCashInBanks" type="text" placeholder="{{ cibSummary }}"
-                                   style="display:none" readonly/>
+                            <label for="totalforCheckCashInBank">合計(NTD):</label>
+                            <input id="totalforCheckCashInBanks" type="text" placeholder="{{ cibSummary }}" readonly/>
                         </div>
                     </div>
-                    <table id="cash_in_bank_table">
+                    <table class="w-auto" id="cash_in_bank_table">
                         <tr class="table-active">
                             <th>銀行別</th>
                             <th>帳號</th>
@@ -158,13 +156,13 @@
                         {% for row in  cibData %}
                             <tr class="input_row">
                                 {% csrf_token %}
-                                <input type="hidden" name="id" value="{{ row.cash_in_banks_id }} ">
-                                <td><input type="text" name="bank_name" value="{{ row.bank_name }}" disabled/></td>
-                                <td><input type="text" name="bank_account_number" value="{{ row.bank_account_number }}" disabled/></td>
-                                <td><input type="text" name="currency" value="{{ row.currency }}" disabled/></td>
+                                <input type="hidden" name="id" value="{{ row.cash_in_banks_id }}" disabled required>
+                                <td><input type="text" name="bank_name" value="{{ row.bank_name }}" disabled required/></td>
+                                <td><input type="text" name="bank_account_number" value="{{ row.bank_account_number }}" disabled required/></td>
+                                <td><input type="text" name="currency" value="{{ row.currency }}" disabled required/></td>
                                 <td><input type="text" name="foreign_currency_amount"
                                            value="{{ row.foreign_currency_amount|default_if_none:"--" }}" disabled/></td>
-                                <td><input type="number" name="ntd_amount" value="{{ row.ntd_amount }}" disabled/></td>
+                                <td><input type="number" name="ntd_amount" value="{{ row.ntd_amount }}" disabled required/></td>
                             </tr>
                         {% endfor %}
 
@@ -183,7 +181,7 @@
     $(document).ready(function() {
         $("#tableforCheckCashInBank").hide();
         $("#tableforCheckDepositAccount").show();
-                $("button").on('click', function (e) {
+        $("button").on('click', function (e) {
             if (e.target.id == "CheckCashInBank") {
                 <!--點了銀行存款，將銀行存款按鈕顯示深色-->
                 $("#CheckDepositAccount").removeClass("btn-dark");
@@ -230,14 +228,11 @@
         {# TODO 儲存按鈕 #}
         $('#save').on('click', function () {
             $('#save').prop('disabled', true)
-            console.log('save')
             msg = '';
             if ($('#tableforCheckDepositAccount').css('display') !== 'none') { <!-- 代表現在是「定期存款」 -->
-                console.log('in save deposit account')
                 $('#deposit_account_table td :input').prop('disabled', 'disabled'); <!-- 不可再更改「定期存款」 -->
 
                 $('#deposit_account_table .input_row').each(function () {
-                    console.log($(this));
                     var foreign_currency_amount = ($(this).find("input[name=foreign_currency_amount]").val().trim() == '--' || $(this).find("input[name=foreign_currency_amount]").val().trim() == '')
                                                     ? null: parseFloat(($(this).find("input[name=foreign_currency_amount]").val().trim()));
 
