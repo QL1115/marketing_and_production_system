@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pandas._libs import json
-
+from .utils.Entries import create_preamount_and_adjust_entries_for_project_account
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
 from .models import Cashinbanks, Depositaccount
@@ -90,22 +90,18 @@ def check(rpt_id):
 
     if count_CashInBank[0]>0:
         #銀行存款已匯入資料
-        print('銀行存款已匯入資料')
         count_CashInBank_result={"status_code": 123, "msg": "銀行存款已匯入資料"}
             
     else:
         #銀行存款沒有
-        print('銀行存款沒匯入過')
         count_CashInBank_result={"status_code": 456, "msg": "銀行存款沒匯入過"}
             
 
     if count_Depositaccount[0]>0:
         #定期存款已匯入資料
-        print('定期存款已匯入資料')
         count_Depositaccount_result={"status_code": 789, "msg": "定期存款已匯入資料"}
     else:
         #定期存款沒有
-        print('定期存款沒匯入過')
         count_Depositaccount_result={"status_code": 999, "msg": "定期存款沒匯入過"}
     return(count_CashInBank_result,count_Depositaccount_result)
 
@@ -122,38 +118,6 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
         count_Depositaccount_result=check(rpt_id)[1]
 
 
-
-        # #執行原生sql，查詢CashInBanks是否已經有匯入
-        # cursor1 = connection.cursor()
-        # cursor1.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join CashInBanks on Report.rpt_id=CashInBanks.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
-        # count_CashInBank = cursor1.fetchone()
-
-        # #執行原生sql，查詢Depositaccount是否已經有匯入
-        # cursor2 = connection.cursor()
-        # cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
-        # count_Depositaccount = cursor2.fetchone()
-        # print('~~~~~~~!!!!!!!!!!')
-
-        # if count_CashInBank[0]>0:
-        #     #銀行存款已匯入資料
-        #     print('銀行存款已匯入資料')
-        #     count_CashInBank_result={"status_code": 123, "msg": "銀行存款已匯入資料"}
-            
-        # else:
-        #     #銀行存款沒有
-        #     print('銀行存款沒匯入過')
-        #     count_CashInBank_result={"status_code": 456, "msg": "銀行存款沒匯入過"}
-            
-
-        # if count_Depositaccount[0]>0:
-        #     #定期存款已匯入資料
-        #     print('定期存款已匯入資料')
-        #     count_Depositaccount_result={"status_code": 789, "msg": "定期存款已匯入資料"}
-        # else:
-        #     #定期存款沒有
-        #     print('定期存款沒匯入過')
-        #     count_Depositaccount_result={"status_code": 999, "msg": "定期存款沒匯入過"}
-            
         
         return render(request, 'import_page.html',{ 'acc_id': acc_id,
                                                     'comp_id': comp_id,
@@ -173,6 +137,11 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
         count_CashInBank_result=check(rpt_id)[0]
         count_Depositaccount_result=check(rpt_id)[1]
        
+        #如果兩張表都已經匯入，才進行建立分錄
+        if check(rpt_id)[0]['status_code']==123 and check(rpt_id)[1]['status_code']==789:
+            #建立分錄，此method放在utils的Entries中
+            create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+
 
         return render(request, 'import_page.html', {'acc_id': acc_id,
                                                     'comp_id': comp_id,
