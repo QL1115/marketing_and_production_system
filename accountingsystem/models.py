@@ -17,7 +17,8 @@ class Adjentry(models.Model):
     amount = models.DecimalField(max_digits=22, decimal_places=2)
     adj_num = models.IntegerField()
     pre = models.ForeignKey('Preamt', models.CASCADE)
-
+    credit_debit=models.IntegerField()
+    front_end_location = models.IntegerField()
     class Meta:
         managed = False
         db_table = 'adjentry'
@@ -63,6 +64,7 @@ class Depositaccount(models.Model):
     plege = models.IntegerField()
     start_date = models.DateField()
     end_date = models.DateField()
+    already_adjust = models.IntegerField()
     rpt = models.ForeignKey('Report', models.CASCADE)
 
     class Meta:
@@ -106,7 +108,7 @@ class Exchangerate(models.Model):
     rate_id = models.AutoField(primary_key=True)
     currency_name = models.CharField(max_length=10)
     rate = models.DecimalField(max_digits=8, decimal_places=5)
-    pre = models.ForeignKey('Preamt', models.CASCADE)
+    rpt = models.ForeignKey('Report', models.CASCADE)
 
     class Meta:
         managed = False
