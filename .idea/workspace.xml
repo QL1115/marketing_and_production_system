@@ -6,8 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="cb85c1da-0c4b-413a-890c-66b4ae99034b" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/mcdonalds/stores_contact.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/mcdonalds/stores_contact.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/mcdonalds/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/mcdonalds/login.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/mcdonalds/raw_materials_order_create.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/mcdonalds/raw_materials_order_create.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/mcdonalds/store_send_demand.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/mcdonalds/store_send_demand.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,7 +104,10 @@
       <workItem from="1609391779555" duration="41535000" />
       <workItem from="1609751975914" duration="10226000" />
       <workItem from="1609768205778" duration="4536000" />
-      <workItem from="1609923976078" duration="1958000" />
+      <workItem from="1609923976078" duration="2459000" />
+      <workItem from="1609994772697" duration="2876000" />
+      <workItem from="1610007109876" duration="3886000" />
+      <workItem from="1610426418907" duration="28000" />
     </task>
     <servers />
   </component>
