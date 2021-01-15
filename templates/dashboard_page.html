@@ -22,11 +22,11 @@
                 </div>
             </li>
                <li class="nav-item dropdown">
-                  <a class="nav-link disabled dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-disabled="true" aria-expanded="false">調整</a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                      <a class="dropdown-item" href="#">Action</a>
-                      <a class="dropdown-item" href="#">Another action</a>
-                    </div>
+                  <a class="nav-link dropdown-toggle" href="{% url 'adjust_acc' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-disabled="true" aria-expanded="false">調整</a>
+{#                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">#}
+{#                      <a class="dropdown-item" href="#">Action</a>#}
+{#                      <a class="dropdown-item" href="#">Another action</a>#}
+{#                    </div>#}
               </li>        
               <li class="nav-item">
                   <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>

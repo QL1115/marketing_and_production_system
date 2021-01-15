@@ -35,14 +35,14 @@
 {#                            </div>#}
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                            <a class="nav-link dropdown-toggle" href="{% url 'adjust_acc' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" id="navbarDropdown" role="button" data-toggle="dropdown"
                                aria-haspopup="true" aria-expanded="false">調整</a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="#">定期存款調整科目</a>
-                                <a class="dropdown-item" href="#">銀行存款調整外幣評價損益</a>
-                                <a class="dropdown-item" href="#">調整表</a>
-                                <a class="dropdown-item" href="#">附註格式</a>
-                            </div>
+{#                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">#}
+{#                                <a class="dropdown-item" href="#">定期存款調整科目</a>#}
+{#                                <a class="dropdown-item" href="#">銀行存款調整外幣評價損益</a>#}
+{#                                <a class="dropdown-item" href="#">調整表</a>#}
+{#                                <a class="dropdown-item" href="#">附註格式</a>#}
+{#                            </div>#}
                         </li>
                         <li class="nav-item">
                             <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
