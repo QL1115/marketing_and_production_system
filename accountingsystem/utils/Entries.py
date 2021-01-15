@@ -34,6 +34,26 @@ def create_cash_preamount(rpt_id, acc_id):
     print('create_cash_preamount')
 
 
+def fill_in_preamount(list, rpt_id, acc_id):
+    '''
+    將 adjust entry 中計算完成的 preamount 塞回。
+    :param list: eg. [{"質押定存": 質押定存obj, "台幣定存": 台幣定存obj}, {"外匯存款", 外匯存款obj}, {...}, ...]
+    :return JSON format string，代表成功或失敗
+    '''
+    try:
+        # 1. 撈 cashinbank 及 depositaccount 這兩個 table 內的 type，找出對應的 account id 後決定邏輯。
+        cash_in_bank = Cashinbanks.objects.get(rpt__rpt_id=rpt_id)
+        deposit_account = Depositaccount.objects.get(rpt__rpt_id=rpt_id)
+        # 2. 各個不同 account id 的邏輯
+
+    except Cashinbanks.DoesNotExist or Depositaccount.DoesNotExist as e:
+        print('「銀行存款」或者「定期存款」資料表中沒有對應的 records >>> ', e)
+        return '{"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}'
+
+
+
+
+
 
 
 

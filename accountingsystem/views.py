@@ -213,3 +213,7 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                     'table_name': 'deposit_account',
                     'isUpdated': False
                 })
+
+def adjust_acc_all(request, comp_id, rpt_id, acc_id):
+    '''單一科目 - 調整頁面 的最後一個'''
+    pass
