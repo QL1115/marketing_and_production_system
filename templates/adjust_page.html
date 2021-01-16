@@ -136,7 +136,7 @@
                             {% for totalAmount in depositTotalEntryAmountList %}
                             <tr class="input_row">
                                 <td>調整金額_{{ totalAmount.0 }}</td>
-                                <td>{{ totalAmount.1 }}</td>
+                                <td>{{ totalAmount.1|floatformat:0 }}</td>
                             </tr>
                             {% endfor %}
                             </table>
@@ -233,7 +233,7 @@
                         {% for totalAmount in cibTotalEntryAmountList %}
                         <tr class="input_row">
                             <td>差異_{{ totalAmount.0 }}</td>
-                            <td>{{ totalAmount.1 }}</td>
+                            <td>{{ totalAmount.1|floatformat:0 }}</td>
                         </tr>
                         {% endfor %}
                         </table>
