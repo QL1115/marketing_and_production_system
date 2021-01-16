@@ -228,6 +228,50 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         msg = uploadFile.get('msg')
         # 這裡要傳errorPage回去嗎
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
+    # 取得分錄(acc_name, amount, adj_num, credit_debit)
+    entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
+    # print('entries[0] >>>>>>>>>', entries[0])
+    adjNum = entries[0].get('adj_num')
+    entryList = []
+    depositEntryList = []
+    depositTotalEntryAmountList = []
+    depositTotalAmount = 0
+    for entry in entries:
+        # 計算調整總額
+        print(entry.get('entry_name'), '\t', entry.get('pre__acc__acc_name'))
+        if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+            depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), entry.get('amount')])
+            depositTotalAmount += entry.get('amount')
+        
+        # 同一組就丟進entryList
+        if entry.get('adj_num') == adjNum:
+            entryList.append(entry)
+        # 出現新的adj_num
+        else:
+            # 先把上一組的entryList丟進depositEntryList
+            depositEntryList.append(entryList)
+            # 清空entryList
+            entryList = []
+            entryList.append(entry)
+            adjNum = entry.get('adj_num')
+    # 把最後一組的entryList丟進depositEntryList
+    depositEntryList.append(entryList)
+    
+    # 調整合計
+    if len(depositTotalEntryAmountList) != 0:
+            depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
+            
+    # print(depositEntryList)
+    # print('----------------------------------------------------------------------------------')
+    # counter = 1
+    # for i in depositEntryList:
+        # print(counter)
+        # for j in i:
+            # print(j)
+        # counter+=1
+    # print('===================================================================================')
+    # print(depositTotalEntryAmountList)
+    
     
     table_name = 'cash_in_banks'
     uploadFile = get_uploaded_file(rpt_id, table_name)
@@ -270,34 +314,46 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
     
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit')
+    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
     # print('entries[0] >>>>>>>>>', entries[0])
-    adjNum = entries[0].get('adj_num')
+    # adjNum = entries[0].get('adj_num')
     entryList = []
-    finEntryList = []
-    for entry in entries:
-        # 同一組就丟進entryList
-        if entry.get('adj_num') == adjNum:
-            entryList.append(entry)
-        # 出現新的adj_num
-        else:
-            # 先把上一組的entryList丟進finEntryList
-            finEntryList.append(entryList)
-            # 清空entryList
-            entryList = []
-            entryList.append(entry)
-            adjNum = entry.get('adj_num')
-    # 把最後一組的entryList丟進finEntryList
-    finEntryList.append(entryList)
-    print(finEntryList)
-    print('----------------------------------------------------------------------------------')
-    counter = 1
-    for i in finEntryList:
-        print(counter)
-        for j in i:
-            print(j)
-        counter+=1
-    print('===================================================================================')
+    cibEntryList = []
+    cibTotalEntryAmountList = []
+    cibTotalAmount = 0
+    # for entry in entries:
+        # 計算調整總額
+        # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+            # cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), entry.get('amount')])
+            # cibTotalAmount += entry.get('amount')
+            
+        # # 同一組就丟進entryList
+        # if entry.get('adj_num') == adjNum:
+            # entryList.append(entry)
+        # # 出現新的adj_num
+        # else:
+            # # 先把上一組的entryList丟進cibEntryList
+            # cibEntryList.append(entryList)
+            # # 清空entryList
+            # entryList = []
+            # entryList.append(entry)
+            # adjNum = entry.get('adj_num')
+    # 把最後一組的entryList丟進cibEntryList
+    # cibEntryList.append(entryList)
+    # 差異合計
+    # if len(cibTotalEntryAmountList) != 0:
+            # cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
+    
+    # print(cibEntryList)
+    # print('----------------------------------------------------------------------------------')
+    # counter = 1
+    # for i in cibEntryList:
+        # print(counter)
+        # for j in i:
+            # print(j)
+        # counter+=1
+    # print('===================================================================================')
+    
     '''單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表'''
     # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set
     preamt_qry_set = Preamt.objects.filter(rpt__rpt_id=rpt_id, acc__acc_id=acc_id).values('pre_id', 'acc__acc_name', 'book_amt', 'adj_amt', 'pre_amt')
@@ -315,4 +371,5 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         adj_entries_list.append({'credit': adj_entries_qry_set.filter(adj_num=adj_num, credit_debit=0), 'debit': adj_entries_qry_set.filter(adj_num, credit_debit=1)})
     print('調整分錄配對好後的 list, adj_entries_list >>> ', adj_entries_list)
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
-                                                'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'entryList': finEntryList})
+                                                'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
+                                                'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
