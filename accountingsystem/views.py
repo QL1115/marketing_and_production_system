@@ -8,7 +8,7 @@ from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 
@@ -86,21 +86,26 @@ def delete_cash_preamount(rpt_id):
     print('!!!!in')
     # 撈出所有存在於 cashinBank 跟 depositAccount 的 (就是兩個會有現金的檯面)的type再予以刪除
     countIdList = [23, 24, 25, 26]
-    for i in Cashinbanks.object.all():
-        if i.type in countIdList:
-            pass
-        else:
-            countIdList.append(i.type)
-    for i in Depositaccount.objects.all():
-        if i.type in countIdList:
-            pass
-        else:
-            countIdList.append(i.type)
     deleteList = []
+    deleteAccountList = []
     for i in countIdList:
-        for a in Preamt.objects.filter(rpt=Reprot.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)):
+        for a in Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)):
             deleteList.append(a)
-    deleteList.delete()
+    for i in Cashinbanks.objects.all():
+        if i.type in deleteAccountList:
+            pass
+        else:
+            deleteAccountList.append(i.type)
+    for i in Depositaccount.objects.all():
+        if i.type in deleteAccountList:
+            pass
+        else:
+            deleteAccountList.append(i.type)
+
+    for i in deleteAccountList:
+        a = Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=i)
+        a.delete()
+    
     return
 
 def check(rpt_id):
