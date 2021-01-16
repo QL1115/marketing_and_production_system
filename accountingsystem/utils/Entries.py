@@ -221,12 +221,7 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
     debit_ntd_deposit_total = Adjentry.objects.create(amount=ntd_total, adj_num=bigest_adj_num + 1,
                                                              pre=ntd_deposit_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='超過三個月定存')
-    #create_adjust_entry for foreign_currency_over_3_month_total
-    #(amount, adj_num, pre_id, credit_debit, front_end_location)
-    #(foreign_currency_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 0, 1)
-    credit_foreign_currency_over_3_month_total = Adjentry.objects.create(amount=foreign_currency_total, adj_num=bigest_adj_num + 1,
-                                                             pre=over_3_month_pre_id, credit_debit=0,
-                                                             front_end_location=1, entry_name='超過三個月定存')
+
     #create_adjust_entry for 外幣定存
     #(amount, adj_num, pre_id, credit_debit, front_end_location)
     #(foreign_currency_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 1, 1)
