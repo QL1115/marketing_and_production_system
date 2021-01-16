@@ -332,8 +332,24 @@ def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
            "台幣定存": debit_ntd_deposit_total}
 
 def create_cash_preamount(rpt_id, acc_id):
-    print('create_cash_preamount')
-
+    countIdList = []
+    acc_id = 1
+    countIdList.append(acc_id)
+    for i in countIdList:
+        childList = Account.objects.filter(acc_parent=i)
+        for a in childList:
+            if a.acc_id in countIdList:
+                pass
+            else:
+                countIdList.append(a.acc_id)
+                # 要接一個account object
+    number23 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=23))
+    number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
+    number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
+    number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
+    for i in countIdList:
+        a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+    
 
 def fill_in_preamount(list,  rpt_id, acc_id):
     '''
