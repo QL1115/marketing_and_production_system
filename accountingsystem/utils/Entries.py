@@ -244,7 +244,7 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
         deposit_month = deposit_account['end_date'].month
         duration = 12 * (deposit_year - report_end_year) + (deposit_month - report_end_month)
         if deposit_account['already_adjust'] != 1 and duration > 3:
-           deposit_account['already_adjusted'] = 1
+           Depositaccount.objects.filter(rpt_id=rpt_id, dep_acc_id=deposit_account['dep_acc_id']).update(already_adjust=1)
            if deposit_account['foreign_currency_amount'] != None:
               foreign_currency_total += deposit_account['ntd_amount']
            else:
@@ -293,6 +293,7 @@ def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
     for deposit_account in deposit_account:
         if deposit_account['plege'] == 1:
             deposit_account['already_adjust'] = 1
+            Depositaccount.objects.filter(rpt_id=rpt_id, dep_acc_id=deposit_account['dep_acc_id']).update(already_adjust=1)
             plege_total += deposit_account['ntd_amount']
 
     '''撈出最大的adj_num(可以寫一個method)'''
