@@ -19,6 +19,7 @@ class Adjentry(models.Model):
     pre = models.ForeignKey('Preamt', models.CASCADE)
     credit_debit=models.IntegerField()
     front_end_location = models.IntegerField()
+    entry_name = models.CharField(max_length=50)
     class Meta:
         managed = False
         db_table = 'adjentry'

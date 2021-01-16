@@ -121,17 +121,56 @@
                                     <td><input type="number" name="ntd_amount" value="{{ row.ntd_amount }}" disabled/>
                                     </td>
                                     <td><input type="number" max="1" min="0" name="plege" value="{{ row.plege }}" disabled/></td>
-                                    <td><input type="date" name="start_date" value="{{ row.start_date|date:"Y-m-d" }}" disabled/>
+                                    <td><input type="date" name="start_date" value="{{ row.start_date|date:'Y-m-d' }}" disabled/>
                                     </td>
-                                    <td><input type="date" name="end_date" value="{{ row.end_date|date:"Y-m-d" }}" disabled/></td>
+                                    <td><input type="date" name="end_date" value="{{ row.end_date|date:'Y-m-d' }}" disabled/></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
+                        <div>
+                        {% if depositTotalEntryAmountList %}
+                        <h5>調整總數</h5>
+                        {% endif %}
+                            <table class="w-auto" id="total_amount_table">
+                            {% for totalAmount in depositTotalEntryAmountList %}
+                            <tr class="input_row">
+                                <td>調整金額_{{ totalAmount.0 }}</td>
+                                <td>{{ totalAmount.1 }}</td>
+                            </tr>
+                            {% endfor %}
+                            </table>
+                        </div>
+                        <br>
+                        <div>
+                        {% if depositEntryList %}
+                        <h5>調整分錄</h5>
+                        {% endif %}
+                                <table class="w-auto" id="entries_table">
+                                        {% for entries in depositEntryList %}
+                                            {% for entry in entries %}
+                                                {% if entry.credit_debit == 0 %}
+                                                <tr class="input_row">
+                                                    <td>{{ entry.pre__acc__acc_name }}</td>
+                                                    <td></td>
+                                                    <td>{{ entry.amount|floatformat:0 }}</td>
+                                                    <td></td>
+                                                </tr>
+                                                {% else %}
+                                                <tr class="input_row">
+                                                    <td></td>
+                                                    <td>{{ entry.pre__acc__acc_name }}</td>
+                                                    <td></td>
+                                                    <td>{{ entry.amount|floatformat:0}}</td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <tr><td>&nbsp</td></tr>
+                                        {% endfor %}
+                                </table>
+                        </div>
                     </div>
-
                 </div>
-
                 <div id="tableforAdjustCashInBank">
                     <!-- <div> -->
                         <!-- <div class="float-right"> -->
@@ -186,6 +225,46 @@
                             </tr>
                         {% endfor %}
                     </table>
+                    <div>
+                    {% if cibTotalEntryAmountList %}
+                    <h5>調整總數</h5>
+                    {% endif %}
+                        <table class="w-auto" id="total_amount_table">
+                        {% for totalAmount in cibTotalEntryAmountList %}
+                        <tr class="input_row">
+                            <td><input type="text" name="difference" value="差異_{{ totalAmount.0 }}" disabled></td>
+                            <td>{{ totalAmount.1 }}</td>
+                        </tr>
+                        {% endfor %}
+                        </table>
+                    </div>
+                    <div>
+                    {% if cibEntryList %}
+                    <h5>調整分錄</h5>
+                    {% endif %}
+                            <table class="w-auto" id="entries_table">
+                                    {% for entries in cibEntryList %}
+                                        {% for entry in entries %}
+                                            {% if entry.credit_debit == 0 %}
+                                            <tr class="input_row">
+                                                <td>{{ entry.pre__acc__acc_name }}</td>
+                                                <td></td>
+                                                <td>{{ entry.amount|floatformat:0 }}</td>
+                                                <td></td>
+                                            </tr>
+                                            {% else %}
+                                            <tr class="input_row">
+                                                <td></td>
+                                                <td>{{ entry.pre__acc__acc_name }}</td>
+                                                <td></td>
+                                                <td>{{ entry.amount|floatformat:0}}</td>
+                                            </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <tr><td>&nbsp</td></tr>
+                                    {% endfor %}
+                            </table>
+                    </div>
                 </div>
             </div>
         </div>
