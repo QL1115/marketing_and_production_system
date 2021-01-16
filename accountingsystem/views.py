@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pandas._libs import json
-from .utils.Entries import create_preamount_and_adjust_entries_for_project_account
+from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
 from .models import Cashinbanks, Depositaccount
@@ -217,3 +217,9 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                     'table_name': 'deposit_account',
                     'isUpdated': False
                 })
+
+def adjust_acc(request, comp_id, rpt_id, acc_id):
+    '''單一科目 - 調整頁面 的最後一個'''
+    fill_in_preamount([], rpt_id, acc_id)
+    return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
+
