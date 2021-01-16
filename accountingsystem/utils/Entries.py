@@ -33,15 +33,19 @@ def create_cash_adjust_entries(rpt_id, acc_id):
     cash_qry_set={ 'cash_in_banks': cash_in_bank_qry_set,'deposit_account': deposit_account_qry_set}
 
     #定期存款-超過三個月定存
-    create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
+    over_3_month_dp = create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
     #定期存款-質押存款
-    create_pledge_deposit_account_entry(cash_qry_set,rpt_id)
+    pledge_deposit = create_pledge_deposit_account_entry(cash_qry_set,rpt_id)
     #銀行存款-外匯存款
-    create_foreign_currency_deposit_entry(cash_qry_set,rpt_id)
+    foreign_currency_deposit = create_foreign_currency_deposit_entry(cash_qry_set,rpt_id)
     #銀行存款-外幣定存
-    create_foreign_currency_time_deposit(cash_qry_set,rpt_id)
+    foreign_currency_time_deposit = create_foreign_currency_time_deposit(cash_qry_set,rpt_id)
     #銀行存款-超過三個月定存
-    create_over_three_month_time_deposit(cash_qry_set,rpt_id)
+    cib_over_3_month = create_over_three_month_time_deposit(cash_qry_set,rpt_id)
+    #
+    li = [over_3_month_dp, pledge_deposit, foreign_currency_deposit, foreign_currency_time_deposit, cib_over_3_month]
+    fill_in_preamount(li, rpt_id, acc_id)
+
 
 
 #銀行存款-外匯存款
@@ -292,18 +296,18 @@ def fill_in_preamount(list,  rpt_id, acc_id):
         cash_in_bank_qry_set = Cashinbanks.objects.filter(rpt__rpt_id=rpt_id)
         cashinbank_type_and_ntd_amount = cash_in_bank_qry_set.values('type__acc_id', 'type__acc_name').annotate(ntd_amount = Sum('ntd_amount'))
         # print('cashinbank.query >>> ', cashinbank_type_and_ntd_amount.query)
-        print('cashinbank_type_and_ntd_amount >>> ', cashinbank_type_and_ntd_amount)
+        # print('cashinbank_type_and_ntd_amount >>> ', cashinbank_type_and_ntd_amount)
         deposit_account_qry_set = Depositaccount.objects.filter(rpt__rpt_id=rpt_id)
         depositaccount_type_and_ntd_amount = deposit_account_qry_set.values('type__acc_id', 'type__acc_name').annotate(ntd_amount = Sum('ntd_amount'))
         # print('depositaccount.query >>> ', depositaccount_type_and_ntd_amount.query)
-        print('depositaccount_type_and_ntd_amount >>> ', depositaccount_type_and_ntd_amount)
+        # print('depositaccount_type_and_ntd_amount >>> ', depositaccount_type_and_ntd_amount)
 
         # 使用上傳資料表的 type 的 acc id 和 rpt_id 查出對應的 preamount qry set
         rpt_acc_tuples = tuple([(rpt_id, item['type__acc_id']) for item in cashinbank_type_and_ntd_amount.values('type__acc_id')]) + tuple([(rpt_id, item['type__acc_id']) for item in depositaccount_type_and_ntd_amount.values('type__acc_id')])
-        print('rpt_acc_tuples >>> ', rpt_acc_tuples)
+        # print('rpt_acc_tuples >>> ', rpt_acc_tuples)
         # 寫法參考：https://stackoverflow.com/a/41717889
         preamt_qry_set = Preamt.objects.extra(where=['(rpt_id, acc_id) in %s'], params=[rpt_acc_tuples])
-        print('preamt_qry_set >>> ', preamt_qry_set)
+        # print('preamt_qry_set >>> ', preamt_qry_set)
         # preamt53 = preamt_qry_set.get(acc__acc_id=53)
         # print('preamt53 >>> ', preamt53)
 
@@ -315,7 +319,7 @@ def fill_in_preamount(list,  rpt_id, acc_id):
 
         # print('<調整數> 超過三個月定存 {:f}, 台幣定存 {:f}, 外幣定存 {:f}, 質押定存 {:f}, 外匯存款 {:f}, 兌換利益 {:f}, 兌換損失 {:f} ')
         report_end_date = Report.objects.get(rpt_id=rpt_id).end_date
-        print('!!!!!!', report_end_date + relativedelta(months=3))
+        # print('!!!!!!', report_end_date + relativedelta(months=3))
         # 報導結束日
         # 2. 設置 preamt value
         # 活期存款 preamt
@@ -353,10 +357,11 @@ def fill_in_preamount(list,  rpt_id, acc_id):
 
         # # 3. 回傳資料
         # print('尚未測試 fill_in_preamount。 程式碼沒有報錯，但是要檢查金額是否正確。')
-        return {"status_code": 200, "returnObject": ""}
+        # return {"status_code": 200, "returnObject": ""}
+        print('fill_in_preamt')
     except Cashinbanks.DoesNotExist or Depositaccount.DoesNotExist as e:
         print('「銀行存款」或者「定期存款」資料表中沒有對應的 records >>> ', e)
-        return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
+        # return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
 
         # TODO 測試時註解掉
         # except Exception as e:

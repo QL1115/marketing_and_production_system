@@ -284,7 +284,7 @@
                 {% for entries_pair in adj_entries %}
                     <div class="row">
                     <div class="col-sm-1">{{ forloop.counter }}</div>
-                    <div class="col-sm-2">--</div>
+                    <div class="col-sm-2">{{ entries_pair.0.entry_name }}</div>
                     <div class="col-sm-3">
                         {% for credit_adj_entry in entries_pair.credit %}
                             <div class="row"><div class="col-sm-12">{{ credit_adj_entry.pre__acc__acc_name }}</div></div>
