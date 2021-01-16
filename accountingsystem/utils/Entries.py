@@ -75,7 +75,9 @@ def create_foreign_currency_deposit_entry(cash_qry_set,rpt_id):
         #寫入adjentry
         credit_foreign_exchange_losses=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_exchange_lost＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_外匯存款')
         debit_foreign_currency_deposit=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_curency_deposit＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_外匯存款')
-        return(credit_foreign_exchange_losses,debit_foreign_currency_deposit)
+        foreign_currency_deposit＿entry_list={}
+        foreign_currency_deposit＿entry_list={'兌換損失':credit_foreign_exchange_losses,'外匯存款':debit_foreign_currency_deposit}
+        return foreign_currency_deposit＿entry_list
     #建立分路#借外匯存款貸兌換利益
     elif total_difference>0:
         #撈出兌換利益pre object
@@ -83,7 +85,9 @@ def create_foreign_currency_deposit_entry(cash_qry_set,rpt_id):
         #寫入adjentry
         credit_foreign_currency_deposit=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_curency_deposit＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_外匯存款')
         debit_foreign_exchange_gain=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_exchange_gain＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_外匯存款')
-        return(debit_foreign_exchange_gain,credit_foreign_currency_deposit)
+        foreign_currency_deposit＿entry_list={}
+        foreign_currency_deposit＿entry_list={'兌換利益':debit_foreign_exchange_gain,'外匯存款':credit_foreign_currency_deposit}
+        return foreign_currency_deposit＿entry_list
 
 #銀行存款-外幣定存
 #此method請放在定期存款調整後
@@ -118,7 +122,9 @@ def create_foreign_currency_time_deposit(cash_qry_set,rpt_id):
         #寫入adjentry
         credit_foreign_exchange_losses=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_exchange_lost＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_定期存款')
         debit_foreign_currency_time_deposit=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_curency_time_deposit＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_定期存款')
-        return(credit_foreign_exchange_losses,debit_foreign_currency_time_deposit)
+        foreign_currency_time_deposit_entry_list={}
+        foreign_currency_time_deposit_entry_list={'兌換損失':credit_foreign_exchange_losses,'外幣定存':debit_foreign_currency_time_deposit}
+        return foreign_currency_time_deposit_entry_list
     #建立分路#借外匯存款貸兌換利益
     elif total_difference>0:
         #撈出兌換利益pre object
@@ -126,7 +132,9 @@ def create_foreign_currency_time_deposit(cash_qry_set,rpt_id):
         #寫入adjentry
         credit_foreign_currency_time_deposit=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_curency_time_deposit＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_定期存款')
         debit_foreign_exchange_gain=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_exchange_gain＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_定期存款')
-        return(debit_foreign_exchange_gain,credit_foreign_currency_time_deposit)
+        foreign_currency_time_deposit_entry_list={}
+        foreign_currency_time_deposit_entry_list={'兌換利益':debit_foreign_exchange_gain,'外幣定存':credit_foreign_currency_time_deposit}
+        return foreign_currency_time_deposit_entry_list
 
           
 #銀行存款-超過三個月定存 
@@ -160,7 +168,9 @@ def create_over_three_month_time_deposit(cash_qry_set,rpt_id):
         #寫入adjentry
         credit_foreign_exchange_losses=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_exchange_lost＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
         debit_over_three_month_time_deposit=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=over_three_month_time_deposit＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
-        return(credit_foreign_exchange_losses,debit_over_three_month_time_deposit)
+        over_three_month_time_deposit＿entry_list={}
+        over_three_month_time_deposit＿entry_list={'超過三個月定存':debit_over_three_month_time_deposit,'兌換損失':credit_foreign_exchange_losses}
+        return over_three_month_time_deposit＿entry_list
     #建立分路#借外匯存款貸兌換利益
     elif total_difference>0:
         #撈出兌換利益pre object
@@ -168,7 +178,9 @@ def create_over_three_month_time_deposit(cash_qry_set,rpt_id):
         #寫入adjentry
         credit_over_three_month_time_deposit=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=over_three_month_time_deposit＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
         debit_foreign_exchange_gain=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_exchange_gain＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
-        return(debit_foreign_exchange_gain,credit_over_three_month_time_deposit)
+        over_three_month_time_deposit＿entry_list={}
+        over_three_month_time_deposit＿entry_list={'超過三個月定存':credit_over_three_month_time_deposit,'兌換利益':debit_foreign_exchange_gain}
+        return over_three_month_time_deposit＿entry_list
 
 #定期存款-超過三個月定存
 def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
