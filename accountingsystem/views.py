@@ -97,7 +97,7 @@ def delete_cash_preamount(rpt_id):
             countIdList.append(i.type)
     deleteList = []
     for i in countIdList:
-        for a in Preamt.objects.filter(rpt=rpt_id, acc=i):
+        for a in Preamt.objects.filter(rpt=Reprot.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)):
             deleteList.append(a)
     deleteList.delete()
     return
