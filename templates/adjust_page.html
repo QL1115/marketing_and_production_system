@@ -129,7 +129,7 @@
                             </tbody>
                         </table>
                         <div>
-                        {% if depositTotalEntryAmountList %}
+                        {% if depositTotalEntryAmountList|length > 0 %}
                         <h5>調整總數</h5>
                         {% endif %}
                             <table class="w-auto" id="total_amount_table">
@@ -143,7 +143,7 @@
                         </div>
                         <br>
                         <div>
-                        {% if depositEntryList %}
+                        {% if depositEntryList|length > 0 %}
                         <h5>調整分錄</h5>
                         {% endif %}
                                 <table class="w-auto" id="entries_table">
@@ -226,20 +226,21 @@
                         {% endfor %}
                     </table>
                     <div>
-                    {% if cibTotalEntryAmountList %}
+                    {% if cibTotalEntryAmountList|length > 0 %}
                     <h5>調整總數</h5>
                     {% endif %}
                         <table class="w-auto" id="total_amount_table">
                         {% for totalAmount in cibTotalEntryAmountList %}
                         <tr class="input_row">
-                            <td><input type="text" name="difference" value="差異_{{ totalAmount.0 }}" disabled></td>
+                            <td>差異_{{ totalAmount.0 }}</td>
                             <td>{{ totalAmount.1 }}</td>
                         </tr>
                         {% endfor %}
                         </table>
                     </div>
+                    <br>
                     <div>
-                    {% if cibEntryList %}
+                    {% if cibEntryList|length > 0 %}
                     <h5>調整分錄</h5>
                     {% endif %}
                             <table class="w-auto" id="entries_table">
@@ -459,6 +460,7 @@
                 if (e.target.id == "AdjustCashInBank") {
                     <!--點了銀行存款，將銀行存款按鈕顯示深色-->
                     $("#AdjustDepositAccount").removeClass("btn-dark");
+                    $("#Adjust").removeClass("btn-dark");
                     $(this).addClass("btn btn-dark");
                     <!--點了銀行存款，銀行存款div，隱藏定期存款-->
                     $("#tableforAdjustDepositAccount").hide();
@@ -466,12 +468,14 @@
                     $("#total_adj_entries").hide();
                 } else if (e.target.id == "AdjustDepositAccount") {
                     $("#AdjustCashInBank").removeClass("btn-dark");
+                    $("#Adjust").removeClass("btn-dark");
                     $(this).addClass("btn btn-dark");
                     $("#tableforAdjustDepositAccount").show();
                     $("#tableforAdjustCashInBank").hide();
                     $("#total_adj_entries").hide();
                 } else if (e.target.id = "Adjust"){
-                    $("#Adjust").removeClass("btn-dark");
+                    $("#AdjustDepositAccount").removeClass("btn-dark");
+                    $("#AdjustCashInBank").removeClass("btn-dark");
                     $(this).addClass("btn btn-dark");
                     $("#tableforAdjustDepositAccount").hide();
                     $("#tableforAdjustCashInBank").hide();

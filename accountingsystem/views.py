@@ -262,36 +262,41 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
     entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
-    # print('entries[0] >>>>>>>>>', entries[0])
-    adjNum = entries[0].get('adj_num')
+    
     entryList = []
     depositEntryList = []
     depositTotalEntryAmountList = []
     depositTotalAmount = 0
-    for entry in entries:
-        # 計算調整總額
-        print(entry.get('entry_name'), '\t', entry.get('pre__acc__acc_name'))
-        if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
-            depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), entry.get('amount')])
-            depositTotalAmount += entry.get('amount')
-        
-        # 同一組就丟進entryList
-        if entry.get('adj_num') == adjNum:
-            entryList.append(entry)
-        # 出現新的adj_num
-        else:
-            # 先把上一組的entryList丟進depositEntryList
-            depositEntryList.append(entryList)
-            # 清空entryList
-            entryList = []
-            entryList.append(entry)
-            adjNum = entry.get('adj_num')
-    # 把最後一組的entryList丟進depositEntryList
-    depositEntryList.append(entryList)
-    
-    # 調整合計
-    if len(depositTotalEntryAmountList) != 0:
-            depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
+    # 先check是否有分錄
+    if len(entries) != 0:
+        adjNum = entries[0].get('adj_num')
+        for entry in entries:
+            # 計算調整總額
+            if entry.get('pre__acc__acc_name') in entry.get('entry_name'): # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
+            # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+                # 此分頁的分錄若計在借方都為正，計在貸方都為負
+                if entry.get('credit_debit') == 0:
+                    amount = entry.get('amount')
+                else:
+                    amount = -1 * entry.get('amount')
+                depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                depositTotalAmount += amount
+            # 同一組就丟進entryList
+            if entry.get('adj_num') == adjNum:
+                entryList.append(entry)
+            # 出現新的adj_num
+            else:
+                # 先把上一組的entryList丟進depositEntryList
+                depositEntryList.append(entryList)
+                # 清空entryList
+                entryList = []
+                entryList.append(entry)
+                adjNum = entry.get('adj_num')
+        # 把最後一組的entryList丟進depositEntryList
+        depositEntryList.append(entryList)
+        # 調整合計
+        if len(depositTotalEntryAmountList) != 0:
+                depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
             
     # print(depositEntryList)
     # print('----------------------------------------------------------------------------------')
@@ -347,34 +352,41 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
     entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
-    # print('entries[0] >>>>>>>>>', entries[0])
-    # adjNum = entries[0].get('adj_num')
+    
     entryList = []
     cibEntryList = []
     cibTotalEntryAmountList = []
     cibTotalAmount = 0
-    # for entry in entries:
-        # 計算調整總額
-        # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
-            # cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), entry.get('amount')])
-            # cibTotalAmount += entry.get('amount')
-            
-        # # 同一組就丟進entryList
-        # if entry.get('adj_num') == adjNum:
-            # entryList.append(entry)
-        # # 出現新的adj_num
-        # else:
-            # # 先把上一組的entryList丟進cibEntryList
-            # cibEntryList.append(entryList)
-            # # 清空entryList
-            # entryList = []
-            # entryList.append(entry)
-            # adjNum = entry.get('adj_num')
-    # 把最後一組的entryList丟進cibEntryList
-    # cibEntryList.append(entryList)
-    # 差異合計
-    # if len(cibTotalEntryAmountList) != 0:
-            # cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
+    # 先check是否有分錄
+    if len(entries) != 0:
+        adjNum = entries[0].get('adj_num')
+        for entry in entries:
+            # 計算調整總額
+            if entry.get('pre__acc__acc_name') in entry.get('entry_name'): # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
+            # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+                # 此分頁的分錄若計在借方都為正，計在貸方都為負
+                if entry.get('credit_debit') == 0:
+                    amount = entry.get('amount')
+                else:
+                    amount = -1 * entry.get('amount')
+                cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                cibTotalAmount += amount
+            # 同一組就丟進entryList
+            if entry.get('adj_num') == adjNum:
+                entryList.append(entry)
+            # 出現新的adj_num
+            else:
+                # 先把上一組的entryList丟進cibEntryList
+                cibEntryList.append(entryList)
+                # 清空entryList
+                entryList = []
+                entryList.append(entry)
+                adjNum = entry.get('adj_num')
+        # 把最後一組的entryList丟進cibEntryList
+        cibEntryList.append(entryList)
+        # 差異合計
+        if len(cibTotalEntryAmountList) != 0:
+                cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
     
     # print(cibEntryList)
     # print('----------------------------------------------------------------------------------')
