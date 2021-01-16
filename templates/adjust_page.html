@@ -200,32 +200,31 @@
                 <div class="col-sm-3">科目（貸）</div>
                 <div class="col-sm-3">金額（NTD）</div>
             </div>
-            {% if adj_entries %}
-{#                {% with temp_num = 0 %}#}
+{#            {% if adj_entries %}#}
+                {% with temp_num=0 %}
                 {% for entries_pair in adj_entries %}
-{#                    {% temp_num += 1 %}#}
                     <div class="row">
-                    <div class="col-sm-1">{{ temp_num }}</div>
+                    <div class="col-sm-1">{{ forloop.counter }}</div>
                     <div class="col-sm-2">--</div>
                     <div class="col-sm-3">
-                        <div class="row"><div class="col-sm-12">超過三個月定存</div></div>
-                        <div class="row"><div class="col-sm-12">--</div></div>
-                        <div class="row"><div class="col-sm-12">--</div></div>
+                        {% for credit_adj_entry in entries_pair.credit %}
+                            <div class="row"><div class="col-sm-12">{{ credit_adj_entry.pre__acc__acc_name }}</div></div>
+                        {% endfor %}
                     </div>
                     <div class="col-sm-3">
-                        <div class="row"><div class="col-sm-12">--</div></div>
-                        <div class="row"><div class="col-sm-12">台幣定存</div></div>
-                        <div class="row"><div class="col-sm-12">外幣定存</div></div>
+                        {% for debit_adj_entry in entries_pair.debit %}
+                            <div class="row"><div class="col-sm-12">{{ debit_adj_entry.pre__acc__acc_name }}</div></div>
+                        {% endfor %}
                     </div>
                     <div class="col-sm-3">
-                        <div class="row"><div class="col-sm-12">--</div></div>
-                        <div class="row"><div class="col-sm-12">--</div></div>
-                        <div class="row"><div class="col-sm-12">--</div></div>
+                        {% for all_adj_entry in entries_pair.debit %}
+                            <div class="row"><div class="col-sm-12">{{ all_adj_entry.amount }}</div></div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}
-{#                {% endwith %}#}
-            {% endif %}
+                {% endwith %}
+{#            {% endif %}#}
             <div class="row">
                 <div class="col-sm-1">1</div>
                 <div class="col-sm-2">超過三個月定存</div>
@@ -323,6 +322,19 @@
                     <div class="col-sm">調整</div>
                     <div class="col-sm">編表數</div>
                 </div>
+                {% for preamt in preamts %}
+                    <div class="row">
+                        <div class="col-sm">{{ preamt.acc__acc_name }}</div>
+                        <div class="col-sm">{{ preamt.book_amt }}</div>
+                        {% if preamt.adj_amt == 0 %}
+                            <div class="col-sm">--</div>
+                        {% else %}
+                            <div class="col-sm">{{ preamt.adj_amt }}</div>
+                        {% endif %}
+                        <div class="col-sm">{{ preamt.pre_amt }}</div>
+                    </div>
+                {% endfor %}
+
                 <div class="row">
                     <div class="col-sm">活期存款</div>
                     <div class="col-sm"> 23,163,606 </div>

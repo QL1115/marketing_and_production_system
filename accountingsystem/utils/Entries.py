@@ -177,11 +177,11 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
     deposit_account = cash_qry_set['deposit_account']
     ntd_total = 0
     foreign_currency_total = 0
-    report_start_date = Report.objects.filter(rpt_id=rpt_id).value_list('start_date')
+    report_start_date = Report.objects.filter(rpt_id=rpt_id).values_list('start_date')
 
     #計算時間差(月)
-    report_start_year = report_start_date[0]['start_date'].year
-    report_start_month =report_start_date[0]['start_date'].month
+    report_start_year = report_start_date.year
+    report_start_month =report_start_date.month
     deposit_year = deposit_account[0]['start_date'].year
     deposit_month = deposit_account[0]['start_date'].month
     duration = 12*(report_start_year-deposit_year)+(report_start_month-deposit_month)
@@ -314,41 +314,42 @@ def fill_in_preamount(list,  rpt_id, acc_id):
         # adj_foreign_currency_cd: 外幣定存調整數, adj_ntd_cd: 台幣定存調整數, adj_exceed_three_months_dp: 超過三個月定存, adj_pledge: 質押定存
 
         # print('<調整數> 超過三個月定存 {:f}, 台幣定存 {:f}, 外幣定存 {:f}, 質押定存 {:f}, 外匯存款 {:f}, 兌換利益 {:f}, 兌換損失 {:f} ')
-        print('!!!!!!', datetime.date(year=2019,month=12,day=31) + relativedelta(months=3))
-
+        report_end_date = Report.objects.get(rpt_id=rpt_id).end_date
+        print('!!!!!!', report_end_date + relativedelta(months=3))
+        # 報導結束日
         # 2. 設置 preamt value
         # 活期存款 preamt
         preamt_demand_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('type__acc_id'))
         preamt_demand_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('ntd_amount')
         preamt_demand_deposit.adj_mat = 0 # TODO
         preamt_demand_deposit.pre_amt = preamt_demand_deposit.book_amt + preamt_demand_deposit.adj_mat
-        # TODO preamt_demand_deposit.save()
+        preamt_demand_deposit.save()
         # 支票存款 preamt
         preamt_check_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='支票存款').get('type__acc_id'))
         preamt_check_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='支票存款').get('ntd_amount')
         preamt_check_deposit.adj_mat = 0  # TODO
         preamt_check_deposit.pre_amt = preamt_check_deposit.book_amt + preamt_check_deposit.adj_mat
-        # TODO preamt_check_deposit.save()
+        preamt_check_deposit.save()
         # 外匯存款 preamt
         preamt_foreign_currency_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='外匯存款').get('type__acc_id'))
         preamt_foreign_currency_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='外匯存款').get('ntd_amount')
         preamt_foreign_currency_deposit.adj_mat = list[2]['外匯存款'].amount if list[2]['外匯存款'].credit_debit == 0 else list[2]['外匯存款'].amount*(-1)
         preamt_foreign_currency_deposit.pre_amt = preamt_foreign_currency_deposit.book_amt + preamt_foreign_currency_deposit.adj_mat
-        # TODO preamt_foreign_currency_deposit.save()
+        preamt_foreign_currency_deposit.save()
         # 台幣定存 preamt
         preamt_ntd_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('type__acc_id'))
         preamt_ntd_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('ntd_amount')
         preamt_ntd_cd.adj_mat = -1 * (deposit_account_qry_set.filter(plege=1).aggregate(Sum('ntd_amount')).get('ntd_amount__sum') \
-                         + deposit_account_qry_set.filter(plege=0, end_date__gte=datetime.date(year=2019,month=12,day=31) + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum'))
+                         + deposit_account_qry_set.filter(plege=0, end_date__gte=report_end_date + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum'))
         preamt_ntd_cd.pre_amt = preamt_ntd_cd.book_amt + preamt_ntd_cd.adj_mat
-        # TODO ntd_cd.save()
+        preamt_ntd_cd.save()
         # 外幣定存 preamt
         preamt_foreign_currency_cd = preamt_qry_set.get(acc__acc_id=deposit_account_qry_set.get(type__acc_name='外幣定存').get('type__acc_id'))
         preamt_foreign_currency_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('ntd_amount')
-        preamt_foreign_currency_cd.adj_mat = -1 * (deposit_account_qry_set.filter(plege=0,type__acc_name='外幣定存', end_date__gte=datetime.date(year=2019,month=12,day=31) + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum')
+        preamt_foreign_currency_cd.adj_mat = -1 * (deposit_account_qry_set.filter(plege=0,type__acc_name='外幣定存', end_date__gte=report_end_date + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum')
                             + list[3]['外幣定存'].amount if list[3]['外幣定存'].credit_debit == 0 else list[3]['外幣定存'].amount*(-1))
         preamt_foreign_currency_cd.pre_amt = preamt_foreign_currency_cd.book_amt + preamt_foreign_currency_cd.adj_mat
-        # TODO foreign_currency_cd.save()
+        preamt_foreign_currency_cd.save()
 
         # # 3. 回傳資料
         # print('尚未測試 fill_in_preamount。 程式碼沒有報錯，但是要檢查金額是否正確。')

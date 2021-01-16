@@ -129,10 +129,10 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
         table_name = request.POST.get('table_name')
         print('table_name >>> ', table_name)
         result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
-        print('result >>> ', result)
-        print(type(result))
-        print(result['status_code'])
-        print(type(result['status_code']))
+        # print('result >>> ', result)
+        # print(type(result))
+        # print(result['status_code'])
+        # print(type(result['status_code']))
         check(rpt_id)
         count_CashInBank_result=check(rpt_id)[0]
         count_Depositaccount_result=check(rpt_id)[1]
@@ -300,15 +300,15 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     print('===================================================================================')
     '''單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表'''
     # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set
-    preamt_qry_set = Preamt.objects.filter(rpt__rpt_id=rpt_id, acc__acc_id=acc_id)
+    preamt_qry_set = Preamt.objects.filter(rpt__rpt_id=rpt_id, acc__acc_id=acc_id).values('pre_id', 'acc__acc_name', 'book_amt', 'adj_amt', 'pre_amt')
     print('preamt_qry_set >>> ', preamt_qry_set)
     # 得到查詢到的 preamt 的所有 pre_id
     preamt_id_list = preamt_qry_set.values('pre_id')
     print('preamt_id_list >>> ', preamt_id_list)
     # 使用 pre_id_list 查詢所有符合的 adj_entries_qry_set
-    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list)
+    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name', 'credit_debit', 'amount')
     print('調整分錄配對之前的 qry set, adj_entries_qry_set >>> ', adj_entries_qry_set)
-    # 處理調整分錄的配對：[{'credit': {cre_1, cre_2} , 'debit': {debit1, debit2}}, {其他相同的 adj_num 借貸配對}, ...]
+    # 處理調整分錄的配對：[{'credit': [cre_1, cre_2] , 'debit': [debit1, debit2]}, {其他相同的 adj_num 借貸配對}, ...]
     adj_num_list = adj_entries_qry_set.values('adj_num').distinct() # 共有幾個不同的 adj_num
     adj_entries_list = []
     for adj_num in adj_num_list:
