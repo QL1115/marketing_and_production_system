@@ -8,7 +8,7 @@ from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 
@@ -219,6 +219,85 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                 })
 
 def adjust_acc(request, comp_id, rpt_id, acc_id):
+    """定期存款&銀行存款調整頁"""
+    table_name = 'deposit_account'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    if uploadFile.get('status_code') == 200:
+        depositData = uploadFile.get('returnObject')        
+    else:
+        msg = uploadFile.get('msg')
+        # 這裡要傳errorPage回去嗎
+        return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
+    
+    table_name = 'cash_in_banks'
+    uploadFile = get_uploaded_file(rpt_id, table_name)
+    cibData = {}
+    if uploadFile.get('status_code') == 200:
+        cibData = uploadFile.get('returnObject')
+        # 只取外幣金額不為NULL的
+        cibData = cibData.filter(foreign_currency_amount__isnull=False)
+        # 取定期存款外幣金額不為NULL的
+        depositDataInCIBpage = depositData.filter(foreign_currency_amount__isnull=False)
+        # 取得匯率
+        exchangeRate = Exchangerate.objects.filter(rpt_id=1)
+        rateDict = {}
+        for exchangerate in exchangeRate:
+            rateDict[exchangerate.currency_name] = exchangerate.rate
+        # 計算核算金額、差異
+        cibCalculatedAmountList = []
+        cibDifferenceList = []
+        cibRateList = []
+        for cib in cibData:
+            rate = rateDict.get(cib.currency)
+            cibRateList.append(rate)
+            calculatedAmount = rate*cib.foreign_currency_amount
+            cibCalculatedAmountList.append(calculatedAmount)
+            cibDifferenceList.append(calculatedAmount-cib.ntd_amount)
+        zipForCib = zip(cibData, cibRateList, cibCalculatedAmountList, cibDifferenceList)
+        
+        depAccCalculatedAmountList = []
+        depAccDifferenceList = []
+        depAccRateList = []
+        for depAcc in depositDataInCIBpage:
+            rate = rateDict.get(depAcc.currency)
+            depAccRateList.append(rate)
+            calculatedAmount = rate*depAcc.foreign_currency_amount
+            depAccCalculatedAmountList.append(calculatedAmount)
+            depAccDifferenceList.append(calculatedAmount-depAcc.ntd_amount)
+        zipForDepAcc = zip(depositDataInCIBpage, depAccRateList, depAccCalculatedAmountList, depAccDifferenceList)
+    else:
+        msg = uploadFile.get('msg')
+        return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
+    
+    # 取得分錄(acc_name, amount, adj_num, credit_debit)
+    entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit')
+    # print('entries[0] >>>>>>>>>', entries[0])
+    adjNum = entries[0].get('adj_num')
+    entryList = []
+    finEntryList = []
+    for entry in entries:
+        # 同一組就丟進entryList
+        if entry.get('adj_num') == adjNum:
+            entryList.append(entry)
+        # 出現新的adj_num
+        else:
+            # 先把上一組的entryList丟進finEntryList
+            finEntryList.append(entryList)
+            # 清空entryList
+            entryList = []
+            entryList.append(entry)
+            adjNum = entry.get('adj_num')
+    # 把最後一組的entryList丟進finEntryList
+    finEntryList.append(entryList)
+    print(finEntryList)
+    print('----------------------------------------------------------------------------------')
+    counter = 1
+    for i in finEntryList:
+        print(counter)
+        for j in i:
+            print(j)
+        counter+=1
+    print('===================================================================================')
     '''單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表'''
     # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set
     preamt_qry_set = Preamt.objects.filter(rpt__rpt_id=rpt_id, acc__acc_id=acc_id)
@@ -235,4 +314,5 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     for adj_num in adj_num_list:
         adj_entries_list.append({'credit': adj_entries_qry_set.filter(adj_num=adj_num, credit_debit=0), 'debit': adj_entries_qry_set.filter(adj_num, credit_debit=1)})
     print('調整分錄配對好後的 list, adj_entries_list >>> ', adj_entries_list)
-    return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list})
+    return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
+                                                'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'entryList': finEntryList})

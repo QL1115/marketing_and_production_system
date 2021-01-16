@@ -69,6 +69,127 @@
         {#  調整表  #}
         {#    調整分錄總表    #}
         <br>
+        <div id="content_layout" class="col-10">
+            <div id=cashAdjustLayout>
+                <div class="row">
+                    <div id="cashAdjustBtnGroup" class="col-6" aria-label="Basic example">
+                        <button id="AdjustDepositAccount" type="button" class="btn btn-secondary" value="deposit_account">定期存款調整科目</button>
+                        <button id="AdjustCashInBank" type="button" class="btn btn-secondary" value="cash_in_banks">銀行存款調整外幣評價損益</button>
+                        <button id="Adjust" type="button" class="btn btn-secondary">調整表</button>
+                    </div>
+                    <!-- <div class="col-10"> -->
+                        <!-- <div id="editBtnGroup" class="btn-group col-2 float-right" role="group" -->
+                             <!-- aria-label="Basic example"> -->
+                            <!-- <button id="Edit" type="button" class="btn btn-secondary">編輯</button> -->
+                            <!-- <button id="save" type="button" class="btn btn-secondary" disabled>確定</button> -->
+                        <!-- </div> -->
+                    <!-- </div> -->
+                </div>
+                <br>
+                <div id="tableforAdjustDepositAccount">
+                    <div>
+                        <!-- <div> -->
+                            <!-- <div class="float-right"> -->
+                                <!-- <label for="totalforCheckDepositAccount">合計(NTD):</label> -->
+                                <!-- <input id="totalforCheckDepositAccount" type="text" placeholder="{{ depositSummary }}" readonly/> -->
+                            <!-- </div> -->
+                        <!-- </div> -->
+                        <table class="w-auto" id="deposit_account_table">
+                            <thead>
+                                <tr class="table-active">
+                                    <th style="padding:8px;">銀行別</th>
+                                    <th style="padding:8px;">帳號</th>
+                                    <th style="padding:8px;">幣別</th>
+                                    <th style="padding:8px;">外幣金額</th>
+                                    <th style="padding:8px;">台幣金額</th>
+                                    <th style="padding:8px;">質押</th>
+                                    <th style="padding:8px;">開始</th>
+                                    <th style="padding:8px;">結束</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in depositData %}
+                                <tr class="input_row">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="id" value="{{ row.dep_acc_id }}"/>
+                                    <td><input type="text" name="bank_name" value="{{ row.bank_name }}" disabled/></td>
+                                    <td><input type="text" name="bank_account_number"
+                                               value="{{ row.bank_account_number }}" disabled/></td>
+                                    <td><input type="text" name="currency" value="{{ row.currency }}" disabled/></td>
+                                    <td><input type="text" name="foreign_currency_amount"
+                                               value="{{ row.foreign_currency_amount|default_if_none:"--" }}" disabled/></td>
+                                    <td><input type="number" name="ntd_amount" value="{{ row.ntd_amount }}" disabled/>
+                                    </td>
+                                    <td><input type="number" max="1" min="0" name="plege" value="{{ row.plege }}" disabled/></td>
+                                    <td><input type="date" name="start_date" value="{{ row.start_date|date:"Y-m-d" }}" disabled/>
+                                    </td>
+                                    <td><input type="date" name="end_date" value="{{ row.end_date|date:"Y-m-d" }}" disabled/></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <div id="tableforAdjustCashInBank">
+                    <!-- <div> -->
+                        <!-- <div class="float-right"> -->
+                            <!-- <label for="totalforCheckCashInBank">合計(NTD):</label> -->
+                            <!-- <input id="totalforCheckCashInBanks" type="text" placeholder="{{ cibSummary }}" readonly/> -->
+                        <!-- </div> -->
+                    <!-- </div> -->
+                    <table class="w-auto" id="cash_in_bank_table">
+                        <tr class="table-active">
+                            <th>銀行別</th>
+                            <th>帳號</th>
+                            <!--<th>類型</th>-->
+                            <th>幣別</th>
+                            <th>外幣金額</th>
+                            <th>台幣金額</th>
+                            <th>匯率</th>
+                            <th>核算金額</th>
+                            <th>差異</th>
+                        </tr>
+
+                        {% for cibData, rate, calculatedAmount, difference in  cibData %}
+                        <!-- , rate, calAmt, diff in cibData, rateList, calculatedAmount, difference %} -->
+                            <tr class="input_row">
+                                {% csrf_token %}
+                                <input type="hidden" name="id" value="{{ cibData.cash_in_banks_id }}" disabled>
+                                <td><input type="text" name="bank_name" value="{{ cibData.bank_name }}" disabled/></td>
+                                <td><input type="text" name="bank_account_number" value="{{ cibData.bank_account_number }}" disabled/></td>
+                                <td><input type="text" name="currency" value="{{ cibData.currency }}" disabled/></td>
+                                <td><input type="text" name="foreign_currency_amount"
+                                           value="{{ cibData.foreign_currency_amount|default_if_none:"--" }}" disabled/></td>
+                                <td><input type="number" name="ntd_amount" value="{{ cibData.ntd_amount }}" disabled/></td>
+                                <td><input type="text" name="rate" value="{{ rate|floatformat:2 }}" disabled/></td>
+                                <td><input type="text" name="calculatedAmount" value="{{ calculatedAmount|floatformat:2 }}" disabled/></td>
+                                <td><input type="text" name="difference" value="{{ difference|floatformat:0 }}" disabled/></td>
+                            </tr>
+                        {% endfor %}
+
+                        {% for depositData, rate, calculatedAmount, difference in  depositDataInCIB %}
+                        <!-- , rate, calAmt, diff in cibData, rateList, calculatedAmount, difference %} -->
+                            <tr class="input_row">
+                                {% csrf_token %}
+                                <input type="hidden" name="id" value="{{ depositData.dep_acc_id }}" disabled>
+                                <td><input type="text" name="bank_name" value="{{ depositData.bank_name }}" disabled/></td>
+                                <td><input type="text" name="bank_account_number" value="{{ depositData.bank_account_number }}" disabled/></td>
+                                <td><input type="text" name="currency" value="{{ depositData.currency }}" disabled/></td>
+                                <td><input type="text" name="foreign_currency_amount"
+                                           value="{{ depositData.foreign_currency_amount|default_if_none:"--" }}" disabled/></td>
+                                <td><input type="number" name="ntd_amount" value="{{ depositData.ntd_amount }}" disabled/></td>
+                                <td><input type="text" name="rate" value="{{ rate|floatformat:2 }}" disabled/></td>
+                                <td><input type="text" name="calculatedAmount" value="{{ calculatedAmount|floatformat:2 }}" disabled/></td>
+                                <td><input type="text" name="difference" value="{{ difference|floatformat:0 }}" disabled/></td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
         <div id="total_adj_entries">
             <h5>調整分錄總表</h5>
 
@@ -238,5 +359,36 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#tableforAdjustCashInBank").hide();
+            $("#tableforAdjustDepositAccount").show();
+            $("#total_adj_entries").hide();
+            $("button").on('click', function (e) {
+                if (e.target.id == "AdjustCashInBank") {
+                    <!--點了銀行存款，將銀行存款按鈕顯示深色-->
+                    $("#AdjustDepositAccount").removeClass("btn-dark");
+                    $(this).addClass("btn btn-dark");
+                    <!--點了銀行存款，銀行存款div，隱藏定期存款-->
+                    $("#tableforAdjustDepositAccount").hide();
+                    $("#tableforAdjustCashInBank").show();
+                    $("#total_adj_entries").hide();
+                } else if (e.target.id == "AdjustDepositAccount") {
+                    $("#AdjustCashInBank").removeClass("btn-dark");
+                    $(this).addClass("btn btn-dark");
+                    $("#tableforAdjustDepositAccount").show();
+                    $("#tableforAdjustCashInBank").hide();
+                    $("#total_adj_entries").hide();
+                } else if (e.target.id = "Adjust"){
+                    $("#Adjust").removeClass("btn-dark");
+                    $(this).addClass("btn btn-dark");
+                    $("#tableforAdjustDepositAccount").hide();
+                    $("#tableforAdjustCashInBank").hide();
+                    $("#total_adj_entries").show();
+                }
+            });
+        });
+
+    </script>
 </body>
 </html>
