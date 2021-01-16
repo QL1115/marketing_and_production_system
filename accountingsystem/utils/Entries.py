@@ -287,28 +287,27 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
     #create_adjust_entry for ntd_over_3_month_total
     #(amount, adj_num, pre_id, credit_debit, front_end_location)
     #(ntd_total, 目前最大, preamount.report_id = report_id 的 pre_id, 0, 1)
-    credit_ntd_over_3_month_total = Adjentry.objects.create(amount=ntd_total, adj_num=bigest_adj_num + 1,
+    credit_ntd_over_3_month_total = Adjentry.objects.create(amount=ntd_total+foreign_currency_total, adj_num=bigest_adj_num + 1,
                                                              pre=over_3_month_pre_id, credit_debit=0,
                                                              front_end_location=1, entry_name= '超過三個月定存')
+    print(credit_ntd_over_3_month_total)
     #create_adjust_entry for 台幣定存
     #(amount, adj_num, pre_id, credit_debit, front_end_location)
     #(ntd_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 1, 1)
     debit_ntd_deposit_total = Adjentry.objects.create(amount=ntd_total, adj_num=bigest_adj_num + 1,
                                                              pre=ntd_deposit_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='超過三個月定存')
-    #create_adjust_entry for foreign_currency_over_3_month_total
-    #(amount, adj_num, pre_id, credit_debit, front_end_location)
-    #(foreign_currency_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 0, 1)
-    credit_foreign_currency_over_3_month_total = Adjentry.objects.create(amount=foreign_currency_total, adj_num=bigest_adj_num + 1,
-                                                             pre=over_3_month_pre_id, credit_debit=0,
-                                                             front_end_location=1, entry_name='超過三個月定存')
+
     #create_adjust_entry for 外幣定存
     #(amount, adj_num, pre_id, credit_debit, front_end_location)
     #(foreign_currency_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 1, 1)
     debit_foreign_currency_deposit_total = Adjentry.objects.create(amount=foreign_currency_total, adj_num=bigest_adj_num + 1,
                                                              pre=foreign_currency_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='超過三個月定存')
-    return(credit_ntd_over_3_month_total, debit_ntd_deposit_total, credit_foreign_currency_over_3_month_total, debit_foreign_currency_deposit_total )
+
+    return{"超過三個月定存": credit_ntd_over_3_month_total,
+           "台幣定存": debit_ntd_deposit_total,
+           "外幣定存": debit_foreign_currency_deposit_total}
 
 #定期存款-質押存款
 def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
@@ -349,11 +348,28 @@ def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
     debit_ntd_deposit_total = Adjentry.objects.create(amount=pledge_total, adj_num=bigest_adj_num + 1,
                                                              pre=ntd_deposit_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='質押定存')
-    return(credit_pledge_total, debit_ntd_deposit_total )
+    return{"質押定存": credit_pledge_total,
+           "台幣定存": debit_ntd_deposit_total}
 
 def create_cash_preamount(rpt_id, acc_id):
-    print('create_cash_preamount')
-
+    countIdList = []
+    acc_id = 1
+    countIdList.append(acc_id)
+    for i in countIdList:
+        childList = Account.objects.filter(acc_parent=i)
+        for a in childList:
+            if a.acc_id in countIdList:
+                pass
+            else:
+                countIdList.append(a.acc_id)
+                # 要接一個account object
+    number23 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=23))
+    number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
+    number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
+    number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
+    for i in countIdList:
+        a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+    
 
 def fill_in_preamount(list,  rpt_id, acc_id):
     '''

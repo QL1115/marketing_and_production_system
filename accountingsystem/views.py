@@ -74,6 +74,7 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     print('in_del!!!!!!!!!!')
     try:
         delete_uploaded_file(rpt_id, table_name)
+        delete_preamount(rpt_id, acc_id)
     except:
         pass
 
@@ -82,7 +83,7 @@ def delete_preamount(rpt_id, acc_id):
         delete_cash_preamount(rpt_id)
 
 def delete_cash_preamount(rpt_id):
-
+    print('!!!!in')
     # 撈出所有存在於 cashinBank 跟 depositAccount 的 (就是兩個會有現金的檯面)的type再予以刪除
     countIdList = [23, 24, 25, 26]
     for i in Cashinbanks.object.all():
@@ -101,7 +102,6 @@ def delete_cash_preamount(rpt_id):
             deleteList.append(a)
     deleteList.delete()
     return
-
 
 def check(rpt_id):
     #執行原生sql，查詢CashInBanks是否已經有匯入
