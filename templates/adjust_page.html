@@ -21,6 +21,7 @@
             min-height: 100vh;
         }
     </script>
+    <!--start of navbar-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">OurLogo</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -64,9 +65,6 @@
     </nav>
 </head>
 <body>
-        <!--start of navbar-->
-
-
     <div class="container-fluid">
         {#  調整表  #}
         {#    調整分錄總表    #}
@@ -81,6 +79,32 @@
                 <div class="col-sm-3">科目（貸）</div>
                 <div class="col-sm-3">金額（NTD）</div>
             </div>
+            {% if adj_entries %}
+{#                {% with temp_num = 0 %}#}
+                {% for entries_pair in adj_entries %}
+{#                    {% temp_num += 1 %}#}
+                    <div class="row">
+                    <div class="col-sm-1">{{ temp_num }}</div>
+                    <div class="col-sm-2">--</div>
+                    <div class="col-sm-3">
+                        <div class="row"><div class="col-sm-12">超過三個月定存</div></div>
+                        <div class="row"><div class="col-sm-12">--</div></div>
+                        <div class="row"><div class="col-sm-12">--</div></div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="row"><div class="col-sm-12">--</div></div>
+                        <div class="row"><div class="col-sm-12">台幣定存</div></div>
+                        <div class="row"><div class="col-sm-12">外幣定存</div></div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="row"><div class="col-sm-12">--</div></div>
+                        <div class="row"><div class="col-sm-12">--</div></div>
+                        <div class="row"><div class="col-sm-12">--</div></div>
+                    </div>
+                </div>
+                {% endfor %}
+{#                {% endwith %}#}
+            {% endif %}
             <div class="row">
                 <div class="col-sm-1">1</div>
                 <div class="col-sm-2">超過三個月定存</div>
@@ -168,46 +192,46 @@
                     <div class="row"><div class="col-sm-12">--</div></div>
                 </div>
             </div>
-
-        <br><hr><br>
-        {#    明細資訊_調整表    #}
-        <div id="details_adjust">
-            <h5>明細資訊 調整表</h5>
-            <div class="row">
-                <div class="col-sm"></div>
-                <div class="col-sm">帳列數</div>
-                <div class="col-sm">調整</div>
-                <div class="col-sm">編表數</div>
-            </div>
-            <div class="row">
-                <div class="col-sm">活期存款</div>
-                <div class="col-sm"> 23,163,606 </div>
-                <div class="col-sm">--</div>
-                <div class="col-sm"> 23,163,606 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm">支票存款</div>
-                <div class="col-sm"> 1,634,859 </div>
-                <div class="col-sm">--</div>
-                <div class="col-sm"> 1,634,859 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm">外匯存款</div>
-                <div class="col-sm"> 4,532,983 </div>
-                <div class="col-sm">(138,692)</div>
-                <div class="col-sm"> 4,394,291 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm">台幣定存</div>
-                <div class="col-sm"> 17,000,000 </div>
-                <div class="col-sm">(9,500,000)</div>
-                <div class="col-sm"> 7,500,000 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm">外幣定存</div>
-                <div class="col-sm">1,413,844</div>
-                <div class="col-sm">(1,398,129)</div>
-                <div class="col-sm">15,714</div>
+            <br><hr><br>
+            {#    明細資訊_調整表    #}
+            <div id="details_adjust">
+                <h5>明細資訊 調整表</h5>
+                <div class="row">
+                    <div class="col-sm"></div>
+                    <div class="col-sm">帳列數</div>
+                    <div class="col-sm">調整</div>
+                    <div class="col-sm">編表數</div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">活期存款</div>
+                    <div class="col-sm"> 23,163,606 </div>
+                    <div class="col-sm">--</div>
+                    <div class="col-sm"> 23,163,606 </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">支票存款</div>
+                    <div class="col-sm"> 1,634,859 </div>
+                    <div class="col-sm">--</div>
+                    <div class="col-sm"> 1,634,859 </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">外匯存款</div>
+                    <div class="col-sm"> 4,532,983 </div>
+                    <div class="col-sm">(138,692)</div>
+                    <div class="col-sm"> 4,394,291 </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">台幣定存</div>
+                    <div class="col-sm"> 17,000,000 </div>
+                    <div class="col-sm">(9,500,000)</div>
+                    <div class="col-sm"> 7,500,000 </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">外幣定存</div>
+                    <div class="col-sm">1,413,844</div>
+                    <div class="col-sm">(1,398,129)</div>
+                    <div class="col-sm">15,714</div>
+                </div>
             </div>
         </div>
     </div>
