@@ -128,7 +128,7 @@ class Group(models.Model):
 class Preamt(models.Model):
     pre_id = models.AutoField(primary_key=True)
     book_amt = models.DecimalField(max_digits=22, decimal_places=2)
-    adj_mat = models.DecimalField(max_digits=22, decimal_places=2)
+    adj_amt = models.DecimalField(max_digits=22, decimal_places=2)
     pre_amt = models.DecimalField(max_digits=22, decimal_places=2)
     rpt = models.ForeignKey('Report', models.CASCADE)
     acc = models.ForeignKey('Account', models.CASCADE)
