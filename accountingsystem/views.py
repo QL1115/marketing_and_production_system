@@ -362,7 +362,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     preamt_id_list = preamt_qry_set.values('pre_id')
     print('preamt_id_list >>> ', preamt_id_list)
     # 使用 pre_id_list 查詢所有符合的 adj_entries_qry_set
-    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name', 'credit_debit', 'amount')
+    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name', 'credit_debit', 'amount', 'entry_name')
     print('調整分錄配對之前的 qry set, adj_entries_qry_set >>> ', adj_entries_qry_set)
     # 處理調整分錄的配對：[{'credit': [cre_1, cre_2] , 'debit': [debit1, debit2]}, {其他相同的 adj_num 借貸配對}, ...]
     adj_num_list = adj_entries_qry_set.values('adj_num').distinct() # 共有幾個不同的 adj_num

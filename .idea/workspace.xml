@@ -15,8 +15,13 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/accountingsystem/views.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state relative-caret-position="1435">
               <caret line="366" column="49" lean-forward="true" selection-start-line="366" selection-start-column="49" selection-end-line="366" selection-end-column="49" />
+=======
+            <state relative-caret-position="259">
+              <caret line="310" column="49" lean-forward="true" selection-start-line="310" selection-start-column="49" selection-end-line="310" selection-end-column="49" />
+>>>>>>> Stashed changes
               <folding>
                 <element signature="e#1#46#0" expanded="true" />
               </folding>
@@ -27,8 +32,13 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/templates/adjust_page.html">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state relative-caret-position="-2253">
               <caret line="306" column="23" lean-forward="true" selection-start-line="306" selection-start-column="23" selection-end-line="306" selection-end-column="23" />
+=======
+            <state relative-caret-position="781">
+              <caret line="227" column="23" lean-forward="true" selection-start-line="227" selection-start-column="23" selection-end-line="227" selection-end-column="23" />
+>>>>>>> Stashed changes
             </state>
           </provider>
         </entry>
@@ -52,8 +62,12 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/accountingsystem/utils/Entries.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state relative-caret-position="-3577">
               <caret line="186" column="1" selection-start-line="186" selection-start-column="1" selection-end-line="186" selection-end-column="1" />
+=======
+            <state relative-caret-position="-59">
+>>>>>>> Stashed changes
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
               </folding>
@@ -85,7 +99,13 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+<<<<<<< Updated upstream
         <option value="$PROJECT_DIR$/accountingsystem/utils/Entries.py" />
+=======
+        <option value="$PROJECT_DIR$/accountingsystem/views.py" />
+        <option value="$PROJECT_DIR$/accountingsystem/models.py" />
+        <option value="$PROJECT_DIR$/templates/adjust_page.html" />
+>>>>>>> Stashed changes
       </list>
     </option>
   </component>
@@ -222,12 +242,22 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
+<<<<<<< Updated upstream
     <option name="totallyTimeSpent" value="308000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.16738197" />
+=======
+    <option name="totallyTimeSpent" value="250000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16738197" />
+>>>>>>> Stashed changes
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -241,7 +271,11 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
+<<<<<<< Updated upstream
       <window_info active="true" anchor="bottom" id="Terminal" order="11" visible="true" weight="0.33493975" />
+=======
+      <window_info anchor="bottom" id="Terminal" order="11" visible="true" weight="0.28554216" />
+>>>>>>> Stashed changes
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -284,18 +318,49 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/accountingsystem/utils/Entries.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state relative-caret-position="-3577">
           <caret line="186" column="1" selection-start-line="186" selection-start-column="1" selection-end-line="186" selection-end-column="1" />
+=======
+        <state relative-caret-position="-59">
+>>>>>>> Stashed changes
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/templates/adjust_page.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2253">
           <caret line="306" column="23" lean-forward="true" selection-start-line="306" selection-start-column="23" selection-end-line="306" selection-end-column="23" />
+=======
+    <entry file="file://$PROJECT_DIR$/templates/checking_page.html">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/accountingsystem/models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="21" column="34" selection-start-line="21" selection-start-column="34" selection-end-line="21" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/accountingsystem/views.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="259">
+          <caret line="310" column="49" lean-forward="true" selection-start-line="310" selection-start-column="49" selection-end-line="310" selection-end-column="49" />
+          <folding>
+            <element signature="e#1#46#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/templates/adjust_page.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="781">
+          <caret line="227" column="23" lean-forward="true" selection-start-line="227" selection-start-column="23" selection-end-line="227" selection-end-column="23" />
+>>>>>>> Stashed changes
         </state>
       </provider>
     </entry>
