@@ -33,142 +33,198 @@ def create_cash_adjust_entries(rpt_id, acc_id):
     cash_qry_set={ 'cash_in_banks': cash_in_bank_qry_set,'deposit_account': deposit_account_qry_set}
 
     #定期存款-超過三個月定存
-    create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
+    over_3_month_dp = create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
     #定期存款-質押存款
-    create_pledge_deposit_account_entry(cash_qry_set,rpt_id)
+    pledge_deposit = create_pledge_deposit_account_entry(cash_qry_set,rpt_id)
     #銀行存款-外匯存款
-    create_foreign_currency_deposit_entry(cash_qry_set,rpt_id)
+    foreign_currency_deposit = create_foreign_currency_deposit_entry(cash_qry_set,rpt_id)
     #銀行存款-外幣定存
-    create_foreign_currency_time_deposit(cash_qry_set,rpt_id)
+    foreign_currency_time_deposit = create_foreign_currency_time_deposit(cash_qry_set,rpt_id)
     #銀行存款-超過三個月定存
-    create_over_three_month_time_deposit(cash_qry_set,rpt_id)
+    cib_over_3_month = create_over_three_month_time_deposit(cash_qry_set,rpt_id)
+    #
+    li = [over_3_month_dp, pledge_deposit, foreign_currency_deposit, foreign_currency_time_deposit, cib_over_3_month]
+    fill_in_preamount(li, rpt_id, acc_id)
 
 
-#銀行存款-外匯存款
-def create_foreign_currency_deposit_entry(cash_qry_set,rpt_id):
-    cash_in_banks=cash_qry_set['cash_in_banks']
-    total_difference=0
-    exchangerate=0
+# 銀行存款-外匯存款
+def create_foreign_currency_deposit_entry(cash_qry_set, rpt_id):
+    cash_in_banks = cash_qry_set['cash_in_banks']
+    total_difference = 0
+    exchangerate = 0
     for cash_in_bank in cash_in_banks:
-        if cash_in_bank['currency']!='TWD':
-            #exchangerate
-            exchangerate=Exchangerate.objects.filter(currency_name=cash_in_bank['currency']).filter(rpt_id=rpt_id)[0].rate
-            difference=(exchangerate*cash_in_bank['foreign_currency_amount'])-cash_in_bank['ntd_amount']
-            total_difference=total_difference+difference
-    #撈出最大的adj_num
-    bigest_adj_num=0
-    cursor1 = connection.cursor() 
+        if cash_in_bank['currency'] != 'TWD':
+            # exchangerate
+            exchangerate = Exchangerate.objects.filter(currency_name=cash_in_bank['currency']).filter(rpt_id=rpt_id)[
+                0].rate
+            difference = (exchangerate * cash_in_bank['foreign_currency_amount']) - cash_in_bank['ntd_amount']
+            total_difference = total_difference + difference
+    # 撈出最大的adj_num
+    bigest_adj_num = 0
+    cursor1 = connection.cursor()
     cursor1.execute("select count(*) from Adjentry")
-    aleady_entry=cursor1.fetchall()[0][0]
-    if aleady_entry==0:
-        bigest_adj_num=0
+    aleady_entry = cursor1.fetchall()[0][0]
+    if aleady_entry == 0:
+        bigest_adj_num = 0
     else:
-        bigest_adj_num=bigest_num=Adjentry.objects.latest('adj_num').adj_num
-    #撈出外匯存款preamt object
-    foreign_curency_deposit＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=17)[0]
-    #建立分路#借兌換損失貸外匯存款
-    if total_difference<0:
-        #撈出兌換損失pre object
-        foreign_exchange_lost＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=25)[0]
-        #寫入adjentry前，total_difference要先轉成正
-        total=total_difference*-1
-        #寫入adjentry
-        credit_foreign_exchange_losses=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_exchange_lost＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_外匯存款')
-        debit_foreign_currency_deposit=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_curency_deposit＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_外匯存款')
-        return(credit_foreign_exchange_losses,debit_foreign_currency_deposit)
-    #建立分路#借外匯存款貸兌換利益
-    elif total_difference>0:
-        #撈出兌換利益pre object
-        foreign_exchange_gain＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=26)[0]
-        #寫入adjentry
-        credit_foreign_currency_deposit=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_curency_deposit＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_外匯存款')
-        debit_foreign_exchange_gain=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_exchange_gain＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_外匯存款')
-        return(debit_foreign_exchange_gain,credit_foreign_currency_deposit)
+        bigest_adj_num = bigest_num = Adjentry.objects.latest('adj_num').adj_num
+    # 撈出外匯存款preamt object
+    foreign_curency_deposit＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=17)[0]
+    # 建立分路#借兌換損失貸外匯存款
+    if total_difference < 0:
+        # 撈出兌換損失pre object
+        foreign_exchange_lost＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=25)[0]
+        # 寫入adjentry前，total_difference要先轉成正
+        total = total_difference * -1
+        # 寫入adjentry
+        credit_foreign_exchange_losses = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
+                                                                 pre=foreign_exchange_lost＿pre_id, credit_debit=0,
+                                                                 front_end_location=2, entry_name='外幣評價損益_外匯存款')
+        debit_foreign_currency_deposit = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
+                                                                 pre=foreign_curency_deposit＿pre_id, credit_debit=1,
+                                                                 front_end_location=2, entry_name='外幣評價損益_外匯存款')
+        foreign_currency_deposit＿entry_list = {}
+        foreign_currency_deposit＿entry_list = {'兌換損失': credit_foreign_exchange_losses,
+                                               '外匯存款': debit_foreign_currency_deposit}
+        return foreign_currency_deposit＿entry_list
+    # 建立分路#借外匯存款貸兌換利益
+    elif total_difference > 0:
+        # 撈出兌換利益pre object
+        foreign_exchange_gain＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=26)[0]
+        # 寫入adjentry
+        credit_foreign_currency_deposit = Adjentry.objects.create(amount=total_difference, adj_num=bigest_adj_num + 1,
+                                                                  pre=foreign_curency_deposit＿pre_id, credit_debit=0,
+                                                                  front_end_location=2, entry_name='外幣評價損益_外匯存款')
+        debit_foreign_exchange_gain = Adjentry.objects.create(amount=total_difference, adj_num=bigest_adj_num + 1,
+                                                              pre=foreign_exchange_gain＿pre_id, credit_debit=1,
+                                                              front_end_location=2, entry_name='外幣評價損益_外匯存款')
+        foreign_currency_deposit＿entry_list = {}
+        foreign_currency_deposit＿entry_list = {'兌換利益': debit_foreign_exchange_gain,
+                                               '外匯存款': credit_foreign_currency_deposit}
+        return foreign_currency_deposit＿entry_list
 
-#銀行存款-外幣定存
-#此method請放在定期存款調整後
-def create_foreign_currency_time_deposit(cash_qry_set,rpt_id):
-    exchangerate=0
-    total_difference=0
-    #重新撈定期存款，因為會需要查看有沒有調整
-    deposit_accounts=Depositaccount.objects.all().values()
-    for deposit_account in deposit_accounts:
-        if deposit_account['currency']!='TWD' and deposit_account['already_adjust']!=1:
-             #exchangerate
-            exchangerate=Exchangerate.objects.filter(currency_name=deposit_account['currency']).filter(rpt_id=rpt_id)[0].rate
-            difference=(exchangerate*deposit_account['foreign_currency_amount'])-deposit_account['ntd_amount']
-            total_difference=total_difference+difference
-    #撈出最大的adj_num
-    bigest_adj_num=0
-    cursor1 = connection.cursor() 
-    cursor1.execute("select count(*) from Adjentry")
-    aleady_entry=cursor1.fetchall()[0][0]
-    if aleady_entry==0:
-        bigest_adj_num=0
-    else:
-        bigest_adj_num=bigest_num=Adjentry.objects.latest('adj_num').adj_num
-    #撈出外幣定存preamt object
-    foreign_curency_time_deposit＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=22)[0]
-    #建立分路#借兌換損失貸外匯存款
-    if total_difference<0:
-        #撈出兌換損失pre object
-        foreign_exchange_lost＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=25)[0]
-        #寫入adjentry前，total_difference要先轉成正
-        total=total_difference*-1
-        #寫入adjentry
-        credit_foreign_exchange_losses=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_exchange_lost＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_定期存款')
-        debit_foreign_currency_time_deposit=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_curency_time_deposit＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_定期存款')
-        return(credit_foreign_exchange_losses,debit_foreign_currency_time_deposit)
-    #建立分路#借外匯存款貸兌換利益
-    elif total_difference>0:
-        #撈出兌換利益pre object
-        foreign_exchange_gain＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=26)[0]
-        #寫入adjentry
-        credit_foreign_currency_time_deposit=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_curency_time_deposit＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_定期存款')
-        debit_foreign_exchange_gain=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_exchange_gain＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_定期存款')
-        return(debit_foreign_exchange_gain,credit_foreign_currency_time_deposit)
 
-          
-#銀行存款-超過三個月定存 
-def create_over_three_month_time_deposit(cash_qry_set,rpt_id):
-    exchangerate=0
-    total_difference=0
-    #重新撈定期存款，因為會需要查看有沒有調整
-    deposit_accounts=Depositaccount.objects.all().values()
+# 銀行存款-外幣定存
+# 此method請放在定期存款調整後
+def create_foreign_currency_time_deposit(cash_qry_set, rpt_id):
+    exchangerate = 0
+    total_difference = 0
+    # 重新撈定期存款，因為會需要查看有沒有調整
+    deposit_accounts = Depositaccount.objects.all().values()
     for deposit_account in deposit_accounts:
-        if deposit_account['currency']!='TWD' and deposit_account['already_adjust']==1 and deposit_account['plege']==0:
-            #exchangerate
-            exchangerate=Exchangerate.objects.filter(currency_name=deposit_account['currency']).filter(rpt_id=rpt_id)[0].rate
-            difference=(exchangerate*deposit_account['foreign_currency_amount'])-deposit_account['ntd_amount']
-            total_difference=total_difference+difference
-    #撈出最大的adj_num
-    bigest_adj_num=0
-    cursor1 = connection.cursor() 
+        if deposit_account['currency'] != 'TWD' and deposit_account['already_adjust'] != 1:
+            # exchangerate
+            exchangerate = Exchangerate.objects.filter(currency_name=deposit_account['currency']).filter(rpt_id=rpt_id)[
+                0].rate
+            difference = (exchangerate * deposit_account['foreign_currency_amount']) - deposit_account['ntd_amount']
+            total_difference = total_difference + difference
+    # 撈出最大的adj_num
+    bigest_adj_num = 0
+    cursor1 = connection.cursor()
     cursor1.execute("select count(*) from Adjentry")
-    aleady_entry=cursor1.fetchall()[0][0]
-    if aleady_entry==0:
-        bigest_adj_num=0
+    aleady_entry = cursor1.fetchall()[0][0]
+    if aleady_entry == 0:
+        bigest_adj_num = 0
     else:
-        bigest_adj_num=bigest_num=Adjentry.objects.latest('adj_num').adj_num
-    #撈出超過三個月定存preamt object
-    over_three_month_time_deposit＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=23)[0]
-    if total_difference<0:
-        #撈出兌換損失pre object
-        foreign_exchange_lost＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=25)[0]
-        #寫入adjentry前，total_difference要先轉成正
-        total=total_difference*-1
-        #寫入adjentry
-        credit_foreign_exchange_losses=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=foreign_exchange_lost＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
-        debit_over_three_month_time_deposit=Adjentry.objects.create(amount=total,adj_num=bigest_adj_num+1,pre=over_three_month_time_deposit＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
-        return(credit_foreign_exchange_losses,debit_over_three_month_time_deposit)
-    #建立分路#借外匯存款貸兌換利益
-    elif total_difference>0:
-        #撈出兌換利益pre object
-        foreign_exchange_gain＿pre_id=Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=26)[0]
-        #寫入adjentry
-        credit_over_three_month_time_deposit=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=over_three_month_time_deposit＿pre_id,credit_debit=0,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
-        debit_foreign_exchange_gain=Adjentry.objects.create(amount=total_difference,adj_num=bigest_adj_num+1,pre=foreign_exchange_gain＿pre_id,credit_debit=1,front_end_location=2,entry_name='外幣評價損益_超過三個月定存')
-        return(debit_foreign_exchange_gain,credit_over_three_month_time_deposit)
+        bigest_adj_num = bigest_num = Adjentry.objects.latest('adj_num').adj_num
+    # 撈出外幣定存preamt object
+    foreign_curency_time_deposit＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=22)[0]
+    # 建立分路#借兌換損失貸外匯存款
+    if total_difference < 0:
+        # 撈出兌換損失pre object
+        foreign_exchange_lost＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=25)[0]
+        # 寫入adjentry前，total_difference要先轉成正
+        total = total_difference * -1
+        # 寫入adjentry
+        credit_foreign_exchange_losses = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
+                                                                 pre=foreign_exchange_lost＿pre_id, credit_debit=0,
+                                                                 front_end_location=2, entry_name='外幣評價損益_定期存款')
+        debit_foreign_currency_time_deposit = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
+                                                                      pre=foreign_curency_time_deposit＿pre_id,
+                                                                      credit_debit=1, front_end_location=2,
+                                                                      entry_name='外幣評價損益_定期存款')
+        foreign_currency_time_deposit_entry_list = {}
+        foreign_currency_time_deposit_entry_list = {'兌換損失': credit_foreign_exchange_losses,
+                                                    '外幣定存': debit_foreign_currency_time_deposit}
+        return foreign_currency_time_deposit_entry_list
+    # 建立分路#借外匯存款貸兌換利益
+    elif total_difference > 0:
+        # 撈出兌換利益pre object
+        foreign_exchange_gain＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=26)[0]
+        # 寫入adjentry
+        credit_foreign_currency_time_deposit = Adjentry.objects.create(amount=total_difference,
+                                                                       adj_num=bigest_adj_num + 1,
+                                                                       pre=foreign_curency_time_deposit＿pre_id,
+                                                                       credit_debit=0, front_end_location=2,
+                                                                       entry_name='外幣評價損益_定期存款')
+        debit_foreign_exchange_gain = Adjentry.objects.create(amount=total_difference, adj_num=bigest_adj_num + 1,
+                                                              pre=foreign_exchange_gain＿pre_id, credit_debit=1,
+                                                              front_end_location=2, entry_name='外幣評價損益_定期存款')
+        foreign_currency_time_deposit_entry_list = {}
+        foreign_currency_time_deposit_entry_list = {'兌換利益': debit_foreign_exchange_gain,
+                                                    '外幣定存': credit_foreign_currency_time_deposit}
+        return foreign_currency_time_deposit_entry_list
+
+
+# 銀行存款-超過三個月定存
+def create_over_three_month_time_deposit(cash_qry_set, rpt_id):
+    exchangerate = 0
+    total_difference = 0
+    # 重新撈定期存款，因為會需要查看有沒有調整
+    deposit_accounts = Depositaccount.objects.all().values()
+    for deposit_account in deposit_accounts:
+        if deposit_account['currency'] != 'TWD' and deposit_account['already_adjust'] == 1 and deposit_account[
+            'plege'] == 0:
+            # exchangerate
+            exchangerate = Exchangerate.objects.filter(currency_name=deposit_account['currency']).filter(rpt_id=rpt_id)[
+                0].rate
+            difference = (exchangerate * deposit_account['foreign_currency_amount']) - deposit_account['ntd_amount']
+            total_difference = total_difference + difference
+    # 撈出最大的adj_num
+    bigest_adj_num = 0
+    cursor1 = connection.cursor()
+    cursor1.execute("select count(*) from Adjentry")
+    aleady_entry = cursor1.fetchall()[0][0]
+    if aleady_entry == 0:
+        bigest_adj_num = 0
+    else:
+        bigest_adj_num = bigest_num = Adjentry.objects.latest('adj_num').adj_num
+    # 撈出超過三個月定存preamt object
+    over_three_month_time_deposit＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=23)[0]
+    if total_difference < 0:
+        # 撈出兌換損失pre object
+        foreign_exchange_lost＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=25)[0]
+        # 寫入adjentry前，total_difference要先轉成正
+        total = total_difference * -1
+        # 寫入adjentry
+        credit_foreign_exchange_losses = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
+                                                                 pre=foreign_exchange_lost＿pre_id, credit_debit=0,
+                                                                 front_end_location=2, entry_name='外幣評價損益_超過三個月定存')
+        debit_over_three_month_time_deposit = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
+                                                                      pre=over_three_month_time_deposit＿pre_id,
+                                                                      credit_debit=1, front_end_location=2,
+                                                                      entry_name='外幣評價損益_超過三個月定存')
+        over_three_month_time_deposit＿entry_list = {}
+        over_three_month_time_deposit＿entry_list = {'超過三個月定存': debit_over_three_month_time_deposit,
+                                                    '兌換損失': credit_foreign_exchange_losses}
+        return over_three_month_time_deposit＿entry_list
+    # 建立分路#借外匯存款貸兌換利益
+    elif total_difference > 0:
+        # 撈出兌換利益pre object
+        foreign_exchange_gain＿pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=26)[0]
+        # 寫入adjentry
+        credit_over_three_month_time_deposit = Adjentry.objects.create(amount=total_difference,
+                                                                       adj_num=bigest_adj_num + 1,
+                                                                       pre=over_three_month_time_deposit＿pre_id,
+                                                                       credit_debit=0, front_end_location=2,
+                                                                       entry_name='外幣評價損益_超過三個月定存')
+        debit_foreign_exchange_gain = Adjentry.objects.create(amount=total_difference, adj_num=bigest_adj_num + 1,
+                                                              pre=foreign_exchange_gain＿pre_id, credit_debit=1,
+                                                              front_end_location=2, entry_name='外幣評價損益_超過三個月定存')
+        over_three_month_time_deposit＿entry_list = {}
+        over_three_month_time_deposit＿entry_list = {'超過三個月定存': credit_over_three_month_time_deposit,
+                                                    '兌換利益': debit_foreign_exchange_gain}
+        return over_three_month_time_deposit＿entry_list
 
 #定期存款-超過三個月定存
 def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
@@ -292,18 +348,18 @@ def fill_in_preamount(list,  rpt_id, acc_id):
         cash_in_bank_qry_set = Cashinbanks.objects.filter(rpt__rpt_id=rpt_id)
         cashinbank_type_and_ntd_amount = cash_in_bank_qry_set.values('type__acc_id', 'type__acc_name').annotate(ntd_amount = Sum('ntd_amount'))
         # print('cashinbank.query >>> ', cashinbank_type_and_ntd_amount.query)
-        print('cashinbank_type_and_ntd_amount >>> ', cashinbank_type_and_ntd_amount)
+        # print('cashinbank_type_and_ntd_amount >>> ', cashinbank_type_and_ntd_amount)
         deposit_account_qry_set = Depositaccount.objects.filter(rpt__rpt_id=rpt_id)
         depositaccount_type_and_ntd_amount = deposit_account_qry_set.values('type__acc_id', 'type__acc_name').annotate(ntd_amount = Sum('ntd_amount'))
         # print('depositaccount.query >>> ', depositaccount_type_and_ntd_amount.query)
-        print('depositaccount_type_and_ntd_amount >>> ', depositaccount_type_and_ntd_amount)
+        # print('depositaccount_type_and_ntd_amount >>> ', depositaccount_type_and_ntd_amount)
 
         # 使用上傳資料表的 type 的 acc id 和 rpt_id 查出對應的 preamount qry set
         rpt_acc_tuples = tuple([(rpt_id, item['type__acc_id']) for item in cashinbank_type_and_ntd_amount.values('type__acc_id')]) + tuple([(rpt_id, item['type__acc_id']) for item in depositaccount_type_and_ntd_amount.values('type__acc_id')])
-        print('rpt_acc_tuples >>> ', rpt_acc_tuples)
+        # print('rpt_acc_tuples >>> ', rpt_acc_tuples)
         # 寫法參考：https://stackoverflow.com/a/41717889
         preamt_qry_set = Preamt.objects.extra(where=['(rpt_id, acc_id) in %s'], params=[rpt_acc_tuples])
-        print('preamt_qry_set >>> ', preamt_qry_set)
+        # print('preamt_qry_set >>> ', preamt_qry_set)
         # preamt53 = preamt_qry_set.get(acc__acc_id=53)
         # print('preamt53 >>> ', preamt53)
 
@@ -315,7 +371,7 @@ def fill_in_preamount(list,  rpt_id, acc_id):
 
         # print('<調整數> 超過三個月定存 {:f}, 台幣定存 {:f}, 外幣定存 {:f}, 質押定存 {:f}, 外匯存款 {:f}, 兌換利益 {:f}, 兌換損失 {:f} ')
         report_end_date = Report.objects.get(rpt_id=rpt_id).end_date
-        print('!!!!!!', report_end_date + relativedelta(months=3))
+        # print('!!!!!!', report_end_date + relativedelta(months=3))
         # 報導結束日
         # 2. 設置 preamt value
         # 活期存款 preamt
@@ -353,10 +409,11 @@ def fill_in_preamount(list,  rpt_id, acc_id):
 
         # # 3. 回傳資料
         # print('尚未測試 fill_in_preamount。 程式碼沒有報錯，但是要檢查金額是否正確。')
-        return {"status_code": 200, "returnObject": ""}
+        # return {"status_code": 200, "returnObject": ""}
+        print('fill_in_preamt')
     except Cashinbanks.DoesNotExist or Depositaccount.DoesNotExist as e:
         print('「銀行存款」或者「定期存款」資料表中沒有對應的 records >>> ', e)
-        return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
+        # return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
 
         # TODO 測試時註解掉
         # except Exception as e:
