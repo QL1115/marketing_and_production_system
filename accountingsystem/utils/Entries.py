@@ -24,6 +24,26 @@ def create_adjust_entries(comp_id, rpt_id, acc_id):
         create_cash_adjust_entries(rpt_id, acc_id)
         print('create_adjust_entries')
 
+def create_cash_preamount(rpt_id):
+    countIdList = []
+    acc_id = 1
+    countIdList.append(acc_id)
+    for i in countIdList:
+        childList = Account.objects.filter(acc_parent=i)
+        for a in childList:
+            if a.acc_id in countIdList:
+                pass
+            else:
+                countIdList.append(a.acc_id)
+                # 要接一個account object
+    number23 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=23))
+    number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
+    number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
+    number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
+    for i in countIdList:
+        a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+    return
+    
 def create_cash_adjust_entries(rpt_id, acc_id):
     # 建立所有現金的 adjust entry
     print('create_cash_adjust_entries')
@@ -32,10 +52,10 @@ def create_cash_adjust_entries(rpt_id, acc_id):
     deposit_account_qry_set=Depositaccount.objects.all().values()
     cash_qry_set={ 'cash_in_banks': cash_in_bank_qry_set,'deposit_account': deposit_account_qry_set}
 
-    #定期存款-超過三個月定存
-    over_3_month_dp = create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
     #定期存款-質押存款
     pledge_deposit = create_pledge_deposit_account_entry(cash_qry_set,rpt_id)
+    #定期存款-超過三個月定存
+    over_3_month_dp = create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
     #銀行存款-外匯存款
     foreign_currency_deposit = create_foreign_currency_deposit_entry(cash_qry_set,rpt_id)
     #銀行存款-外幣定存
@@ -230,25 +250,27 @@ def create_over_three_month_time_deposit(cash_qry_set, rpt_id):
 def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
     #建立超過三個月定存調整分錄
     print('create_over_3_month_deposit_entry')
-    deposit_account = cash_qry_set['deposit_account']
     ntd_total = 0
     foreign_currency_total = 0
-    report_start_date = Report.objects.filter(rpt_id=rpt_id).values('end_date')
+    deposit_account = cash_qry_set['deposit_account']
+    report_end_date = Report.objects.filter(rpt_id=rpt_id).values('end_date')
+    report_end_year = report_end_date[0]['end_date'].year
+    report_end_month = report_end_date[0]['end_date'].month
+    #x=0
 
     #計算時間差(月)
-    report_start_year = report_start_date[0]['end_date'].year
-    report_start_month =report_start_date[0]['end_date'].month
-    deposit_year = deposit_account[0]['end_date'].year
-    deposit_month = deposit_account[0]['end_date'].month
-    duration = 12*(report_start_year-deposit_year)+(report_start_month-deposit_month)
-
     for deposit_account in deposit_account:
-       if duration > 3:
-           deposit_account['already_adjusted'] = 1
+        deposit_year = deposit_account['end_date'].year
+        deposit_month = deposit_account['end_date'].month
+        duration = 12 * (deposit_year - report_end_year) + (deposit_month - report_end_month)
+        if deposit_account['already_adjust'] != 1 and duration > 3:
+           Depositaccount.objects.filter(rpt_id=rpt_id, dep_acc_id=deposit_account['dep_acc_id']).update(already_adjust=1)
            if deposit_account['foreign_currency_amount'] != None:
               foreign_currency_total += deposit_account['ntd_amount']
            else:
               ntd_total += deposit_account['ntd_amount']
+        #x+=1
+        #print(x, "foreign_currency_total:", foreign_currency_total, "ntd_total", ntd_total)
 
     '''撈出最大的adj_num(可以寫一個method)'''
     cursor1 = connection.cursor()
@@ -265,22 +287,15 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
     foreign_currency_pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=22)[0]
 
     #create_adjust_entry for ntd_over_3_month_total
-    #(amount, adj_num, pre_id, credit_debit, front_end_location)
-    #(ntd_total, 目前最大, preamount.report_id = report_id 的 pre_id, 0, 1)
     credit_ntd_over_3_month_total = Adjentry.objects.create(amount=ntd_total+foreign_currency_total, adj_num=bigest_adj_num + 1,
                                                              pre=over_3_month_pre_id, credit_debit=0,
                                                              front_end_location=1, entry_name= '超過三個月定存')
-    print(credit_ntd_over_3_month_total)
     #create_adjust_entry for 台幣定存
-    #(amount, adj_num, pre_id, credit_debit, front_end_location)
-    #(ntd_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 1, 1)
     debit_ntd_deposit_total = Adjentry.objects.create(amount=ntd_total, adj_num=bigest_adj_num + 1,
                                                              pre=ntd_deposit_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='超過三個月定存')
 
     #create_adjust_entry for 外幣定存
-    #(amount, adj_num, pre_id, credit_debit, front_end_location)
-    #(foreign_currency_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 1, 1)
     debit_foreign_currency_deposit_total = Adjentry.objects.create(amount=foreign_currency_total, adj_num=bigest_adj_num + 1,
                                                              pre=foreign_currency_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='超過三個月定存')
@@ -292,16 +307,14 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
 #定期存款-質押存款
 def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
     print('create_pledge_deposit_account_entry')
-    pledge_total = 0
+    plege_total = 0
     deposit_account = cash_qry_set['deposit_account']
-    new_deposit_account=[]
-    for deposit_account in deposit_account:
-        if deposit_account['already_adjust']==0:
-            new_deposit_account.add(deposit_account)
 
-    for deposit_account in new_deposit_account:
-       if deposit_account['pledge'] == 1:
-           pledge_total += deposit_account['ntd_amount']
+    for deposit_account in deposit_account:
+        if deposit_account['plege'] == 1:
+            deposit_account['already_adjust'] = 1
+            Depositaccount.objects.filter(rpt_id=rpt_id, dep_acc_id=deposit_account['dep_acc_id']).update(already_adjust=1)
+            plege_total += deposit_account['ntd_amount']
 
     '''撈出最大的adj_num(可以寫一個method)'''
     cursor1 = connection.cursor()
@@ -313,19 +326,19 @@ def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
         bigest_adj_num=Adjentry.objects.latest('adj_num').adj_num
 
     #撈出 preamount id
-    pledge_pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=24)[0]
+    plege_pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=24)[0]
     ntd_deposit_pre_id = Preamt.objects.filter(rpt_id=rpt_id).filter(acc_id=21)[0]
 
     #create_adjust_entry_for_pledge
     #(amount, adj_num, pre_id, credit_debit, front_end_location)
     #(pledge_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 0, 1)
-    credit_pledge_total = Adjentry.objects.create(amount=pledge_total, adj_num=bigest_adj_num + 1,
-                                                             pre=pledge_pre_id, credit_debit=0,
+    credit_pledge_total = Adjentry.objects.create(amount=plege_total, adj_num=bigest_adj_num + 1,
+                                                             pre=plege_pre_id, credit_debit=0,
                                                              front_end_location=1,entry_name='質押定存')
     #create_adjust_entry_for_台幣定存
     #(amount, adj_num, pre_id, credit_debit, front_end_location)
     #(pledge_total, 目前最大(與上同), preamount.report_id = report_id 的 pre_id, 1, 1)
-    debit_ntd_deposit_total = Adjentry.objects.create(amount=pledge_total, adj_num=bigest_adj_num + 1,
+    debit_ntd_deposit_total = Adjentry.objects.create(amount=plege_total, adj_num=bigest_adj_num + 1,
                                                              pre=ntd_deposit_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='質押定存')
     return{"質押定存": credit_pledge_total,

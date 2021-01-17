@@ -8,7 +8,7 @@ from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
@@ -71,7 +71,7 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     # return HttpResponse({"status_code":
     #
     # , "msg":"成功刪除檔案"})
-    
+    delete_preamount(rpt_id, acc_id)
     print('in_del!!!!!!!!!!')
     try:
         delete_uploaded_file(rpt_id, table_name)
@@ -87,21 +87,26 @@ def delete_cash_preamount(rpt_id):
     print('!!!!in')
     # 撈出所有存在於 cashinBank 跟 depositAccount 的 (就是兩個會有現金的檯面)的type再予以刪除
     countIdList = [23, 24, 25, 26]
-    for i in Cashinbanks.object.all():
-        if i.type in countIdList:
-            pass
-        else:
-            countIdList.append(i.type)
-    for i in Depositaccount.objects.all():
-        if i.type in countIdList:
-            pass
-        else:
-            countIdList.append(i.type)
     deleteList = []
+    deleteAccountList = []
     for i in countIdList:
-        for a in Preamt.objects.filter(rpt=rpt_id, acc=i):
+        for a in Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)):
             deleteList.append(a)
-    deleteList.delete()
+    for i in Cashinbanks.objects.all():
+        if i.type in deleteAccountList:
+            pass
+        else:
+            deleteAccountList.append(i.type)
+    for i in Depositaccount.objects.all():
+        if i.type in deleteAccountList:
+            pass
+        else:
+            deleteAccountList.append(i.type)
+
+    for i in deleteAccountList:
+        a = Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=i)
+        a.delete()
+    
     return
 
 def check(rpt_id):
@@ -258,36 +263,41 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
     entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
-    # print('entries[0] >>>>>>>>>', entries[0])
-    adjNum = entries[0].get('adj_num')
+    
     entryList = []
     depositEntryList = []
     depositTotalEntryAmountList = []
     depositTotalAmount = 0
-    for entry in entries:
-        # 計算調整總額
-        print(entry.get('entry_name'), '\t', entry.get('pre__acc__acc_name'))
-        if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
-            depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), entry.get('amount')])
-            depositTotalAmount += entry.get('amount')
-        
-        # 同一組就丟進entryList
-        if entry.get('adj_num') == adjNum:
-            entryList.append(entry)
-        # 出現新的adj_num
-        else:
-            # 先把上一組的entryList丟進depositEntryList
-            depositEntryList.append(entryList)
-            # 清空entryList
-            entryList = []
-            entryList.append(entry)
-            adjNum = entry.get('adj_num')
-    # 把最後一組的entryList丟進depositEntryList
-    depositEntryList.append(entryList)
-    
-    # 調整合計
-    if len(depositTotalEntryAmountList) != 0:
-            depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
+    # 先check是否有分錄
+    if len(entries) != 0:
+        adjNum = entries[0].get('adj_num')
+        for entry in entries:
+            # 計算調整總額
+            if entry.get('pre__acc__acc_name') in entry.get('entry_name'): # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
+            # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+                # 此分頁的分錄若計在借方都為正，計在貸方都為負
+                if entry.get('credit_debit') == 0:
+                    amount = entry.get('amount')
+                else:
+                    amount = -1 * entry.get('amount')
+                depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                depositTotalAmount += amount
+            # 同一組就丟進entryList
+            if entry.get('adj_num') == adjNum:
+                entryList.append(entry)
+            # 出現新的adj_num
+            else:
+                # 先把上一組的entryList丟進depositEntryList
+                depositEntryList.append(entryList)
+                # 清空entryList
+                entryList = []
+                entryList.append(entry)
+                adjNum = entry.get('adj_num')
+        # 把最後一組的entryList丟進depositEntryList
+        depositEntryList.append(entryList)
+        # 調整合計
+        if len(depositTotalEntryAmountList) != 0:
+                depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
             
     # print(depositEntryList)
     # print('----------------------------------------------------------------------------------')
@@ -343,34 +353,41 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
     entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
-    # print('entries[0] >>>>>>>>>', entries[0])
-    # adjNum = entries[0].get('adj_num')
+    
     entryList = []
     cibEntryList = []
     cibTotalEntryAmountList = []
     cibTotalAmount = 0
-    # for entry in entries:
-        # 計算調整總額
-        # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
-            # cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), entry.get('amount')])
-            # cibTotalAmount += entry.get('amount')
-            
-        # # 同一組就丟進entryList
-        # if entry.get('adj_num') == adjNum:
-            # entryList.append(entry)
-        # # 出現新的adj_num
-        # else:
-            # # 先把上一組的entryList丟進cibEntryList
-            # cibEntryList.append(entryList)
-            # # 清空entryList
-            # entryList = []
-            # entryList.append(entry)
-            # adjNum = entry.get('adj_num')
-    # 把最後一組的entryList丟進cibEntryList
-    # cibEntryList.append(entryList)
-    # 差異合計
-    # if len(cibTotalEntryAmountList) != 0:
-            # cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
+    # 先check是否有分錄
+    if len(entries) != 0:
+        adjNum = entries[0].get('adj_num')
+        for entry in entries:
+            # 計算調整總額
+            if entry.get('pre__acc__acc_name') in entry.get('entry_name'): # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
+            # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+                # 此分頁的分錄若計在借方都為正，計在貸方都為負
+                if entry.get('credit_debit') == 0:
+                    amount = entry.get('amount')
+                else:
+                    amount = -1 * entry.get('amount')
+                cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                cibTotalAmount += amount
+            # 同一組就丟進entryList
+            if entry.get('adj_num') == adjNum:
+                entryList.append(entry)
+            # 出現新的adj_num
+            else:
+                # 先把上一組的entryList丟進cibEntryList
+                cibEntryList.append(entryList)
+                # 清空entryList
+                entryList = []
+                entryList.append(entry)
+                adjNum = entry.get('adj_num')
+        # 把最後一組的entryList丟進cibEntryList
+        cibEntryList.append(entryList)
+        # 差異合計
+        if len(cibTotalEntryAmountList) != 0:
+                cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
     
     # print(cibEntryList)
     # print('----------------------------------------------------------------------------------')
