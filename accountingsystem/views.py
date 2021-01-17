@@ -401,7 +401,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     
     ############### 單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表
     # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set: book_amt 非 0 的，科目直接或間接是 acc_id 的子類別的，acc_id 為 23，24，25，26 的
-    preamt_qry_set = Preamt.objects.filter(~Q(book_amt=0) & (Q(rpt__rpt_id=rpt_id) & (Q(acc__acc_parent__acc_parent_id=acc_id) | Q(acc__acc_parent__acc_id=acc_id) | Q(acc__acc_id=acc_id) | Q(acc__acc_id__in=[23,24,25,26]))) ).values('pre_id', 'acc__acc_name', 'book_amt', 'adj_amt', 'pre_amt').order_by('pre_id')
+    preamt_qry_set = Preamt.objects.filter((Q(rpt__rpt_id=rpt_id) & (Q(acc__acc_parent__acc_parent_id=acc_id) | Q(acc__acc_parent__acc_id=acc_id) | Q(acc__acc_id=acc_id) | Q(acc__acc_id__in=[23,24,25,26]))) ).values('pre_id', 'acc__acc_name', 'book_amt', 'adj_amt', 'pre_amt').order_by('pre_id')
     # print('preamt_qry_set >>> ', preamt_qry_set)
     # 得到查詢到的 preamt 的所有 pre_id
     preamt_id_list = list(preamt_qry_set.values_list('pre_id', flat=True))
@@ -415,6 +415,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     adj_entries_list = []
     def filter_set(entry_list, adj_num, credit_debit):
         def iterator_func(item):
+            # print('item >>> ', item)
             if item['adj_num'] == adj_num:
                 if bool(item['credit_debit']) == bool(credit_debit):
                     return True
