@@ -137,7 +137,8 @@
                             {% for totalAmount in depositTotalEntryAmountList %}
                             <tr class="input_row">
                                 <td>調整金額_{{ totalAmount.0 }}</td>
-                                <td>{{ totalAmount.1|floatformat:0 }}</td>
+                                <td>&nbsp</td>
+                                <td>{{ totalAmount.1|floatformat:0|intcomma:False }}</td>
                             </tr>
                             {% endfor %}
                             </table>
@@ -154,7 +155,7 @@
                                                 <tr class="input_row">
                                                     <td>{{ entry.pre__acc__acc_name }}</td>
                                                     <td></td>
-                                                    <td>{{ entry.amount|floatformat:0 }}</td>
+                                                    <td>{{ entry.amount|floatformat:0|intcomma:False }}</td>
                                                     <td></td>
                                                 </tr>
                                                 {% else %}
@@ -162,7 +163,7 @@
                                                     <td></td>
                                                     <td>{{ entry.pre__acc__acc_name }}</td>
                                                     <td></td>
-                                                    <td>{{ entry.amount|floatformat:0}}</td>
+                                                    <td>{{ entry.amount|floatformat:0|intcomma:False }}</td>
                                                 </tr>
                                                 {% endif %}
                                             {% endfor %}
@@ -234,7 +235,8 @@
                         {% for totalAmount in cibTotalEntryAmountList %}
                         <tr class="input_row">
                             <td>差異_{{ totalAmount.0 }}</td>
-                            <td>{{ totalAmount.1|floatformat:0 }}</td>
+                            <td>&nbsp</td>
+                            <td>{{ totalAmount.1|floatformat:0|intcomma:False }}</td>
                         </tr>
                         {% endfor %}
                         </table>
@@ -251,7 +253,7 @@
                                             <tr class="input_row">
                                                 <td>{{ entry.pre__acc__acc_name }}</td>
                                                 <td></td>
-                                                <td>{{ entry.amount|floatformat:0 }}</td>
+                                                <td>{{ entry.amount|floatformat:0|intcomma:False }}</td>
                                                 <td></td>
                                             </tr>
                                             {% else %}
@@ -259,7 +261,7 @@
                                                 <td></td>
                                                 <td>{{ entry.pre__acc__acc_name }}</td>
                                                 <td></td>
-                                                <td>{{ entry.amount|floatformat:0}}</td>
+                                                <td>{{ entry.amount|floatformat:0|intcomma:False}}</td>
                                             </tr>
                                             {% endif %}
                                         {% endfor %}

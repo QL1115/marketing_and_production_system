@@ -352,7 +352,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
     
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
+    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name', 'front_end_location')
     
     entryList = []
     cibEntryList = []
@@ -363,8 +363,8 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         adjNum = entries[0].get('adj_num')
         for entry in entries:
             # 計算調整總額
-            if entry.get('pre__acc__acc_name') in entry.get('entry_name'): # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
-            # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+            # 用contains的方法判斷
+            if (entry.get('pre__acc__acc_name') in entry.get('entry_name')):
                 # 此分頁的分錄若計在借方都為正，計在貸方都為負
                 if entry.get('credit_debit') == 0:
                     amount = entry.get('amount')
@@ -372,6 +372,15 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
                     amount = -1 * entry.get('amount')
                 cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
                 cibTotalAmount += amount
+            # entry_name為外幣評價損益_定期存款的不適用上面的判斷方法，暫時先寫死
+            elif (entry.get('entry_name') == '外幣評價損益_定期存款') and (entry.get('pre__acc__acc_name') == '外幣定存'):
+                # 計在借方為正，計在貸方為負
+                if entry.get('credit_debit') == 0:
+                    amount = entry.get('amount')
+                else:
+                    amount = -1 * entry.get('amount')
+                cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                    
             # 同一組就丟進entryList
             if entry.get('adj_num') == adjNum:
                 entryList.append(entry)
