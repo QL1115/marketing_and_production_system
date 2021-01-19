@@ -84,28 +84,21 @@ def delete_preamount(rpt_id, acc_id):
 
 def delete_cash_preamount(rpt_id):
     print('!!!!in')
-    # 撈出所有存在於 cashinBank 跟 depositAccount 的 (就是兩個會有現金的檯面)的type再予以刪除
-    countIdList = [23, 24, 25, 26]
-    deleteList = []
-    deleteAccountList = []
+    # 全部予以刪除 
+    # 必定刪除:1 23 24 25 26
+    countIdList = [1,23, 24, 25, 26]
+    deleteAccount = []
+    # 抓出全部要被刪除的Account的ID
     for i in countIdList:
-        for a in Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)):
-            deleteList.append(a)
-    for i in Cashinbanks.objects.all():
-        if i.type in deleteAccountList:
-            pass
-        else:
-            deleteAccountList.append(i.type)
-    for i in Depositaccount.objects.all():
-        if i.type in deleteAccountList:
-            pass
-        else:
-            deleteAccountList.append(i.type)
-
-    for i in deleteAccountList:
-        a = Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=i)
-        a.delete()
-    
+        childList = Account.objects.filter(acc_parent=i)
+        for a in childList:
+            if a.acc_id in countIdList:
+                pass
+            else:
+                countIdList.append(a.acc_id)
+                
+    for i in countIdList:
+         Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
     return
 
 def check(rpt_id):
