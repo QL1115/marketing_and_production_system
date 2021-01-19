@@ -378,11 +378,14 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
             elif (entry.get('entry_name') == '外幣評價損益_定期存款') and (entry.get('pre__acc__acc_name') == '外幣定存'):
                 # 計在借方為正，計在貸方為負
                 if entry.get('credit_debit') == 0:
+                    # print('credit entry >>> ', entry)
                     amount = entry.get('amount')
-                else:
+                elif entry.get('credit_debit') == 1:
+                    # print('debit entry >>> ', entry)
                     amount = -1 * entry.get('amount')
+                cibTotalAmount += amount
                 cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
-                    
+
             # 同一組就丟進entryList
             if entry.get('adj_num') == adjNum:
                 entryList.append(entry)
