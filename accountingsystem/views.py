@@ -11,6 +11,7 @@ from django.db import connection
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
+from django.db.models import Q
 
 
 def index(request):
@@ -344,7 +345,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
     
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name')
+    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name', 'amount', 'adj_num', 'credit_debit', 'entry_name', 'front_end_location')
     
     entryList = []
     cibEntryList = []
@@ -355,8 +356,8 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         adjNum = entries[0].get('adj_num')
         for entry in entries:
             # 計算調整總額
-            if entry.get('pre__acc__acc_name') in entry.get('entry_name'): # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
-            # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+            # 用contains的方法判斷
+            if (entry.get('pre__acc__acc_name') in entry.get('entry_name')):
                 # 此分頁的分錄若計在借方都為正，計在貸方都為負
                 if entry.get('credit_debit') == 0:
                     amount = entry.get('amount')
@@ -364,6 +365,15 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
                     amount = -1 * entry.get('amount')
                 cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
                 cibTotalAmount += amount
+            # entry_name為外幣評價損益_定期存款的不適用上面的判斷方法，暫時先寫死
+            elif (entry.get('entry_name') == '外幣評價損益_定期存款') and (entry.get('pre__acc__acc_name') == '外幣定存'):
+                # 計在借方為正，計在貸方為負
+                if entry.get('credit_debit') == 0:
+                    amount = entry.get('amount')
+                else:
+                    amount = -1 * entry.get('amount')
+                cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                    
             # 同一組就丟進entryList
             if entry.get('adj_num') == adjNum:
                 entryList.append(entry)
@@ -391,22 +401,31 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         # counter+=1
     # print('===================================================================================')
     
-    '''單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表'''
-    # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set
-    preamt_qry_set = Preamt.objects.filter(rpt__rpt_id=rpt_id, acc__acc_id=acc_id).values('pre_id', 'acc__acc_name', 'book_amt', 'adj_amt', 'pre_amt')
-    print('preamt_qry_set >>> ', preamt_qry_set)
+    ############### 單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表
+    # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set: book_amt 非 0 的，科目直接或間接是 acc_id 的子類別的，acc_id 為 23，24，25，26 的
+    preamt_qry_set = Preamt.objects.filter((Q(rpt__rpt_id=rpt_id) & (Q(acc__acc_parent__acc_parent_id=acc_id) | Q(acc__acc_parent__acc_id=acc_id) | Q(acc__acc_id=acc_id) | Q(acc__acc_id__in=[23,24,25,26]))) ).values('pre_id', 'acc__acc_name', 'book_amt', 'adj_amt', 'pre_amt').order_by('pre_id')
+    # print('preamt_qry_set >>> ', preamt_qry_set)
     # 得到查詢到的 preamt 的所有 pre_id
-    preamt_id_list = preamt_qry_set.values('pre_id')
-    print('preamt_id_list >>> ', preamt_id_list)
+    preamt_id_list = list(preamt_qry_set.values_list('pre_id', flat=True))
+    # print('preamt_id_list >>> ', preamt_id_list)
     # 使用 pre_id_list 查詢所有符合的 adj_entries_qry_set
-    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name', 'credit_debit', 'amount', 'entry_name')
-    print('調整分錄配對之前的 qry set, adj_entries_qry_set >>> ', adj_entries_qry_set)
+    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name', 'credit_debit', 'amount', 'entry_name', 'adj_num').order_by('adj_num')
+    # print('調整分錄配對之前的 qry set, adj_entries_qry_set >>> ', adj_entries_qry_set)
     # 處理調整分錄的配對：[{'credit': [cre_1, cre_2] , 'debit': [debit1, debit2]}, {其他相同的 adj_num 借貸配對}, ...]
-    adj_num_list = adj_entries_qry_set.values('adj_num').distinct() # 共有幾個不同的 adj_num
+    adj_num_list = list(adj_entries_qry_set.values_list('adj_num', flat=True).distinct()) # 共有幾個不同的 adj_num
+    # print('adj_num_list >>> ', adj_num_list)
     adj_entries_list = []
+    def filter_set(entry_list, adj_num, credit_debit):
+        def iterator_func(item):
+            # print('item >>> ', item)
+            if item['adj_num'] == adj_num:
+                if bool(item['credit_debit']) == bool(credit_debit):
+                    return True
+            return False
+        return filter(iterator_func, entry_list)
     for adj_num in adj_num_list:
-        adj_entries_list.append({'credit': adj_entries_qry_set.filter(adj_num=adj_num, credit_debit=0), 'debit': adj_entries_qry_set.filter(adj_num, credit_debit=1)})
-    print('調整分錄配對好後的 list, adj_entries_list >>> ', adj_entries_list)
+        adj_entries_list.append({'credit': list(filter_set(list(adj_entries_qry_set), adj_num, 0)), 'debit': list(filter_set(list(adj_entries_qry_set), adj_num, 1))})
+    # print('調整分錄配對好後的 list, adj_entries_list >>> ', adj_entries_list)
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})

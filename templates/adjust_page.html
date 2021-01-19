@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,7 +137,8 @@
                             {% for totalAmount in depositTotalEntryAmountList %}
                             <tr class="input_row">
                                 <td>調整金額_{{ totalAmount.0 }}</td>
-                                <td>{{ totalAmount.1|floatformat:0 }}</td>
+                                <td>&nbsp</td>
+                                <td>{{ totalAmount.1|floatformat:0|intcomma:False }}</td>
                             </tr>
                             {% endfor %}
                             </table>
@@ -153,7 +155,7 @@
                                                 <tr class="input_row">
                                                     <td>{{ entry.pre__acc__acc_name }}</td>
                                                     <td></td>
-                                                    <td>{{ entry.amount|floatformat:0 }}</td>
+                                                    <td>{{ entry.amount|floatformat:0|intcomma:False }}</td>
                                                     <td></td>
                                                 </tr>
                                                 {% else %}
@@ -161,7 +163,7 @@
                                                     <td></td>
                                                     <td>{{ entry.pre__acc__acc_name }}</td>
                                                     <td></td>
-                                                    <td>{{ entry.amount|floatformat:0}}</td>
+                                                    <td>{{ entry.amount|floatformat:0|intcomma:False }}</td>
                                                 </tr>
                                                 {% endif %}
                                             {% endfor %}
@@ -233,7 +235,8 @@
                         {% for totalAmount in cibTotalEntryAmountList %}
                         <tr class="input_row">
                             <td>差異_{{ totalAmount.0 }}</td>
-                            <td>{{ totalAmount.1|floatformat:0 }}</td>
+                            <td>&nbsp</td>
+                            <td>{{ totalAmount.1|floatformat:0|intcomma:False }}</td>
                         </tr>
                         {% endfor %}
                         </table>
@@ -250,7 +253,7 @@
                                             <tr class="input_row">
                                                 <td>{{ entry.pre__acc__acc_name }}</td>
                                                 <td></td>
-                                                <td>{{ entry.amount|floatformat:0 }}</td>
+                                                <td>{{ entry.amount|floatformat:0|intcomma:False }}</td>
                                                 <td></td>
                                             </tr>
                                             {% else %}
@@ -258,7 +261,7 @@
                                                 <td></td>
                                                 <td>{{ entry.pre__acc__acc_name }}</td>
                                                 <td></td>
-                                                <td>{{ entry.amount|floatformat:0}}</td>
+                                                <td>{{ entry.amount|floatformat:0|intcomma:False}}</td>
                                             </tr>
                                             {% endif %}
                                         {% endfor %}
@@ -270,132 +273,54 @@
             </div>
         </div>
     </div>
-        <div id="total_adj_entries">
-            <h5>調整分錄總表</h5>
-
+        <div id="total_adj_entries" class="row justify-content-center">
+            <h5 class="col-sm-12 offset-sm-2">調整分錄總表</h5>
+            <div class="col-sm-10">
             <div class="row">
-                <div class="col-sm-1">編號</div>
-                <div class="col-sm-2">說明</div>
-                <div class="col-sm-3">科目（借）</div>
-                <div class="col-sm-3">科目（貸）</div>
+                <div class="col-sm-2">編號</div>
+                <div class="col-sm-3">說明</div>
+                <div class="col-sm-2">科目（借）</div>
+                <div class="col-sm-2">科目（貸）</div>
                 <div class="col-sm-3">金額（NTD）</div>
             </div>
             {% if adj_entries %}
                 {% with temp_num=0 %}
                 {% for entries_pair in adj_entries %}
                     <div class="row">
-                    <div class="col-sm-1">{{ forloop.counter }}</div>
-                    <div class="col-sm-2">{{ entries_pair.0.entry_name }}</div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">{{ forloop.counter }}</div>
+                    <div class="col-sm-3">{{ entries_pair.debit.0.entry_name|default:'這是說明' }}</div>
+                    <div class="col-sm-2">
                         {% for credit_adj_entry in entries_pair.credit %}
                             <div class="row"><div class="col-sm-12">{{ credit_adj_entry.pre__acc__acc_name }}</div></div>
                         {% endfor %}
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
+                        {% for credit_adj_entry in entries_pair.credit %}
+                            <div class="row"><div class="col-sm-12"><p></p></div></div>
+                        {% endfor %}
                         {% for debit_adj_entry in entries_pair.debit %}
                             <div class="row"><div class="col-sm-12">{{ debit_adj_entry.pre__acc__acc_name }}</div></div>
                         {% endfor %}
                     </div>
                     <div class="col-sm-3">
-                        {% for all_adj_entry in entries_pair.debit %}
-                            <div class="row"><div class="col-sm-12">{{ all_adj_entry.amount }}</div></div>
+
+                        {% for credit_adj_entry in entries_pair.credit %}
+                            <div class="col-sm-12">{{ credit_adj_entry.amount|floatformat:0|intcomma:False }}</div>
+                        {% endfor %}
+                        {% for debit_adj_entry in entries_pair.debit %}
+                            <div class="col-sm-9 offset-sm-3">{{ debit_adj_entry.amount|floatformat:0|intcomma:False }}</div>
                         {% endfor %}
                     </div>
                 </div>
                 {% endfor %}
                 {% endwith %}
             {% endif %}
-{#            <div class="row">#}
-{#                <div class="col-sm-1">1</div>#}
-{#                <div class="col-sm-2">超過三個月定存</div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">超過三個月定存</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">台幣定存</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">外幣定存</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#            </div>#}
-{#            <br>#}
-{#            <div class="row">#}
-{#                <div class="col-sm-1">2</div>#}
-{#                <div class="col-sm-2">質押定存</div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">質押定存</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">台幣定存</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#            </div>#}
-{#            <br>#}
-{#            <div class="row">#}
-{#                <div class="col-sm-1">3</div>#}
-{#                <div class="col-sm-2">外幣評價損益_外匯存款</div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">兌換損失</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">外匯存款</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#            </div>#}
-{#            <br>#}
-{#            <div class="row">#}
-{#                <div class="col-sm-1">4</div>#}
-{#                <div class="col-sm-2">外幣評價損益_定期存款</div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">兌換損失</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">外幣定存</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#            </div>#}
-{#            <br>#}
-{#            <div class="row">#}
-{#                <div class="col-sm-1">5</div>#}
-{#                <div class="col-sm-2">外幣評價損益_超過三個月定存</div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">超過三個月定存</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">兌換利益</div></div>#}
-{#                </div>#}
-{#                <div class="col-sm-3">#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                    <div class="row"><div class="col-sm-12">--</div></div>#}
-{#                </div>#}
-{#            </div>#}
-            <br><hr><br>
+            </div>
+            <br><hr class="col-sm-10"><br>
             {#    明細資訊_調整表    #}
-            <div id="details_adjust">
-                <h5>明細資訊 調整表</h5>
+            <div id="details_adjust" class="col-sm-10">
+                <h5 class="col-sm-12">明細資訊 調整表</h5>
+                <div class="col-sm-12">
                 <div class="row">
                     <div class="col-sm"></div>
                     <div class="col-sm">帳列數</div>
@@ -403,48 +328,24 @@
                     <div class="col-sm">編表數</div>
                 </div>
                 {% for preamt in preamts %}
+                    {% if preamt.book_amt != 0 or preamt.adj_amt != 0 %}
                     <div class="row">
                         <div class="col-sm">{{ preamt.acc__acc_name }}</div>
-                        <div class="col-sm">{{ preamt.book_amt }}</div>
+                        <div class="col-sm">{{ preamt.book_amt|floatformat:0|intcomma:False }}</div>
                         {% if preamt.adj_amt == 0 %}
                             <div class="col-sm">--</div>
                         {% else %}
-                            <div class="col-sm">{{ preamt.adj_amt }}</div>
+                            {% if preamt.adj_amt < 0 %}
+                                 <div class="col-sm">({{ preamt.adj_amt|floatformat:0|intcomma:False|slice:'1:' }})</div>
+                            {% else %}
+                                <div class="col-sm">{{ preamt.adj_amt|floatformat:0|intcomma:False }}</div>
+                            {% endif %}
                         {% endif %}
-                        <div class="col-sm">{{ preamt.pre_amt }}</div>
+                        <div class="col-sm">{{ preamt.pre_amt|floatformat:0|intcomma:False }}</div>
                     </div>
+                    {% endif %}
                 {% endfor %}
-
-{#                <div class="row">#}
-{#                    <div class="col-sm">活期存款</div>#}
-{#                    <div class="col-sm"> 23,163,606 </div>#}
-{#                    <div class="col-sm">--</div>#}
-{#                    <div class="col-sm"> 23,163,606 </div>#}
-{#                </div>#}
-{#                <div class="row">#}
-{#                    <div class="col-sm">支票存款</div>#}
-{#                    <div class="col-sm"> 1,634,859 </div>#}
-{#                    <div class="col-sm">--</div>#}
-{#                    <div class="col-sm"> 1,634,859 </div>#}
-{#                </div>#}
-{#                <div class="row">#}
-{#                    <div class="col-sm">外匯存款</div>#}
-{#                    <div class="col-sm"> 4,532,983 </div>#}
-{#                    <div class="col-sm">(138,692)</div>#}
-{#                    <div class="col-sm"> 4,394,291 </div>#}
-{#                </div>#}
-{#                <div class="row">#}
-{#                    <div class="col-sm">台幣定存</div>#}
-{#                    <div class="col-sm"> 17,000,000 </div>#}
-{#                    <div class="col-sm">(9,500,000)</div>#}
-{#                    <div class="col-sm"> 7,500,000 </div>#}
-{#                </div>#}
-{#                <div class="row">#}
-{#                    <div class="col-sm">外幣定存</div>#}
-{#                    <div class="col-sm">1,413,844</div>#}
-{#                    <div class="col-sm">(1,398,129)</div>#}
-{#                    <div class="col-sm">15,714</div>#}
-{#                </div>#}
+                </div>
             </div>
         </div>
     </div>
