@@ -48,8 +48,10 @@ def create_cash_adjust_entries(rpt_id, acc_id):
     # 建立所有現金的 adjust entry
     print('create_cash_adjust_entries')
 
-    cash_in_bank_qry_set=Cashinbanks.objects.all().values()
-    deposit_account_qry_set=Depositaccount.objects.all().values()
+    Depositaccount.objects.filter(rpt_id=rpt_id).update(already_adjust=0)
+
+    cash_in_bank_qry_set=Cashinbanks.objects.filter(rpt_id=rpt_id).values()
+    deposit_account_qry_set=Depositaccount.objects.filter(rpt_id=rpt_id).values()
     cash_qry_set={ 'cash_in_banks': cash_in_bank_qry_set,'deposit_account': deposit_account_qry_set}
 
     #定期存款-質押存款
@@ -191,7 +193,7 @@ def create_over_three_month_time_deposit(cash_qry_set, rpt_id):
     exchangerate = 0
     total_difference = 0
     # 重新撈定期存款，因為會需要查看有沒有調整
-    deposit_accounts = Depositaccount.objects.all().values()
+    deposit_accounts = Depositaccount.objects.filter(rpt_id=rpt_id).values()
     for deposit_account in deposit_accounts:
         if deposit_account['currency'] != 'TWD' and deposit_account['already_adjust'] == 1 and deposit_account[
             'plege'] == 0:
