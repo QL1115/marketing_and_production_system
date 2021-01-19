@@ -190,7 +190,7 @@
         {% endif %}
 
         $("#del_CashInBank").on('click',function () {
-                alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
+                {#alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");#}
                 var statu = confirm("確定要刪除銀行存款嗎?");
                 if (!statu) { return false; }
                 $.ajax({
@@ -213,7 +213,7 @@
 
         $("#del_Depositaccount").on('click', function () {
             console.log('in')
-                alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");
+                {#alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");#}
                 var statu = confirm("確定要刪除銀行存款嗎?");
                 if (!statu) { return false; }
                 $.ajax({
@@ -233,50 +233,46 @@
                     }
                 });
         });
-    })
-
-    $("#del_CashInBank").on('click',function () {
-            alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");
-            var statu = confirm("確定要刪除銀行存款嗎?");
-            if (!statu) { return false; }
-            $.ajax({
-
-                type: "GET",
-                url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
-                //data: "BookID=" + $(this).next().val(),
-                //dataType: "json",
-                success: function (response) {
-                    window.location.reload();
-                }, error: function (error) {
-                    window.location.reload();
-                    console.log(error);
-                }
-            });
-    });
-
-    $("#del_Depositaccount").click(function () {
-            alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");
-            var statu = confirm("確定要刪除銀行存款嗎?");
-            if (!statu) { return false; }
-            $.ajax({
-
-                type: "GET",
-                url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
-                //data: "BookID=" + $(this).next().val(),
-                //dataType: "json",
-                success: function (response) {
-                    window.location.reload();
-                }, error: function (error) {
-                    window.location.reload();
-                    console.log(error);
-                }
-            });
-    });
 
 
-    $(function() {
+        $("#del_CashInBank").on('click',function () {
+                {#alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}");#}
+                var statu = confirm("確定要刪除銀行存款嗎?");
+                if (!statu) { return false; }
+                $.ajax({
 
-    var defaultData = [
+                    type: "GET",
+                    url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
+                    //data: "BookID=" + $(this).next().val(),
+                    //dataType: "json",
+                    success: function (response) {
+                        window.location.reload();
+                    }, error: function (error) {
+                        window.location.reload();
+                        console.log(error);
+                    }
+                });
+        });
+
+        $("#del_Depositaccount").click(function () {
+                {#alert(" {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}");#}
+                var statu = confirm("確定要刪除銀行存款嗎?");
+                if (!statu) { return false; }
+                $.ajax({
+
+                    type: "GET",
+                    url: " {% url 'delete_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
+                    //data: "BookID=" + $(this).next().val(),
+                    //dataType: "json",
+                    success: function (response) {
+                        window.location.reload();
+                    }, error: function (error) {
+                        window.location.reload();
+                        console.log(error);
+                    }
+                });
+        });
+            var defaultData = [
     {
     text: '資產',
     href: '#parent1',
@@ -375,7 +371,15 @@
     $('#input-search').val('');
     $('#search-output').html('');
     });
-});
+    })
+
+
+
+
+{#    $(function() {#}
+{##}
+{##}
+//{#});#}
 </script>
 </body>
 </html>

@@ -114,7 +114,7 @@
                             </thead>
                             <tbody>
                             {% for row in depositData %}
-                                <tr class="input_row">
+                                <tr class="input_row dp_acc">
                                     {% csrf_token %}
                                     <input type="hidden" name="id" value="{{ row.dep_acc_id }}" required/>
                                     <td><input type="text" name="bank_name" value="{{ row.bank_name }}" disabled required/></td>
@@ -154,7 +154,7 @@
                         </tr>
 
                         {% for row in  cibData %}
-                            <tr class="input_row">
+                            <tr class="input_row cib_acc">
                                 {% csrf_token %}
                                 <input type="hidden" name="id" value="{{ row.cash_in_banks_id }}" disabled required>
                                 <td><input type="text" name="bank_name" value="{{ row.bank_name }}" disabled required/></td>
@@ -226,26 +226,37 @@
         });
 
         {# TODO 儲存按鈕 #}
-        $('#save').on('click', function () {
+        $('#save').on('click', function (event) {
+            event.preventDefault()
             $('#save').prop('disabled', true)
             msg = '';
             if ($('#tableforCheckDepositAccount').css('display') !== 'none') { <!-- 代表現在是「定期存款」 -->
                 $('#deposit_account_table td :input').prop('disabled', 'disabled'); <!-- 不可再更改「定期存款」 -->
 
-                $('#deposit_account_table .input_row').each(function () {
-                    var foreign_currency_amount = ($(this).find("input[name=foreign_currency_amount]").val().trim() == '--' || $(this).find("input[name=foreign_currency_amount]").val().trim() == '')
-                                                    ? null: parseFloat(($(this).find("input[name=foreign_currency_amount]").val().trim()));
+                {#$(document).on('click', '#save', function () {#}
+                    console.log('save click')
+
+
+                    {# 將關聯的所有商品包裝成 JSON 格式 [{},{},{},...]，送至後端處理，一筆筆塞入 StrategyProductRel 資料表 #}
+                    var dp_acc_list = $('#deposit_account_table .dp_acc').map(function () {
+                        var foreign_currency_amount = ($(this).find("input[name=foreign_currency_amount]").val() == '--' || $(this).find("input[name=foreign_currency_amount]").val() == '')
+                                                    ? null: parseFloat(($(this).find("input[name=foreign_currency_amount]").val()));
+                        return {
+                            'id': parseInt($(this).find("input[name=id]").val()),
+                            'bank_name': $(this).find("input[name=bank_name]").val(),
+                            'bank_account_number': $(this).find("input[name=bank_account_number]").val(),
+                            'currency': $(this).find("input[name=currency]").val(),
+                            'foreign_currency_amount': foreign_currency_amount,
+                            'ntd_amount': parseFloat($(this).find("input[name=ntd_amount]").val()),
+                            'plege': parseInt($(this).find("input[name=plege]").val()),
+                            'start_date': $(this).find("input[name=start_date]").val(),
+                            'end_date': $(this).find("input[name=end_date]").val()
+                        };
+                    }).get();
+                    console.log('dp_acc_list >>> ', dp_acc_list);
 
                     var postData = {
-                        'id': parseInt($(this).find("input[name=id]").val()),
-                        'bank_name': $(this).find("input[name=bank_name]").val().trim(),
-                        'bank_account_number': $(this).find("input[name=bank_account_number]").val().trim(),
-                        'currency': $(this).find("input[name=currency]").val().trim(),
-                        'foreign_currency_amount': foreign_currency_amount,
-                        'ntd_amount': parseFloat($(this).find("input[name=ntd_amount]").val()),
-                        'plege': parseInt($(this).find("input[name=plege]").val()),
-                        'start_date': $(this).find("input[name=start_date]").val(),
-                        'end_date': $(this).find("input[name=end_date]").val()
+                        'data': dp_acc_list,
                     };
                     console.log('postData', postData);
                     $.ajax({
@@ -255,59 +266,75 @@
                         url: "{% url 'update_raw_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='deposit_account' %}",
                         data: JSON.stringify(postData),
                         success: function(data) {
+                            console.log('dp data', data)
                             {#data = JSON.parse(data);#}
                             console.log('data', data)
                             if (data['isUpdated'] === true) {
                                 console.log('成功！')
                                 msg = '成功更新定期存款'
+                                alert(msg)
                             } else {
                                 msg = '更新定期存款失敗，可能原因：資料欄位型態不正確'
+                                alert(msg)
                             }
                         },
                         error: function(error) {
                             console.log('error msg', error)
                             msg = '定期存款更新失敗，原因：' + error
+                            alert(msg)
                         }
                     })
-                });
+             //   {#});#}
             } else {
                 console.log('in save cash in bank')
                 $('#cash_in_bank_table td :input').prop('disabled', 'disabled')
-                $('#cash_in_bank_table .input_row').each(function () {
-                    var foreign_currency_amount = ($(this).find("input[name=foreign_currency_amount]").val().trim() == '--' || $(this).find("input[name=foreign_currency_amount]").val().trim() == '')
-                                    ? null:parseFloat($(this).find("input[name=foreign_currency_amount]").val().trim());
+                 {#$(document).on('click', '#save', function () {#}
+                     console.log('in cash in bank')
 
-                    var postData = {
-                        'id': parseInt(($(this).find("input[name=id]").val())),
-                        'bank_name': $(this).find("input[name=bank_name]").val().trim(),
-                        'bank_account_number': $(this).find("input[name=bank_account_number]").val().trim(),
-                        'currency': $(this).find("input[name=currency]").val().trim(),
-                        'foreign_currency_amount': foreign_currency_amount,
-                        'ntd_amount': parseFloat($(this).find("input[name=ntd_amount]").val())
-                    };
-                    console.log('postData', postData);
-                    $.ajax({
-                        dataType: "json",
-                        contentType: 'application/json',
-                        type: "POST",
-                        url: "{% url 'update_raw_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
-                        data: JSON.stringify(postData),
-                        success: function(data) {
-                            {#data = JSON.parse(data);#}
-                            console.log('data', data)
-                            if (data['isUpdated'] === true) {
-                                msg = '成功更新銀行存款'
-                            } else {
-                                msg = '更新銀行存款失敗，可能原因：資料欄位型態不正確'
-                            }
-                        },
-                        error: function(error) {
-                            console.log('error msg', error)
-                            msg = '銀行存款更新失敗，原因：' + error
-                        }
-                    })
 
-                });
+                     {# 將關聯的所有商品包裝成 JSON 格式 [{},{},{},...]，送至後端處理，一筆筆塞入 StrategyProductRel 資料表 #}
+                     var cib_acc_list = $('#cash_in_bank_table .cib_acc').map(function () {
+                         var foreign_currency_amount = ($(this).find("input[name=foreign_currency_amount]").val() == '--' || $(this).find("input[name=foreign_currency_amount]").val() == '')
+                                    ? null : parseFloat($(this).find("input[name=foreign_currency_amount]").val().trim());
+                         return {
+                             'id': parseInt(($(this).find("input[name=id]").val())),
+                             'bank_name': $(this).find("input[name=bank_name]").val(),
+                             'bank_account_number': $(this).find("input[name=bank_account_number]").val(),
+                             'currency': $(this).find("input[name=currency]").val(),
+                             'foreign_currency_amount': foreign_currency_amount,
+                             'ntd_amount': parseFloat($(this).find("input[name=ntd_amount]").val())
+                         };
+                     }).get();
+                     console.log('cib_acc_list >>> ', cib_acc_list);
+
+                     var postData = {
+                         'data': cib_acc_list
+                     };
+                     console.log('postData', postData);
+                     $.ajax({
+                         dataType: "json",
+                         contentType: 'application/json',
+                         type: "POST",
+                         url: "{% url 'update_raw_file' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id table_name='cash_in_banks' %}",
+                         data: JSON.stringify(postData),
+                         success: function(data) {
+                             console.log('data', data)
+                             if (data['isUpdated'] === true) {
+                                 msg = '成功更新銀行存款'
+                                 alert(msg)
+                             } else {
+                                 msg = '更新銀行存款失敗，可能原因：資料欄位型態不正確'
+                                 alert(msg)
+                             }
+                         },
+                         error: function(error) {
+                             console.log('error msg', error)
+                             msg = '銀行存款更新失敗，原因：' + error
+                             alert(msg)
+                         }
+                     })
+
+             //   {#});#}
             }
 
             {#localtion.reload()#}

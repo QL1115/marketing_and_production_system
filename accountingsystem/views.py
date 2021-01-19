@@ -210,39 +210,48 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
     if request.method == 'POST' and request.is_ajax():
         # ⚠️ 注意：若是用 Ajax 以 JSON 格式， POST 方式送 data 過來，這裡使用 request.body 來接收並且需要處理一下 json。
         data = json.loads(request.body) #
+        data = data['data']
+        # print('data >>> ', data)
         # print("data >>> ", data)
         if table_name == 'cash_in_banks':
-            form = CashinbanksForm(data)
-            if form.is_valid():
-                cash_in_banks = Cashinbanks.objects.get(cash_in_banks_id=data.get('id'))
-                form = CashinbanksForm(data, instance=cash_in_banks)
-                form.save()
-                context = {
+            for cib_row in data:
+                # print('cib_row >>> ', cib_row)
+                form = CashinbanksForm(cib_row)
+                if form.is_valid():
+                    cash_in_banks = Cashinbanks.objects.get(cash_in_banks_id=cib_row.get('id'))
+                    form = CashinbanksForm(cib_row, instance=cash_in_banks)
+                    form.save()
+                else:
+                    return JsonResponse({
+                        'table_name': 'cash_in_banks',
+                        'isUpdated': False
+                    })
+            delete_preamount(rpt_id, acc_id)
+            create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+            return JsonResponse({
                     'table_name': 'cash_in_banks',
                     'isUpdated': True
-                }
-                return JsonResponse(context)
-            else:
-                return JsonResponse({
-                    'table_name': 'cash_in_banks',
-                    'isUpdated': False
-                })
+            })
+
         elif table_name == 'deposit_account':
-            form = DepositAccountForm(data)
-            if form.is_valid():
-                deposit_account = Depositaccount.objects.get(dep_acc_id=data.get('id'))
-                form = DepositAccountForm(data, instance=deposit_account)
-                form.save()
-                context = {
-                    'table_name': 'deposit_account',
-                    'isUpdated': True
-                }
-                return JsonResponse(context)
-            else:
-                return JsonResponse({
-                    'table_name': 'deposit_account',
-                    'isUpdated': False
-                })
+            for dp_row in data:
+                # print('dp_row >>> ', dp_row)
+                form = DepositAccountForm(dp_row)
+                if form.is_valid():
+                    deposit_account = Depositaccount.objects.get(dep_acc_id=dp_row.get('id'))
+                    form = DepositAccountForm(dp_row, instance=deposit_account)
+                    form.save()
+                else:
+                    return JsonResponse({
+                        'table_name': 'deposit_account',
+                        'isUpdated': False
+                    })
+            delete_preamount(rpt_id, acc_id)
+            create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+            return JsonResponse({
+                        'table_name': 'deposit_account',
+                        'isUpdated': True
+                    })
 
 def adjust_acc(request, comp_id, rpt_id, acc_id):
     """定期存款&銀行存款調整頁"""
