@@ -21,7 +21,7 @@ def create_preamount(comp_id, rpt_id, acc_id):
 def create_adjust_entries(comp_id, rpt_id, acc_id):
     #如果科目是現金，建立現金的分錄
     if acc_id==1:
-        create_cash_adjust_entries(rpt_id, acc_id)
+        create_cash_adjust_entries(comp_id,rpt_id, acc_id)
         print('create_adjust_entries')
 
 def create_cash_preamount(rpt_id):
@@ -44,7 +44,7 @@ def create_cash_preamount(rpt_id):
         a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
     return
     
-def create_cash_adjust_entries(rpt_id, acc_id):
+def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
     # 建立所有現金的 adjust entry
     print('create_cash_adjust_entries')
 
@@ -55,27 +55,27 @@ def create_cash_adjust_entries(rpt_id, acc_id):
     cash_qry_set={ 'cash_in_banks': cash_in_bank_qry_set,'deposit_account': deposit_account_qry_set}
 
     #定期存款-質押存款
-    pledge_deposit = create_pledge_deposit_account_entry(cash_qry_set,rpt_id)
+    pledge_deposit = create_pledge_deposit_account_entry(comp_id,cash_qry_set,rpt_id)
     #定期存款-超過三個月定存
-    over_3_month_dp = create_over_3_month_deposit_entry(cash_qry_set, rpt_id)
+    over_3_month_dp = create_over_3_month_deposit_entry(comp_id,cash_qry_set, rpt_id)
     #銀行存款-外匯存款
-    foreign_currency_deposit = create_foreign_currency_deposit_entry(cash_qry_set,rpt_id)
+    foreign_currency_deposit = create_foreign_currency_deposit_entry(comp_id,cash_qry_set,rpt_id)
     #銀行存款-外幣定存
-    foreign_currency_time_deposit = create_foreign_currency_time_deposit(cash_qry_set,rpt_id)
+    foreign_currency_time_deposit = create_foreign_currency_time_deposit(comp_id,cash_qry_set,rpt_id)
     #銀行存款-超過三個月定存
-    cib_over_3_month = create_over_three_month_time_deposit(cash_qry_set,rpt_id)
+    cib_over_3_month = create_over_three_month_time_deposit(comp_id,cash_qry_set,rpt_id)
     #
     li = [over_3_month_dp, pledge_deposit, foreign_currency_deposit, foreign_currency_time_deposit, cib_over_3_month]
     fill_in_preamount(li, rpt_id, acc_id)
 
 
 # 銀行存款-外匯存款
-def create_foreign_currency_deposit_entry(cash_qry_set, rpt_id):
+def create_foreign_currency_deposit_entry(comp_id,cash_qry_set, rpt_id):
     cash_in_banks = cash_qry_set['cash_in_banks']
     total_difference = 0
     exchangerate = 0
     for cash_in_bank in cash_in_banks:
-        if cash_in_bank['currency'] != 'TWD':
+        if cash_in_bank['currency'] != Company.objects.filter(com_id=comp_id)[0].currency:
             # exchangerate
             exchangerate = Exchangerate.objects.filter(currency_name=cash_in_bank['currency']).filter(rpt_id=rpt_id)[
                 0].rate
@@ -128,13 +128,13 @@ def create_foreign_currency_deposit_entry(cash_qry_set, rpt_id):
 
 # 銀行存款-外幣定存
 # 此method請放在定期存款調整後
-def create_foreign_currency_time_deposit(cash_qry_set, rpt_id):
+def create_foreign_currency_time_deposit(comp_id,cash_qry_set, rpt_id):
     exchangerate = 0
     total_difference = 0
     # 重新撈定期存款，因為會需要查看有沒有調整
     deposit_accounts = Depositaccount.objects.all().values()
     for deposit_account in deposit_accounts:
-        if deposit_account['currency'] != 'TWD' and deposit_account['already_adjust'] != 1:
+        if deposit_account['currency'] != Company.objects.filter(com_id=comp_id)[0].currency and deposit_account['already_adjust'] != 1:
             # exchangerate
             exchangerate = Exchangerate.objects.filter(currency_name=deposit_account['currency']).filter(rpt_id=rpt_id)[
                 0].rate
@@ -189,13 +189,13 @@ def create_foreign_currency_time_deposit(cash_qry_set, rpt_id):
 
 
 # 銀行存款-超過三個月定存
-def create_over_three_month_time_deposit(cash_qry_set, rpt_id):
+def create_over_three_month_time_deposit(comp_id,cash_qry_set, rpt_id):
     exchangerate = 0
     total_difference = 0
     # 重新撈定期存款，因為會需要查看有沒有調整
     deposit_accounts = Depositaccount.objects.filter(rpt_id=rpt_id).values()
     for deposit_account in deposit_accounts:
-        if deposit_account['currency'] != 'TWD' and deposit_account['already_adjust'] == 1 and deposit_account[
+        if deposit_account['currency'] != Company.objects.filter(com_id=comp_id)[0].currency and deposit_account['already_adjust'] == 1 and deposit_account[
             'plege'] == 0:
             # exchangerate
             exchangerate = Exchangerate.objects.filter(currency_name=deposit_account['currency']).filter(rpt_id=rpt_id)[
@@ -249,7 +249,7 @@ def create_over_three_month_time_deposit(cash_qry_set, rpt_id):
         return over_three_month_time_deposit＿entry_list
 
 #定期存款-超過三個月定存
-def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
+def create_over_3_month_deposit_entry(comp_id,cash_qry_set, rpt_id):
     #建立超過三個月定存調整分錄
     print('create_over_3_month_deposit_entry')
     ntd_total = 0
@@ -307,7 +307,7 @@ def create_over_3_month_deposit_entry(cash_qry_set, rpt_id):
            "外幣定存": debit_foreign_currency_deposit_total}
 
 #定期存款-質押存款
-def create_pledge_deposit_account_entry(cash_qry_set, rpt_id):
+def create_pledge_deposit_account_entry(comp_id,cash_qry_set, rpt_id):
     print('create_pledge_deposit_account_entry')
     plege_total = 0
     deposit_account = cash_qry_set['deposit_account']
