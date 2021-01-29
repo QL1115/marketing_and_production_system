@@ -7,8 +7,9 @@ from django.views.decorators.http import require_http_methods
 from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
+from .utils.ConsolidateReport import create_consolidated_report,create_consolidated_report_preamt
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group,Reltrx
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
@@ -441,3 +442,14 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
+
+
+
+def test(request,comp_id):
+    start_date='2020-01-01'
+    end_date='2020-12-31'
+    rpt_id=create_consolidated_report(comp_id,start_date,end_date)
+    create_consolidated_report_preamt(rpt_id,comp_id,start_date,end_date)
+
+
+    
