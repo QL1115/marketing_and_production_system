@@ -468,9 +468,4 @@ def fill_in_preamount(list,  rpt_id, acc_id):
         #     return '{"status_code": 500, "msg": "發生非預期錯誤。"}'
     # else:
     #     return {"status_code": 501, "msg": "尚未實作該科目。"}
-
-
-
-
-
-
+    
