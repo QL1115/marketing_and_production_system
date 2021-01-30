@@ -300,18 +300,6 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         # 調整合計
         if len(depositTotalEntryAmountList) != 0:
                 depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
-            
-    # print(depositEntryList)
-    # print('----------------------------------------------------------------------------------')
-    # counter = 1
-    # for i in depositEntryList:
-        # print(counter)
-        # for j in i:
-            # print(j)
-        # counter+=1
-    # print('===================================================================================')
-    # print(depositTotalEntryAmountList)
-    
     
     table_name = 'cash_in_banks'
     uploadFile = get_uploaded_file(rpt_id, table_name)
@@ -374,18 +362,6 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
                     amount = -1 * entry.get('amount')
                 cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
                 cibTotalAmount += amount
-            # entry_name為外幣評價損益_定期存款的不適用上面的判斷方法，暫時先寫死
-            elif (entry.get('entry_name') == '外幣評價損益_定期存款') and (entry.get('pre__acc__acc_name') == '外幣定存'):
-                # 計在借方為正，計在貸方為負
-                if entry.get('credit_debit') == 0:
-                    # print('credit entry >>> ', entry)
-                    amount = entry.get('amount')
-                elif entry.get('credit_debit') == 1:
-                    # print('debit entry >>> ', entry)
-                    amount = -1 * entry.get('amount')
-                cibTotalAmount += amount
-                cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
-
             # 同一組就丟進entryList
             if entry.get('adj_num') == adjNum:
                 entryList.append(entry)
@@ -402,16 +378,6 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         # 差異合計
         if len(cibTotalEntryAmountList) != 0:
                 cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
-    
-    # print(cibEntryList)
-    # print('----------------------------------------------------------------------------------')
-    # counter = 1
-    # for i in cibEntryList:
-        # print(counter)
-        # for j in i:
-            # print(j)
-        # counter+=1
-    # print('===================================================================================')
     
     ############### 單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表
     # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set: book_amt 非 0 的，科目直接或間接是 acc_id 的子類別的，acc_id 為 23，24，25，26 的

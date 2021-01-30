@@ -1,6 +1,6 @@
 import datetime
 
-from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, Exchangerate,Adjentry,Preamt
+from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, Exchangerate,Adjentry,Preamt, Company
 from django.db import connection
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q
@@ -160,11 +160,11 @@ def create_foreign_currency_time_deposit(comp_id,cash_qry_set, rpt_id):
         # 寫入adjentry
         credit_foreign_exchange_losses = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
                                                                  pre=foreign_exchange_lost＿pre_id, credit_debit=0,
-                                                                 front_end_location=2, entry_name='外幣評價損益_定期存款')
+                                                                 front_end_location=2, entry_name='外幣評價損益_外幣定存')
         debit_foreign_currency_time_deposit = Adjentry.objects.create(amount=total, adj_num=bigest_adj_num + 1,
                                                                       pre=foreign_curency_time_deposit＿pre_id,
                                                                       credit_debit=1, front_end_location=2,
-                                                                      entry_name='外幣評價損益_定期存款')
+                                                                      entry_name='外幣評價損益_外幣定存')
         foreign_currency_time_deposit_entry_list = {}
         foreign_currency_time_deposit_entry_list = {'兌換損失': credit_foreign_exchange_losses,
                                                     '外幣定存': debit_foreign_currency_time_deposit}
@@ -178,10 +178,10 @@ def create_foreign_currency_time_deposit(comp_id,cash_qry_set, rpt_id):
                                                                        adj_num=bigest_adj_num + 1,
                                                                        pre=foreign_curency_time_deposit＿pre_id,
                                                                        credit_debit=0, front_end_location=2,
-                                                                       entry_name='外幣評價損益_定期存款')
+                                                                       entry_name='外幣評價損益_外幣定存')
         debit_foreign_exchange_gain = Adjentry.objects.create(amount=total_difference, adj_num=bigest_adj_num + 1,
                                                               pre=foreign_exchange_gain＿pre_id, credit_debit=1,
-                                                              front_end_location=2, entry_name='外幣評價損益_定期存款')
+                                                              front_end_location=2, entry_name='外幣評價損益_外幣定存')
         foreign_currency_time_deposit_entry_list = {}
         foreign_currency_time_deposit_entry_list = {'兌換利益': debit_foreign_exchange_gain,
                                                     '外幣定存': credit_foreign_currency_time_deposit}
