@@ -407,3 +407,6 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
+
+def get_notes_page(request, comp_id, rpt_id, acc_id):
+    return render(request, 'notes_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
