@@ -408,5 +408,5 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
 
-def get_notes_page(request, comp_id, rpt_id, acc_id):
-    return render(request, 'notes_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
+def get_disclosure_page(request, comp_id, rpt_id, acc_id):
+    return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
