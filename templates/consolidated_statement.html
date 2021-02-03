@@ -41,8 +41,134 @@
     </nav>
 </head>
 <body>
+    <div class="container">
+        <br>
+        <div class="row">
+            <div class="col-sm-8" id="cash_title">現金及約當現金</div>
+            <div class="col-sm-8" id="property_title" style="display:none">不動產</div>
+            <div class="col-sm-2">
+                <select id="selectId" onchange="ShowSelectValue()" >
+                    <option value="0">現金及約當現金</option>
+                    <option value="1">不動產</option>
+                    <option value="2">c</option>
+                </select>
+            </div>
+            <div class="col-sm-2"><button class="btn btn-secondary">下一步</button></div>
+        </div>
+        <br>
+        <br>
+        <div id='cash'>
+            <div class="row">
+                {% for company in com_list %}
+                
+                    <div class="col-sm">{{ company}}</div>
+                
+                {% endfor %}
+                <div class="col-sm">合計帳列數</div>
+                <div class="col-sm">合併沖銷</div>
+                <div class="col-sm">合計查核數</div>
+            </div>
 
-    
+            <div class="row">
+                {% for demand_deposit in demand_deposit_list %}
+                    {% if demand_deposit == 0 %}
+                        <div class="col-sm">--</div>
+                    {% else %}
+                        {% if demand_deposit < 0 %}
+                            <div class="col-sm">({{ demand_deposit|floatformat:0|intcomma:False|slice:'1:' }})</div>
+                        {% else %}
+                            <div class="col-sm">{{ demand_deposit|floatformat:0|intcomma:False }}</div>
+                        {% endif %}
+                    {% endif %}  
+                {% endfor %}
+            </div>
 
+            <div class="row">
+                {% for check_deposit in check_deposit_list %}
+                    {% if check_deposit == 0 %}
+                        <div class="col-sm">--</div>
+                    {% else %}
+                        {% if check_deposit < 0 %}
+                            <div class="col-sm">({{ check_deposit|floatformat:0|intcomma:False|slice:'1:' }})</div>
+                        {% else %}
+                            <div class="col-sm">{{ check_deposit|floatformat:0|intcomma:False }}</div>
+                        {% endif %}
+                    {% endif %}  
+                {% endfor %}
+            </div>
+
+            <div class="row">
+                {% for foreign_currency_deposit in foreign_currency_deposit_list %}
+                    {% if foreign_currency_deposit == 0 %}
+                        <div class="col-sm">--</div>
+                    {% else %}
+                        {% if foreign_currency_deposit < 0 %}
+                            <div class="col-sm">({{ foreign_currency_deposit|floatformat:0|intcomma:False|slice:'1:' }})</div>
+                        {% else %}
+                            <div class="col-sm">{{ foreign_currency_deposit|floatformat:0|intcomma:False }}</div>
+                        {% endif %}
+                    {% endif %}  
+                {% endfor %}
+            </div>
+
+            <div class="row">
+                {% for currency_cd in currency_cd_list %}
+                    {% if currency_cd == 0 %}
+                        <div class="col-sm">--</div>
+                    {% else %}
+                        {% if currency_cd < 0 %}
+                            <div class="col-sm">({{ currency_cd|floatformat:0|intcomma:False|slice:'1:' }})</div>
+                        {% else %}
+                            <div class="col-sm">{{ currency_cd|floatformat:0|intcomma:False }}</div>
+                        {% endif %}
+                    {% endif %}  
+                {% endfor %}
+            </div>
+            <div class="row">
+                {% for foreign_currency_cd in foreign_currency_cd_list %}
+                    {% if foreign_currency_cd == 0 %}
+                        <div class="col-sm">--</div>
+                    {% else %}
+                        {% if foreign_currency_cd < 0 %}
+                            <div class="col-sm">({{ foreign_currency_cd|floatformat:0|intcomma:False|slice:'1:' }})</div>
+                        {% else %}
+                            <div class="col-sm">{{ foreign_currency_cd|floatformat:0|intcomma:False }}</div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div id=property style="display:none">
+            <p>hi</p>
+        <div>
+    </div>
 </body>
+
+<script>
+    function GetSelectValue(obj) {
+        var selectObj = document.getElementById(obj);
+        return selectObj.options[selectObj.options.selectedIndex].value;
+    }
+
+
+    function ShowSelectValue() {
+        var value = GetSelectValue("selectId");
+        if (value==0) {
+            $("#cash").show();
+            $("#cash_title").show();
+            $("#property").hide();
+            $("#property_title").hide();
+            //alert("1");
+        } else if(value==1) {
+            $("#cash").hide();
+            $("#cash_title").hide();
+            $("#property").show();
+            $("#property_title").show();
+            //alert("2");
+        }else{
+            alert("2");
+        }
+    }
+</script>
 </html>
+ 

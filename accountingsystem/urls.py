@@ -10,4 +10,5 @@ urlpatterns = [
     path('companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/raw_files/update/<str:table_name>', views.update_raw_file, name='update_raw_file'),
     path('companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/adjust_acc', views.adjust_acc, name='adjust_acc'),
     path('test/companies/<int:comp_id>',views.test, name='test'),
+    path('companies/<int:comp_id>/projects/<int:rpt_id>/',views.get_consolidated_statement_page, name='get_consolidated_statement_page'),
 ]

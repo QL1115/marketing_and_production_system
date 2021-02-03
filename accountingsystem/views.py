@@ -450,6 +450,163 @@ def test(request,comp_id):
     end_date='2020-12-31'
     rpt_id=create_consolidated_report(comp_id,start_date,end_date)
     create_consolidated_report_preamt(rpt_id,comp_id,start_date,end_date)
+#,start_date,end_date
+
+def get_consolidated_statement_page(request,comp_id,rpt_id):
+    def check_null_or_not(i,amt):
+        if not i:
+            i=0
+        else:
+            i=i.values()[0][amt]
+        return i
+    #撈日期
+    start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
+    end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
+    #此處rpt_id是合併報表的
+    company_list=[]
+    demand_deposit_list = []#活期存款
+    check_deposit_list = []#支票存款
+    foreign_currency_deposit_list = []#外匯存款
+    currency_cd_list = []#原幣定存
+    foreign_currency_cd_list = []#外幣定存
+    total_book_amt_demand_deposit=0 #活期存款book_amt
+    total_book_amt_check_deposit=0 #支票存款book_amt
+    total_book_amt_foreign_currency_deposit=0 #外匯存款book_amt
+    total_book_amt_currency_cd=0 #原幣定存book_amt
+    total_book_amt_foreign_currency_cd=0 #外幣定存book_amt
+    total_adj_amt_demand_deposit=0#活期存款adj_amt
+    total_adj_amt_check_deposit=0#支票存款adj_amt
+    total_adj_amt_foreign_currency_deposit=0#外匯存款adj_amt
+    total_adj_amt_currency_cd=0#原幣定存adj_amt
+    total_adj_amt_foreign_currency_cd=0#外幣定存adj_amts
+    #先撈舊報表的
+    #撈出母公司所屬的集團
+    group_id=Company.objects.filter(com_id=comp_id).values()[0]['grp_id']
+    #撈出同個集團的所有公司
+    com_list=Company.objects.filter(grp=group_id)
+    #撈出母公司幣別
+    parent_currency=Company.objects.filter(com_id=comp_id).values()[0]['currency']
+    #撈出母公司rpt_id，以便在下方撈出匯率
+    parent_rpt_id=Report.objects.filter(com_id=comp_id).filter(start_date=start_date).filter(end_date=end_date).values()[0]['rpt_id']
+    for i in com_list:
+        #查看該公司所使用的幣別
+        currency=Company.objects.filter(com_id=i.com_id).values()[0]['currency']
+        #撈出該公司個體報表rpt_id(報表要是個體,且報表符合所選日期)
+        report_id=Report.objects.filter(com=i).filter(type='個體').filter(start_date=start_date).filter(end_date=end_date).values()[0]['rpt_id']
+        #撈活期存款 acc_id=11
+        pre_amt_demand_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=11)
+        pre_amt_demand_deposit=check_null_or_not(pre_amt_demand_deposit,'pre_amt')
+        demand_deposit_list.append(pre_amt_demand_deposit)
+        #撈支票存款 acc_id=14
+        pre_amt_check_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=14)
+        pre_amt_check_deposit=check_null_or_not(pre_amt_check_deposit,'pre_amt')
+        check_deposit_list.append(pre_amt_check_deposit)
+        #撈外匯存款 acc_id=17
+        pre_amt_foreign_currency_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=17)
+        pre_amt_foreign_currency_deposit=check_null_or_not(pre_amt_foreign_currency_deposit,'pre_amt')
+        foreign_currency_deposit_list.append(pre_amt_foreign_currency_deposit)
+        #撈原幣定存 acc_id=21
+        pre_amt_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=21)
+        pre_amt_currency_cd=check_null_or_not(pre_amt_currency_cd,'pre_amt')
+        currency_cd_list.append(pre_amt_currency_cd)
+        #撈外幣定存 acc_id=22
+        pre_amt_foreign_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=22)
+        pre_amt_foreign_currency_cd=check_null_or_not(pre_amt_foreign_currency_cd,'pre_amt')
+        foreign_currency_cd_list.append(pre_amt_foreign_currency_cd)
+        if currency==parent_currency:
+            #新增公司料表
+            company_list.append(i.com_name+'('+parent_currency+')')
+            #company_list.append(i)
+            #活期存款 
+            total_book_amt_demand_deposit=total_book_amt_demand_deposit+pre_amt_demand_deposit
+            #支票存款
+            total_book_amt_check_deposit=total_book_amt_check_deposit+pre_amt_check_deposit
+            #外匯存款
+            total_book_amt_foreign_currency_deposit=total_book_amt_foreign_currency_deposit+pre_amt_foreign_currency_deposit
+            #原幣定存
+            total_book_amt_currency_cd=total_book_amt_currency_cd+pre_amt_currency_cd
+            #外幣定存
+            total_book_amt_foreign_currency_cd=total_book_amt_foreign_currency_cd+pre_amt_foreign_currency_cd
+        else:
+            #新增公司料表
+            original_currency_company_name=i.com_name+'('+currency+')'
+            company_list.append(original_currency_company_name)
+            parrent_currency_company_name=i.com_name+'('+parent_currency+')'
+            company_list.append(parrent_currency_company_name)
+        #     company_list.append({'name':})
+            #撈出匯率
+            exchange_rate=Exchangerate.objects.filter(currency_name=currency).filter(rpt=parent_rpt_id).values()[0]['rate']
+            #活期存款
+            pre_amt_demand_deposit=pre_amt_demand_deposit*exchange_rate
+            demand_deposit_list.append(pre_amt_demand_deposit)
+            total_book_amt_demand_deposit=total_book_amt_demand_deposit+pre_amt_demand_deposit
+            #支票存款 
+            pre_amt_check_deposit=pre_amt_check_deposit*exchange_rate
+            check_deposit_list.append(pre_amt_check_deposit)
+            total_book_amt_check_deposit=total_book_amt_check_deposit+pre_amt_check_deposit
+            #外匯存款
+            pre_amt_foreign_currency_deposit=pre_amt_foreign_currency_deposit*exchange_rate
+            foreign_currency_deposit_list.append(pre_amt_foreign_currency_deposit)
+            total_book_amt_foreign_currency_deposit=total_book_amt_foreign_currency_deposit+pre_amt_foreign_currency_deposit
+            #原幣定存
+            pre_amt_currency_cd=pre_amt_currency_cd*exchange_rate
+            currency_cd_list.append(pre_amt_currency_cd)
+            total_book_amt_currency_cd=total_book_amt_currency_cd+pre_amt_currency_cd
+            #外幣定存
+            pre_amt_foreign_currency_cd=pre_amt_foreign_currency_cd*exchange_rate
+            foreign_currency_cd_list.append(pre_amt_foreign_currency_cd)
+            total_book_amt_foreign_currency_cd=total_book_amt_foreign_currency_cd+pre_amt_foreign_currency_cd
+        #計算合併沖銷，撈出每間公司的關係人交易分錄
+        #先由每間公司對應的pre_amt_id，再撈出關係人交易，把關係人交易相加。
+        #撈活期存款pre_id acc_id=11
+        pre_id_demand_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=11).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_demand_deposit=Reltrx.objects.filter(pre=pre_id_demand_deposit)
+        adj_amt_demand_deposit=check_null_or_not(adj_amt_demand_deposit,'related_amt')
+        total_adj_amt_demand_deposit=total_adj_amt_demand_deposit+adj_amt_demand_deposit
+        #撈支票存款pre_id acc_id=14
+        pre_id_check_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=14).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_check_deposit=Reltrx.objects.filter(pre=pre_id_check_deposit)
+        adj_amt_check_deposit=check_null_or_not(adj_amt_check_deposit,'related_amt')
+        total_adj_amt_check_deposit=total_adj_amt_check_deposit+adj_amt_check_deposit
+        #撈外匯存款pre_id acc_id=17
+        pre_id_foreign_currency_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=17).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_foreign_currency_deposit=Reltrx.objects.filter(pre=pre_id_foreign_currency_deposit)
+        adj_amt_foreign_currency_deposit=check_null_or_not(adj_amt_foreign_currency_deposit,'related_amt')
+        total_adj_amt_foreign_currency_deposit=total_adj_amt_foreign_currency_deposit+adj_amt_foreign_currency_deposit
+        #撈原幣定存pre_id acc_id=21
+        pre_id_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=21).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_currency_cd=Reltrx.objects.filter(pre=pre_id_currency_cd)
+        adj_amt_currency_cd=check_null_or_not(adj_amt_currency_cd,'related_amt')
+        total_adj_amt_currency_cd=total_adj_amt_currency_cd+adj_amt_currency_cd
+        #撈外幣定存pre_id acc_id=22
+        pre_id_foreign_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=22).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_foreign_currency_cd=Reltrx.objects.filter(pre=pre_id_foreign_currency_cd)
+        adj_amt_foreign_currency_cd=check_null_or_not(adj_amt_foreign_currency_cd,'related_amt')
+        total_adj_amt_foreign_currency_cd=total_adj_amt_foreign_currency_cd+adj_amt_foreign_currency_cd
+    demand_deposit_list.append(total_book_amt_demand_deposit)
+    demand_deposit_list.append(total_adj_amt_demand_deposit)
+    demand_deposit_list.append(total_book_amt_demand_deposit+total_adj_amt_demand_deposit)
+    check_deposit_list.append(total_book_amt_check_deposit)
+    check_deposit_list.append(total_adj_amt_check_deposit)
+    check_deposit_list.append(total_book_amt_check_deposit+total_adj_amt_check_deposit)
+    foreign_currency_deposit_list.append(total_book_amt_foreign_currency_deposit)
+    foreign_currency_deposit_list.append(total_adj_amt_foreign_currency_deposit)
+    foreign_currency_deposit_list.append(total_book_amt_foreign_currency_deposit+total_adj_amt_foreign_currency_deposit)
+    currency_cd_list.append(total_book_amt_currency_cd)
+    currency_cd_list.append(total_adj_amt_currency_cd)
+    currency_cd_list.append(total_book_amt_currency_cd+total_adj_amt_currency_cd)
+    foreign_currency_cd_list.append(total_book_amt_foreign_currency_cd)
+    foreign_currency_cd_list.append(total_adj_amt_foreign_currency_cd)
+    foreign_currency_cd_list.append(total_book_amt_foreign_currency_cd+total_adj_amt_foreign_currency_cd)
+    return render(request, 'consolidated_statement.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'com_list':company_list,'demand_deposit_list':demand_deposit_list,
+                            'check_deposit_list':check_deposit_list,'foreign_currency_deposit_list':foreign_currency_deposit_list,
+                            'currency_cd_list':currency_cd_list,'foreign_currency_cd_list':foreign_currency_cd_list})
+
 
 
     
