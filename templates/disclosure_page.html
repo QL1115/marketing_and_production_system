@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <style type="text/css">
+        .disdetail_row{
+            margin-bottom: 1em;
+        }
+        .hide {
+            display: none;
+        }
+        .disclosure_format_plus:hover{
+            cursor: pointer;
+        }
+        #disclosure_checkboxes_fields .form-check {
+            margin-left: 0.8em;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">OurLogo</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'import' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                   aria-disabled="true"><strong>匯入</strong></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'check_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}"
+                   tabindex="-1" aria-disabled="true"><strong>檢查</strong></a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link" href="{% url 'adjust_acc' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}"
+                   id="navbarDropdown" role="button"
+                   aria-haspopup="true" aria-expanded="false">調整</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                   aria-disabled="true">附註格式</a>
+            </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+        <div class="other_nav_buttons">
+            <i class="fas fa-cog"></i>
+            <i class="fas fa-user"></i>
+        </div>
+    </div>
+</nav>
+<br>
+<div class="container">
+
+    <div class="row col-sm-10 justify-content-between">
+        <button id="add_disdetail_btn" type="button" class="col-sm-3 btn btn-secondary">新增附註格式分類</button>
+        <button id="show_disclosure_format_plus_btn" type="button" class="col-sm-1 btn btn-secondary">編輯</button>
+        <button id="update_disclosure_format_btn" type="button" class="col-sm-1 btn btn-secondary hide">確定</button>
+{#         data-toggle="modal" data-target="#notes_format_modal"#}
+    </div>
+
+    <br>
+
+    <div class="disdetail_row row">
+        <div class="col-sm-10">
+            <div data-disdetail="disdetail_1" class="row font-weight-bold lead">
+                <div class="disdetail_name col-sm-7">活期存款 disdetail</div>
+                <div class="disdetail_sum col-sm-4 text-right"></div>
+                <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+            </div>
+            <div data-disclosure="1" class="row">
+                <div class="col-sm-6 offset-2">活期存款</div>
+                <div class="disclosure_amount col-sm-3 text-right">23,163,606</div>
+            </div>
+{#            <div data-disclosure="1-2" class="row">#}
+{#                <div class="col-sm-6 offset-2">活期存款2</div>#}
+{#                <div class="col-sm-3 text-right">23163607</div>#}
+{#            </div>#}
+{#            <div data-disclosure="1-3" class="row">#}
+{#                <div class="col-sm-6 offset-2">活期存款3</div>#}
+{#                <div class="col-sm-3 text-right">23163608</div>#}
+{#            </div>#}
+        </div>
+    </div>
+    <div class="disdetail_row row">
+        <div class="col-sm-10">
+            <div data-disdetail="disdetail_2" class="row font-weight-bold lead">
+                <div class="disdetail_name col-sm-7">支票存款 disdetail</div>
+                <div class="disdetail_sum col-sm-4 text-right"></div>
+                <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+            </div>
+            <div data-disclosure="2" class="row">
+                <div class="col-sm-6 offset-2">支票存款</div>
+                <div class="disclosure_amount col-sm-3 text-right">1,634,859</div>
+            </div>
+        </div>
+    </div>
+    <div class="disdetail_row row">
+        <div class="col-sm-10">
+            <div data-disdetail="disdetail_3" class="row font-weight-bold lead">
+                <div class="disdetail_name col-sm-7">外匯存款 disdetail</div>
+                <div class="disdetail_sum col-sm-4 text-right"></div>
+                <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+            </div>
+            <div data-disclosure="3" class="row">
+                <div class="col-sm-6 offset-2">外匯存款</div>
+                <div class="disclosure_amount col-sm-3 text-right">4,394,291</div>
+            </div>
+        </div>
+    </div>
+    <div class="disdetail_row row">
+        <div class="col-sm-10">
+            <div data-disdetail="disdetail_4" class="row font-weight-bold lead">
+                <div class="disdetail_name col-sm-7">台幣定存 disdetail</div>
+                <div class="disdetail_sum col-sm-4 text-right"></div>
+                <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+            </div>
+            <div data-disclosure="4" class="row">
+                <div class="col-sm-6 offset-2">台幣定存</div>
+                <div class="disclosure_amount col-sm-3 text-right">7,500,000</div>
+            </div>
+        </div>
+    </div>
+    <div class="disdetail_row row">
+        <div class="col-sm-10">
+            <div data-disdetail="disdetail_5" class="row font-weight-bold lead">
+                <div class="disdetail_name col-sm-7">外幣定存 disdetail</div>
+                <div class="disdetail_sum col-sm-4 text-right"></div>
+                <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+            </div>
+            <div data-disclosure="5" class="row">
+                <div class="col-sm-6 offset-2">外幣定存</div>
+                <div class="disclosure_amount col-sm-3 text-right">18,121</div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+
+
+<!-- 附註格式 Modal -->
+<div class="modal fade" id="disclosure_format_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">附註格式設定</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="col-sm-12">
+                    <input type="text" class="disdetail_name form-control" placeholder="附註格式名稱" value="">
+                    <hr>
+                    {#  顯示科目層級  #}
+                    <div class="row btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-link">Level 1</button>
+                        <button type="button" class="btn btn-link" disabled>Level 2</button>
+                    </div>
+                    {#  顯示科目選項  #}
+                    <div id="disclosure_checkboxes_fields" class="row">
+                        <div class="form-check col-sm-5">
+                            <input class="form-check-input" type="checkbox" value="1" id="disclosure-1">
+                            <label class="form-check-label" for="disclosure-1">活期存款</label>
+                        </div>
+                        <div class="form-check col-sm-5">
+                            <input class="form-check-input" type="checkbox" value="2" id="disclosure-2">
+                            <label class="form-check-label" for="disclosure-2">支票存款</label>
+                        </div>
+                        <div class="form-check col-sm-5">
+                            <input class="form-check-input" type="checkbox" value="3" id="disclosure-3">
+                            <label class="form-check-label" for="disclosure-3">外匯存款</label>
+                        </div>
+                        <div class="form-check col-sm-5">
+                            <input class="form-check-input" type="checkbox" value="4" id="disclosure-4">
+                            <label class="form-check-label" for="disclosure-4">台幣定存</label>
+                        </div>
+                        <div class="form-check col-sm-5">
+                            <input class="form-check-input" type="checkbox" value="5" id="disclosure-5">
+                            <label class="form-check-label" for="disclosure-5">外幣定存</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button id="update_frontend_notes_btn" type="button" class="btn btn-primary">暫時儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增 disdetail Modal -->
+<div class="modal fade" id="add_disdetail_modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.js" crossorigin="anonymous"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        disdetail_row = null;
+
+        refresh_disclosure_amount_in_disdetail();
+
+        function refresh_disclosure_amount_in_disdetail() {
+            $('.disdetail_row').each(function() {
+                if ($('div[data-disclosure]:not(".hide")', this).length == 0) {
+                    $(this).addClass('hide');
+                } else {
+                    var disclosure_amount_in_a_disdetail_list = $('[data-disclosure]:not(".hide")', this).map(function () {
+                        return parseInt($('.disclosure_amount', this).text().replaceAll(',', ''))
+                    }).get();
+                    $('.disdetail_sum', this).text(Number(eval(disclosure_amount_in_a_disdetail_list.join("+"))).toLocaleString('en'));
+                }
+
+            });
+        }
+
+        {# 「編輯」按鈕按下後，在 disdetail 旁邊顯示「+」 #}
+        $('#show_disclosure_format_plus_btn').on('click', function() {
+            $('.disclosure_format_plus').removeClass('hide');
+            $('#show_disclosure_format_plus_btn').addClass('hide');
+            $('#update_disclosure_format_btn').removeClass('hide');
+        });
+
+        {#  資料送至後端  #}
+        $('#update_disclosure_format_btn').on('click', function() {
+            {# 畫面變更 #}
+            $('#show_disclosure_format_plus_btn').removeClass('hide');
+            $('#update_disclosure_format_btn').addClass('hide');
+            $('.disclosure_format_plus').addClass('hide');
+            {#  TODO 檢查有無重複勾選或未選到的 disclosure  #}
+            {# 抓取要傳回後端的資料 #}
+            var data = {};
+            $('.disdetail_row').each(function() {
+                var disclosures_list = $('[data-disclosure]', this).map(function() {
+                    return {
+                        disclosure_id: $(this).attr('data-disclosure'),
+                        {# TODO 要改成從後端傳過來的資料中取得 pre_amt，不要直接從畫面撈，否則可能有被篡改的問題。 #}
+                        pre_amt: $(':nth-child(2)', this).text()
+                    };
+                }).get();
+                data[($(this).find('div[data-disdetail]').attr('data-disdetail'))] = disclosures_list;
+            });
+            {#  TODO 資料送至後端  #}
+            alert('尚未實作檢查，目前回傳至後端的資料：\n' + JSON.stringify(data, null, 2));
+        });
+
+        {# 按下「+」後，顯示附註格式設定 modal #}
+        $('.disclosure_format_plus').on('click', function () {
+            $('#disclosure_format_modal .modal-body .form-check-input:checkbox').prop('checked', false);
+            disdetail_row = $(this).parents('.disdetail_row');
+            var disdetail_name = disdetail_row.find('.disdetail_name').text();
+            disdetail_row.find('div[data-disclosure]').each(function() {
+                $('#disclosure_checkboxes_fields .form-check-input[value="' + $(this).attr('data-disclosure') + '"]').prop('checked', true)
+            });
+            $('#disclosure_format_modal .modal-body input[type="text"]').val(disdetail_name);
+            $('#disclosure_format_modal').modal('show');
+        });
+
+        {# 按下附註格式設定 modal 的「暫時儲存」後，關閉 modal 並更新前端 #}
+        $('#update_frontend_notes_btn').on('click', function () {
+            {# 更新畫面 #}
+            if (disdetail_row.hasClass('hide')) {
+                if ($('#disclosure_format_modal .modal-body .disdetail_name').val().trim() == '' || $('#disclosure_checkboxes_fields .form-check-input:checkbox:checked').length == 0) {
+                    alert('沒有名稱或選擇科目');
+                    return;
+                }
+                $('.disdetail_row').last().after(disdetail_row);
+                disdetail_row.removeClass('hide');
+            }
+            var selected_disclosure_id_list = $.map($('#disclosure_checkboxes_fields .form-check-input:checkbox:checked'), (checked_disclosure) => {return checked_disclosure.value});
+            $('div[data-disclosure]', disdetail_row).addClass('hide');
+            selected_disclosure_id_list.forEach(function (id) {
+                var disclosure = $('.disdetail_row div[data-disclosure=' + id + ']');
+                var origin_disclosure_parent = disclosure.closest('.disdetail_row');
+                disdetail_row.find('div[data-disdetail]').after(disclosure.removeClass('hide').get());
+                {# 如果 disdetail 下沒有 disclosure，則將 disdetail 隱藏起來 #}
+                if (origin_disclosure_parent.find('div[data-disclosure]').length == 0) {
+                    origin_disclosure_parent.addClass('hide');
+                }
+            });
+            disdetail_row.find('.disdetail_name').text($('#disclosure_format_modal .modal-body .disdetail_name').val());
+            refresh_disclosure_amount_in_disdetail();
+            $('#disclosure_format_modal').modal('hide');
+        });
+    });
+
+    $('#add_disdetail_btn').on('click', function() {
+        {# 檢查目前的 disdetail 是否已經超過 disclosure 數量 #}
+        {# TODO disclosure 的數量要從後端送來的資料來判斷，這裡先寫 5 #}
+        if ($('.disdetail_row.hide').length == 0 || (! $('.disdetail_row.hide')).length > 5) {
+            alert('附註格式分類不可比附註格式多！');
+        } else {
+            disdetail_row = null;
+            console.log('disdetail_row', disdetail_row)
+            disdetail_row = $('.disdetail_row.hide:first');
+            console.log('disdetail_row', $('.disdetail_row.hide:first'));
+            console.log('disdetail_row disclosures', $('.disdetail_row.hide:first div[data-disclosure]').attr('data-disclosure'));
+            disdetail_row.find('.disdetail_name').text('');
+
+            $('#disclosure_format_modal .modal-body .disdetail_name').val('');
+            $('#disclosure_format_modal .form-check-input:checkbox').prop('checked', false);
+            $('#disclosure_format_modal').modal('show');
+        }
+
+    });
+</script>
+</body>
+</html>

@@ -407,6 +407,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
+                                                
 @csrf_exempt                              
 def new_report(request, comp_id):
     # 創造一個新的report
@@ -429,8 +430,12 @@ def new_report(request, comp_id):
     acc_id=1
     redirect_url = 'projects/%s/accounts/1/import'%(rpt_id)
     return redirect(redirect_url)
+    
 @csrf_exempt  
 def get_dashboard_page(request, comp_id):
     # 暫時寫死為沒給的東西都是1，讓頁面其他按鈕有效果
-    # 可修正為拿除dashboard頁上，navbar東西，就不需要這些
+    # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
     return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1})
+
+def get_disclosure_page(request, comp_id, rpt_id, acc_id):
+    return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})

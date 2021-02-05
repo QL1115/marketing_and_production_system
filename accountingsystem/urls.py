@@ -11,4 +11,5 @@ urlpatterns = [
     path('companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/adjust_acc', views.adjust_acc, name='adjust_acc'),
     path('companies/<int:comp_id>/new_report', views.new_report, name='new_report'),
     path('companies/<int:comp_id>/dashboard_page', views.get_dashboard_page, name='dash_board'),
+    path('companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/disclosure', views.get_disclosure_page, name='disclosure_page'),
 ]
