@@ -1,4 +1,4 @@
-{% load humanize %}
+{% load humanize %}{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -67,9 +67,132 @@
 </head>
 <body>
     <div class="container-fluid">
+    <!-- start tree -->
+    <div class="row">
+    <div class="col-md-2 pt-5">
+        <div id="tree">
+
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+        <script src="{% static 'js/bstreeview.js' %}">
+    </script>
+    <script>
+        $(function () {
+
+            var json = '[' +
+                '{' +
+                '"text": "資產",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+
+
+
+                '{' +
+                '"text": "負債",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "權益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "損益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "其他",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '}' +
+                ']';
+
+            $('#tree').bstreeview({ data: json });
+
+        });
+    </script>
+    <!-- endof tree-->
         {#  調整表  #}
         {#    調整分錄總表    #}
-        <br>
+        
+
         <div id="content_layout" class="col-10">
             <div id=cashAdjustLayout>
                 <div class="row">
@@ -95,7 +218,7 @@
                                 <!-- <input id="totalforCheckDepositAccount" type="text" placeholder="{{ depositSummary }}" readonly/> -->
                             <!-- </div> -->
                         <!-- </div> -->
-                        <table class="w-auto" id="deposit_account_table">
+                        <table class="table-responsive" id="deposit_account_table">
                             <thead>
                                 <tr class="table-active">
                                     <th style="padding:8px;">銀行別</th>
@@ -180,7 +303,7 @@
                             <!-- <input id="totalforCheckCashInBanks" type="text" placeholder="{{ cibSummary }}" readonly/> -->
                         <!-- </div> -->
                     <!-- </div> -->
-                    <table class="w-auto" id="cash_in_bank_table">
+                    <table class="table-responsive" id="cash_in_bank_table">
                         <tr class="table-active">
                             <th>銀行別</th>
                             <th>帳號</th>
@@ -348,6 +471,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>

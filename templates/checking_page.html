@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,15 +13,15 @@
     <!-- FontAwesome -->
     <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
     <!--tree things -->
-{#    <link href="test.css" rel="stylesheet">#}
-    <style>
-        td input {
-            border: none;
-        }
-    </style>
+
+
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="{% static 'css/bstreeview.css' %}" rel="stylesheet">
 
 
     <!--start of navbar-->
+
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">OurLogo</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -53,7 +54,7 @@
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <input class="form-control mr-sm-2" type="search" value="Search" aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
             <div class="other_nav_buttons">
@@ -65,25 +66,144 @@
     <!--end of navbar-->
 </head>
 <body>
+  
 <div class="container-fluid">
+
+
     <div class="row">
-        {#    <!--start of tree view-->#}
-        {#        <div id="content_layout" class="col-2">#}
-        {#          <div>#}
-        {#              <div id="treeview1" class=""></div>#}
-        {#          </div>#}
-        {#        </div>#}
-        {#  <!--end of tree view-->#}
+          <!-- start tree -->
+    
+    <div class="col-md-2 pt-5">
+        <div id="tree">
+
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+        <script src="{% static 'js/bstreeview.js' %}">
+    </script>
+    <script>
+        $(function () {
+
+            var json = '[' +
+                '{' +
+                '"text": "資產",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+
+
+
+                '{' +
+                '"text": "負債",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "權益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "損益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "其他",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+                
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '}' +
+                ']';
+
+            $('#tree').bstreeview({ data: json });
+
+        });
+    </script>
+    <!-- endof tree-->
+
         <!--start of checking page-->
         <div id="content_layout" class="col-10">
             <div id=cashCheckLayout>
                 <div class="row">
-                    <div id="cashCheckBtnGroup" class="col-2" aria-label="Basic example">
+                    <div id="cashCheckBtnGroup" class="col-6" aria-label="Basic example">
                         <button id="CheckDepositAccount" type="button" class="btn btn-secondary" value="deposit_account">定期存款</button>
                         <button id="CheckCashInBank" type="button" class="btn btn-secondary" value="cash_in_banks">銀行存款</button>
                     </div>
-                    <div class="col-10">
-                        <div id="editBtnGroup" class="btn-group col-2 float-right" role="group"
+                    <div class="col-6">
+                        <div id="editBtnGroup" class="btn-group col-4 float-right" role="group"
                              aria-label="Basic example">
                             <button id="Edit" type="button" class="btn btn-secondary">編輯</button>
                             <button id="save" type="button" class="btn btn-secondary" disabled>確定</button>
@@ -91,15 +211,15 @@
                     </div>
                 </div>
                 <br>
-                <div id="tableforCheckDepositAccount">
+                <div id="tableforCheckDepositAccount" class="table-responsive">
                     <div>
                         <div>
                             <div class="float-right">
                                 <label for="totalforCheckDepositAccount">合計(NTD):</label>
-                                <input id="totalforCheckDepositAccount" type="text" placeholder="{{ depositSummary }}" readonly/>
+                                <input id="totalforCheckDepositAccount" type="text" value="{{ depositSummary }}" readonly/>
                             </div>
                         </div>
-                        <table class="w-auto" id="deposit_account_table">
+                        <table id="deposit_account_table">
                             <thead>
                                 <tr class="table-active">
                                     <th style="padding:8px;">銀行別</th>
@@ -140,7 +260,7 @@
                     <div>
                         <div class="float-right">
                             <label for="totalforCheckCashInBank">合計(NTD):</label>
-                            <input id="totalforCheckCashInBanks" type="text" placeholder="{{ cibSummary }}" readonly/>
+                            <input id="totalforCheckCashInBanks" type="text" value="{{ cibSummary }}" readonly/>
                         </div>
                     </div>
                     <table class="w-auto" id="cash_in_bank_table">

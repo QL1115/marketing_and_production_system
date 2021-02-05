@@ -1,5 +1,5 @@
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -8,7 +8,7 @@ from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
@@ -407,3 +407,30 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
+@csrf_exempt                              
+def new_report(request, comp_id):
+    # 創造一個新的report
+    # 取得起始與結束日期
+    start_date = request.GET["start_date"]
+    print(start_date)
+    end_date = request.GET["end_date"]
+    print(end_date)
+    # 製造report
+    Report.objects.create(start_date=start_date, end_date=end_date, com=Company.objects.get(com_id=comp_id), type="個體")
+    # 查詢新增的report
+    reports = Report.objects.filter(start_date=start_date, end_date=end_date, com=Company.objects.get(com_id=comp_id))
+    for report in reports:
+        new_report = report
+    if new_report:
+        rpt_id = new_report.rpt_id
+    else:
+        pass
+    # 導到匯入頁
+    acc_id=1
+    redirect_url = 'projects/%s/accounts/1/import'%(rpt_id)
+    return redirect(redirect_url)
+@csrf_exempt  
+def get_dashboard_page(request, comp_id):
+    # 暫時寫死為沒給的東西都是1，讓頁面其他按鈕有效果
+    # 可修正為拿除dashboard頁上，navbar東西，就不需要這些
+    return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1})
