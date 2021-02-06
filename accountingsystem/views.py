@@ -8,7 +8,7 @@ from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Disclosure, Disdetail, Distitle
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
@@ -165,9 +165,8 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
        
         #如果兩張表都已經匯入，才進行建立分錄
         if check(rpt_id)[0]['status_code']==123 and check(rpt_id)[1]['status_code']==789:
-            #建立分錄，此method放在utils的Entries中
+            #建立分錄和附註格式，此method放在utils的Entries中
             create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
-
 
         return render(request, 'import_page.html', {'acc_id': acc_id,
                                                     'comp_id': comp_id,
@@ -207,11 +206,13 @@ def get_check_page(request, comp_id, rpt_id, acc_id):
                                                  'cibSummary': cibSummary, 'depositSummary':depositSummary})
 @csrf_exempt
 def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
+    #print('request >>> ', request)
     if request.method == 'POST' and request.is_ajax():
         # ⚠️ 注意：若是用 Ajax 以 JSON 格式， POST 方式送 data 過來，這裡使用 request.body 來接收並且需要處理一下 json。
         data = json.loads(request.body) #
+        #print('unprocessed_data >>>', data)
         data = data['data']
-        # print('data >>> ', data)
+        #print('data >>> ', data)
         # print("data >>> ", data)
         if table_name == 'cash_in_banks':
             for cib_row in data:
@@ -409,4 +410,48 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
 
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
-    return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
+    """
+    如果 method 是 GET，回傳正確 disclosure 頁面
+    如果 method 是 POST，將傳回的 disclosure 檢查後存進資料庫
+    """
+
+    #確認銀行存款和定期存款有被上傳
+    if request.method == 'GET':
+        table_name = 'cash_in_banks'
+        uploadFile = get_uploaded_file(rpt_id, table_name)
+        if uploadFile.get('status_code') == 200:
+            table_name = 'deposit_account'
+            uploadFile = get_uploaded_file(rpt_id, table_name)
+            cibData = uploadFile.get('returnObject')
+            if uploadFile.get('status_code') == 200:
+                depositData = uploadFile.get('returnObject')
+                disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail').filter(dis_title__rpt__rpt_id=rpt_id).values()
+                disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure').filter(pre__rpt__rpt_id=rpt_id).values('disclosure_id', 'pre_amt', 'dis_detail__row_name')
+                acc_name=[]
+                # TODO 如何送回階層表 (根據用到的 account?)
+                disdetail_editor = {}
+
+            else:
+                msg = uploadFile.get('msg')
+                return render(request, 'disclosure_page.html',
+                          {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
+        else:
+            msg = uploadFile.get('msg')
+            return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
+        return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set, 'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor})
+
+
+    if request.method == 'POST' and request.is_ajax():
+        data = json.loads(request.body)
+        #TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
+        #TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
+        try:
+            for disdetail_obj in data:
+                #更新 row_name
+                Disdetail.objects.filter(disdetail_id = disdetail_obj.get('disdetail_id')).update(row_name = disdetail_obj.get('row_name'))
+                #更新 pre_amt 和所關聯的 disdetail
+                Disclosure.objects.filter(disclosure_id = disdetail_obj['disclosures'].get('disclosure_id')).update(dis_detail_id = disdetail_obj.get('disdetail_id'), pre_amt = disdetail_obj['disclosures'].get('pre_amt'))
+        except Exception as e:
+            print('update_disclosure exception >>> ', e)
+            # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
+            return {"status_code": 500, "msg": "發生不明錯誤。"}

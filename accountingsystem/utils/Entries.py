@@ -1,14 +1,14 @@
 import datetime
 
-from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, Exchangerate,Adjentry,Preamt, Company
+from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, Exchangerate,Adjentry,Preamt, Company, Disdetail, Disclosure, Distitle
 from django.db import connection
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q
 
 
-def create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id):
+def create_preamount_and_adjust_entries_for_project_account(comp_id: object, rpt_id: object, acc_id: object) -> object:
     print('create_preamount_and_adjust_entries_for_project_account')
-    #建立調整
+    #建立調整和附註格式
     create_preamount(comp_id, rpt_id, acc_id)
     #建立分錄
     create_adjust_entries(comp_id, rpt_id, acc_id) 
@@ -40,8 +40,22 @@ def create_cash_preamount(rpt_id):
     number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
     number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
     number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
+
+    """
+    問題:
+    DisDetail, Disclosure 都是跟著 Preamount 建立
+    目前建立順序: Preamount > Distitle > DisDetail > Disclosure，但要如何讓 Disclosure 抓到和 DisDetail&Preamount的關聯?
+    """
+    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=23).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
+    Disclosure.objects.create(pre_amt=0, dis_detail_id=0, pre_id=0)
+
+    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=24).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
+    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=25).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
+    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=26).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
+
     for i in countIdList:
         a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+        Disdetail.objects.create(row_name=Account.objects.filter(acc_id=i).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
     return
     
 def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
@@ -468,6 +482,8 @@ def fill_in_preamount(list,  rpt_id, acc_id):
         #     return '{"status_code": 500, "msg": "發生非預期錯誤。"}'
     # else:
     #     return {"status_code": 501, "msg": "尚未實作該科目。"}
+
+
 
 
 
