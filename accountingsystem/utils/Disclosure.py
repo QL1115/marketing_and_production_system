@@ -41,29 +41,35 @@ def create_disclosure(preamount_list, disdetail_list, rpt_id):
 
 def delete_disclosure_for_project_account(acc_id, countIdList, rpt_id):
     print('>>> delete_disclosure_for_project_account')
+    delete_disclosure(acc_id, countIdList, rpt_id)
+
+def delete_disclosure(acc_id, countIdList, rpt_id):
+    """
+    :param countIdList: 需刪除的 preamount_id_list
+    """
+    disclosure_list = []
+    print('>>> delete_disclosure')
+    for i in range(len(countIdList)):
+        disclosure = Disclosure.objects.filter(pre_id=countIdList[i])
+        disclosure_list.append(disclosure.dis_detail_id)
+        disclosure.delete()
+    delete_disdetail(disclosure_list, rpt_id)
+
+def delete_disdetail(acc_id, disclosure_list, rpt_id):
+    print('>>> delete_disdetail')
+    for i in range(len(disclosure_list)):
+        disdetail = Disdetail.objects.filter(disdetail_id=disclosure_list[i])
+        disdetail.delete()
     delete_distitle(acc_id, countIdList, rpt_id)
 
 def delete_distitle(acc_id, countIdList, rpt_id):
     print('>>> delete_distitle')
     disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
     Distitle.objects.filter(dis_name=disname[0]['acc_name'], rpt_id=rpt_id).delete()
-    delete_disdetail(countIdList, rpt_id)
-
-def delete_disdetail(countIdList, rpt_id):
-    print('>>> delete_disdetail')
-    disdetail_list = []
-    for i in countIdList:
-        disdetail = Disdetail.objects.filter(row_name=Account.objects.filter(acc_id=i),
-                                             dis_title=Distitle.objects.get(rpt_id=rpt_id))
-        disdetail_list.append(disdetail.dis_detail_id)
-        disdetail.delete()
-    delete_disclosure(countIdList, disdetail_list, rpt_id)
-
-def delete_disclosure(countIdList, disdetail_list, rpt_id):
-    print('>>> delete_disclosure')
-    for i in range(len(countIdList)):
-        Disclosure.objects.filter(dis_detail_id=disdetail_list[i],
-                                  pre_id=countIdList[i], pre_amt=0)
     print(">>> Disclosure deleted successfully.")
+
+
+
+
 
 

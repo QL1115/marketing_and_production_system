@@ -89,7 +89,7 @@ def delete_cash_preamount(rpt_id):
     # 全部予以刪除 
     # 必定刪除:1 23 24 25 26
     acc_id=1
-    countIdList = [1,23, 24, 25, 26]
+    countIdList = [1, 23, 24, 25, 26]
     deleteAccount = []
     # 抓出全部要被刪除的Account的ID
     for i in countIdList:
@@ -101,8 +101,8 @@ def delete_cash_preamount(rpt_id):
                 countIdList.append(a.acc_id)
                 
     for i in countIdList:
-         Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
-    delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
+        delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
+        Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
     return
 
 def check(rpt_id):

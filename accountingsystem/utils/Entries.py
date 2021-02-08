@@ -355,7 +355,7 @@ def create_pledge_deposit_account_entry(comp_id,cash_qry_set, rpt_id):
     return{"質押定存": credit_pledge_total,
            "原幣定存": debit_ntd_deposit_total}
 
-def create_cash_preamount(rpt_id):
+def create_cash_preamount(rpt_id, acc_id):
     print('create cash preamount')
     preamount_list = []  #用於建立 disdetail
     countIdList = []
