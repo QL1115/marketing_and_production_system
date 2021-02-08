@@ -29,9 +29,7 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
     try:
         # file = request.FILES.('file')
         file = request.FILES["file"]
-        print('request >>>>>>', request)
         book = xlrd.open_workbook(file.name, file_contents=file.read())
-        print('book >>>', book)
 
         if book.nsheets != 1:
             return {"status_code": 422, "msg":"檔案超過一個分頁。", "redirect_url":" "}
@@ -72,13 +70,12 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     # return HttpResponse({"status_code":
     #
     # , "msg":"成功刪除檔案"})
-    delete_preamount(rpt_id, acc_id)
-    print('in_del!!!!!!!!!!')
+    # delete_preamount(rpt_id, acc_id)
     try:
         delete_uploaded_file(rpt_id, table_name)
         delete_preamount(rpt_id, acc_id)
-    except:
-        pass
+    except Exception as e:
+        print('刪除錯誤：', e)
 
 def delete_preamount(rpt_id, acc_id):
     if acc_id == 1:
@@ -101,9 +98,9 @@ def delete_cash_preamount(rpt_id):
                 countIdList.append(a.acc_id)
 
     delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
+    print('執行完了 delete_disclosure_for_project_account')
     for i in countIdList:
         Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
-    return
 
 def check(rpt_id):
     #執行原生sql，查詢CashInBanks是否已經有匯入
@@ -115,7 +112,6 @@ def check(rpt_id):
     cursor2 = connection.cursor()
     cursor2.execute("select count(*) from `Group` inner join Company on `Group`.grp_id=Company.grp_id inner join Report on Company.com_id=Report.com_id inner join Depositaccount on Report.rpt_id=Depositaccount.rpt_id WHERE Report.rpt_id = %s", [rpt_id])
     count_Depositaccount = cursor2.fetchone()
-    print('~~~~~~~!!!!!!!!!!')
 
     if count_CashInBank[0]>0:
         #銀行存款已匯入資料
@@ -137,13 +133,9 @@ def check(rpt_id):
 @csrf_exempt
 def get_import_page(request,comp_id, rpt_id, acc_id):
 
-    print('into get_import')
     if request.method == 'GET':
         check(rpt_id)
-        print('checccccccccccck',check(rpt_id))
-        print(type(check(rpt_id)))
         count_CashInBank_result=check(rpt_id)[0]
-        print()
         count_Depositaccount_result=check(rpt_id)[1]
 
 
@@ -156,7 +148,6 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
                                                     })
     elif request.method == 'POST':
         table_name = request.POST.get('table_name')
-        print('table_name >>> ', table_name)
         result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
         # print('result >>> ', result)
         # print(type(result))

@@ -25,7 +25,7 @@ def create_disdetail(preamount_list, rpt_id):
     disdetail_list = []
     for i in preamount_list:
         disdetail = Disdetail.objects.create(row_name=Account.objects.filter(acc_id=i.acc_id).values('acc_name')[0]['acc_name'], row_amt=0,
-                                             dis_title=Distitle.objects.get(rpt_id=rpt_id))
+                                             dis_title=Distitle.objects.filter(rpt_id=rpt_id).first())
         disdetail_list.append(disdetail)
     create_disclosure(preamount_list, disdetail_list, rpt_id)
 
@@ -50,10 +50,13 @@ def delete_disclosure(acc_id, countIdList, rpt_id):
     disclosure_list = []
     print('>>> delete_disclosure')
     for i in range(len(countIdList)):
-        disclosure = Disclosure.objects.filter(pre_id=countIdList[i])
-        disclosure_list.append(disclosure.dis_detail_id)
-        disclosure.delete()
-    delete_disdetail(disclosure_list, rpt_id)
+        # print('countIdList >>> ', countIdList)
+        disclosure = Disclosure.objects.filter(pre__acc__acc_id=countIdList[i]).first()
+        # print('disclosure >>> ', disclosure)
+        if disclosure is not None:
+            disclosure_list.append(disclosure.dis_detail_id)
+            disclosure.delete()
+    delete_disdetail(acc_id, disclosure_list, rpt_id)
 
 def delete_disdetail(acc_id, disclosure_list, rpt_id):
     print('>>> delete_disdetail')

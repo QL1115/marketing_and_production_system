@@ -384,8 +384,7 @@ def create_cash_preamount(rpt_id, acc_id):
         preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
         preamount_list.append(preamount)
 
-    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id);
-    return
+    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id)
 
 def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
     '''
