@@ -4,6 +4,7 @@ from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, E
 from django.db import connection
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q
+from .Disclosure import create_disclosure_for_project_account
 
 
 def create_preamount_and_adjust_entries_for_project_account(comp_id: object, rpt_id: object, acc_id: object) -> object:
@@ -24,7 +25,9 @@ def create_adjust_entries(comp_id, rpt_id, acc_id):
         create_cash_adjust_entries(comp_id,rpt_id, acc_id)
         print('create_adjust_entries')
 
-def create_cash_preamount(rpt_id):
+'''def create_cash_preamount(rpt_id):
+    print('create cash preamount')
+    preamount_list = []  #用於建立 disdetail
     countIdList = []
     acc_id = 1
     countIdList.append(acc_id)
@@ -40,23 +43,15 @@ def create_cash_preamount(rpt_id):
     number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
     number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
     number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
-
-    """
-    問題:
-    DisDetail, Disclosure 都是跟著 Preamount 建立
-    目前建立順序: Preamount > Distitle > DisDetail > Disclosure，但要如何讓 Disclosure 抓到和 DisDetail&Preamount的關聯?
-    """
-    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=23).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
-    Disclosure.objects.create(pre_amt=0, dis_detail_id=0, pre_id=0)
-
-    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=24).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
-    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=25).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
-    Disdetail.objects.create(row_name=Account.objects.filter(acc_id=26).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
+    preamount_list.append(number23, number24, number25, number26)
+    print('preamount_list >>>', preamount_list)
 
     for i in countIdList:
-        a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
-        Disdetail.objects.create(row_name=Account.objects.filter(acc_id=i).get('acc_name'), row_amt=0, dis_title=Distitle.object.get(rpt_id=rpt_id))
-    return
+        preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+        preamount_list.append(preamount)
+
+    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id);
+    return'''
     
 def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
     # 建立所有現金的 adjust entry
@@ -80,7 +75,7 @@ def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
     cib_over_3_month = create_over_three_month_time_deposit(comp_id,cash_qry_set,rpt_id)
     #
     li = [over_3_month_dp, pledge_deposit, foreign_currency_deposit, foreign_currency_time_deposit, cib_over_3_month]
-    fill_in_preamount(li, rpt_id, acc_id)
+    fill_in_preamount(li, comp_id, rpt_id, acc_id)
 
 
 # 銀行存款-外匯存款
@@ -317,7 +312,7 @@ def create_over_3_month_deposit_entry(comp_id,cash_qry_set, rpt_id):
                                                              front_end_location=1, entry_name='超過三個月定存')
 
     return{"超過三個月定存": credit_ntd_over_3_month_total,
-           "台幣定存": debit_ntd_deposit_total,
+           "原幣定存": debit_ntd_deposit_total,
            "外幣定存": debit_foreign_currency_deposit_total}
 
 #定期存款-質押存款
@@ -358,9 +353,11 @@ def create_pledge_deposit_account_entry(comp_id,cash_qry_set, rpt_id):
                                                              pre=ntd_deposit_pre_id, credit_debit=1,
                                                              front_end_location=1, entry_name='質押定存')
     return{"質押定存": credit_pledge_total,
-           "台幣定存": debit_ntd_deposit_total}
+           "原幣定存": debit_ntd_deposit_total}
 
-def create_cash_preamount(rpt_id, acc_id):
+def create_cash_preamount(rpt_id):
+    print('create cash preamount')
+    preamount_list = []  #用於建立 disdetail
     countIdList = []
     acc_id = 1
     countIdList.append(acc_id)
@@ -376,11 +373,21 @@ def create_cash_preamount(rpt_id, acc_id):
     number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
     number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
     number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
-    for i in countIdList:
-        a = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
-    
+    preamount_list.append(number23)
+    preamount_list.append(number24)
+    preamount_list.append(number25)
+    preamount_list.append(number26)
+    #print('>>> number23', number23[0].acc_id)
+    #print('preamount_list >>>', preamount_list)
 
-def fill_in_preamount(list,  rpt_id, acc_id):
+    for i in countIdList:
+        preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+        preamount_list.append(preamount)
+
+    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id);
+    return
+
+def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
     '''
     將 adjust entry 中計算完成的 preamount 塞回。
     :param list: eg. [{"質押定存": 質押定存obj, "台幣定存": 台幣定存obj}, {"外匯存款", 外匯存款obj}, {...}, ...]
@@ -445,13 +452,14 @@ def fill_in_preamount(list,  rpt_id, acc_id):
         preamt_foreign_currency_deposit.save()
         # print('外匯存款：{}, {}, {}'.format(preamt_foreign_currency_deposit.book_amt, preamt_foreign_currency_deposit.adj_amt, preamt_foreign_currency_deposit.pre_amt))
 
-        # 台幣定存 preamt
-        # print("depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('type__acc_id') >>> ", depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('type__acc_id'))
-        preamt_ntd_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('type__acc_id'))
+        # 原幣定存 preamt
+        currency = Company.objects.filter(com_id=comp_id).values_list('currency', flat=True)[0]
+        # print("depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('type__acc_id') >>> ", depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('type__acc_id'))
+        preamt_ntd_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('type__acc_id'))
         # print('台幣定存 preamt >>> ', preamt_ntd_cd)
-        preamt_ntd_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('ntd_amount')
-        preamt_ntd_cd.adj_amt = -1 * (deposit_account_qry_set.filter(plege=1, currency='TWD').aggregate(Sum('ntd_amount')).get('ntd_amount__sum') \
-                         + deposit_account_qry_set.filter(plege=0, currency='TWD', end_date__gte=report_end_date + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum'))
+        preamt_ntd_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('ntd_amount')
+        preamt_ntd_cd.adj_amt = -1 * (deposit_account_qry_set.filter(plege=1, currency=currency).aggregate(Sum('ntd_amount')).get('ntd_amount__sum') \
+                         + deposit_account_qry_set.filter(plege=0, currency=currency, end_date__gte=report_end_date + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum'))
         preamt_ntd_cd.pre_amt = preamt_ntd_cd.book_amt + preamt_ntd_cd.adj_amt
         preamt_ntd_cd.save()
         # print('台幣定存：{}, {}, {}'.format(preamt_ntd_cd.book_amt, preamt_ntd_cd.adj_amt, preamt_ntd_cd.pre_amt))

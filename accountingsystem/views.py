@@ -1,12 +1,13 @@
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pandas._libs import json
-from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
+from .utils.Entries import create_preamount_and_adjust_entries_for_project_account
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
+from .utils.Disclosure import delete_disclosure_for_project_account
 from django.db import connection
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Disclosure, Disdetail, Distitle
 from .forms import CashinbanksForm, DepositAccountForm
@@ -87,6 +88,7 @@ def delete_cash_preamount(rpt_id):
     print('!!!!in')
     # 全部予以刪除 
     # 必定刪除:1 23 24 25 26
+    acc_id=1
     countIdList = [1,23, 24, 25, 26]
     deleteAccount = []
     # 抓出全部要被刪除的Account的ID
@@ -100,6 +102,7 @@ def delete_cash_preamount(rpt_id):
                 
     for i in countIdList:
          Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
+    delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
     return
 
 def check(rpt_id):
@@ -165,7 +168,7 @@ def get_import_page(request,comp_id, rpt_id, acc_id):
        
         #如果兩張表都已經匯入，才進行建立分錄
         if check(rpt_id)[0]['status_code']==123 and check(rpt_id)[1]['status_code']==789:
-            #建立分錄和附註格式，此method放在utils的Entries中
+            #建立分錄，此method放在utils的Entries中
             create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
 
         return render(request, 'import_page.html', {'acc_id': acc_id,
@@ -408,6 +411,35 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
     return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set, 'adj_entries': adj_entries_list,
                                                 'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc, 'depositEntryList': depositEntryList, 
                                                 'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList, 'cibTotalEntryAmountList': cibTotalEntryAmountList})
+                                                
+@csrf_exempt                              
+def new_report(request, comp_id):
+    # 創造一個新的report
+    # 取得起始與結束日期
+    start_date = request.GET["start_date"]
+    print(start_date)
+    end_date = request.GET["end_date"]
+    print(end_date)
+    # 製造report
+    Report.objects.create(start_date=start_date, end_date=end_date, com=Company.objects.get(com_id=comp_id), type="個體")
+    # 查詢新增的report
+    reports = Report.objects.filter(start_date=start_date, end_date=end_date, com=Company.objects.get(com_id=comp_id))
+    for report in reports:
+        new_report = report
+    if new_report:
+        rpt_id = new_report.rpt_id
+    else:
+        pass
+    # 導到匯入頁
+    acc_id=1
+    redirect_url = 'projects/%s/accounts/1/import'%(rpt_id)
+    return redirect(redirect_url)
+    
+@csrf_exempt  
+def get_dashboard_page(request, comp_id):
+    # 暫時寫死為沒給的東西都是1，讓頁面其他按鈕有效果
+    # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
+    return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1})
 
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
     """
@@ -429,8 +461,16 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                 disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure').filter(pre__rpt__rpt_id=rpt_id).values('disclosure_id', 'pre_amt', 'dis_detail__row_name')
                 acc_name=[]
                 # TODO 如何送回階層表 (根據用到的 account?)
+                #rpt_id 屬於該 report 往上找，根據 acc_id 找acc_parent,
+                #Disclosure_id_list: 同樣的 parent 放同一個
                 disdetail_editor = {}
-
+                acc_parent_list = []
+                for disclosure in disclosure_qry_set:
+                    a = Account.objects.filter(account__preamt__disclosure__disclosure_id=disclosure['disclosure_id']).values('acc_parent')
+                    if a in acc_parent_list:
+                        pass # 新增到屬於他的那個 key value pair
+                    else:
+                        acc_parent_list.append(a)
             else:
                 msg = uploadFile.get('msg')
                 return render(request, 'disclosure_page.html',

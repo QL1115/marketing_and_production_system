@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -10,10 +11,8 @@
         <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
         <!-- FontAwesome -->
         <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
-        <!--tree things -->
-        <link href="test.css" rel="stylesheet">
         
-        <script type="text/javascript" src="/static/js/jquery.js"></script>
+        {# <script type="text/javascript" src="/static/js/jquery.js"></script>#}
 
         </head>
 <body>
@@ -65,9 +64,101 @@
 <!--end of navbar-->
 <div class="container-fluid" >
     <div class="row">
-        <div class="col-2">
-            <div id="treeview1" class=""></div>
+    <!-- start tree -->
+    <div class="col-md-2 pt-5">
+        <div id="tree">
+
         </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+        <script src="{% static 'js/bstreeview.js' %}">
+    </script>
+    <script>
+        $(function () {
+
+            var json = '[' +
+                '{' +
+                '"text": "資產",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "負債",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "權益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "損益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "其他",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '}' +
+                ']';
+
+            $('#tree').bstreeview({ data: json });
+
+        });
+    </script>
+    <!-- endof tree-->
+        <br>
         <div class="col-8">
             <!--如果沒上傳過定期存款，顯示這個-->
             {% if  count_Depositaccount_list.0 == 999 %}
@@ -169,7 +260,7 @@
 
 <!--upload documents-->
 
-<script src="test3.js"></script>
+
 <script type="text/javascript">
     $(document).ready(function() {
 
@@ -272,85 +363,7 @@
                     }
                 });
         });
-            var defaultData = [
-    {
-    text: '資產',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '負債',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '損益',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '權益',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-    {
-    text: '其他',
-    href: '#parent1',
-    nodes: [
-    {
-        text: 'Child 1',
-        href: '#child1',
-    },
-    {
-        text: 'Child 2',
-        href: '#child2',
-    }
-    ]
-    },
-
-
-    ];
-    $('#treeview1').treeview({
-    levels:1,
-    data: defaultData
-    });
-
+   
     var search = function(e) {
     var pattern = $('#input-search').val();
     var options = {
@@ -358,7 +371,6 @@
         exactMatch: $('#chk-exact-match').is(':checked'),
         revealResults: $('#chk-reveal-results').is(':checked')
     };
-    var results = $searchableTree.treeview('search', [ pattern, options ]);
 
     var output = '<p>' + results.length + ' matches found</p>';
     $.each(results, function (index, result) {
@@ -367,7 +379,6 @@
     $('#search-output').html(output);
     }
     $('#btn-clear-search').on('click', function (e) {
-    $searchableTree.treeview('clearSearch');
     $('#input-search').val('');
     $('#search-output').html('');
     });

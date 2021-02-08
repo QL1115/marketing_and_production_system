@@ -19,7 +19,7 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
 
     # 確認 column 的名稱和個數是否一致
     expected_ncols = 6
-    col_names = ['銀行別', '帳號', '類型', '幣別', '外幣金額', '台幣金額']
+    col_names = ['銀行別', '帳號', '類型', '幣別', '外幣金額', '原幣金額']
     col_types = [xlrd.XL_CELL_TEXT, xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_NUMBER] # 上傳的檔案欄位長度應該 為 6
     #
     if sheet.ncols != expected_ncols:
@@ -80,7 +80,7 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
 
     # 確認 column 的名稱和個數是否一致
     expected_ncols = 9
-    col_names = ['銀行別', '帳號', '類型', '幣別', '外幣金額', '台幣金額', '質押', '開始', '結束']
+    col_names = ['銀行別', '帳號', '類型', '幣別', '外幣金額', '原幣金額', '質押', '開始', '結束']
     col_types = [xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_NUMBER
                , xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_DATE, xlrd.XL_CELL_DATE] # 上傳的檔案欄位長度應該 為 9
     #

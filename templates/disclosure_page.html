@@ -234,7 +234,7 @@
                     $(this).addClass('hide');
                 } else {
                     var disclosure_amount_in_a_disdetail_list = $('[data-disclosure]:not(".hide")', this).map(function () {
-                        return parseInt($('.disclosure_amount', this).text().replaceAll(',', ''))
+                        return parseFloat($('.disclosure_amount', this).text().replaceAll(',', ''))
                     }).get();
                     $('.disdetail_sum', this).text(Number(eval(disclosure_amount_in_a_disdetail_list.join("+"))).toLocaleString('en'));
                 }
@@ -257,19 +257,24 @@
             $('.disclosure_format_plus').addClass('hide');
             {#  TODO 檢查有無重複勾選或未選到的 disclosure  #}
             {# 抓取要傳回後端的資料 #}
-            var data = {};
+            result = [];
             $('.disdetail_row').each(function() {
+                data = {}
                 var disclosures_list = $('[data-disclosure]', this).map(function() {
                     return {
                         disclosure_id: $(this).attr('data-disclosure'),
                         {# TODO 要改成從後端傳過來的資料中取得 pre_amt，不要直接從畫面撈，否則可能有被篡改的問題。 #}
-                        pre_amt: $(':nth-child(2)', this).text()
+                        pre_amt: parseFloat($(':nth-child(2)', this).text().replaceAll(',', ''))
                     };
                 }).get();
-                data[($(this).find('div[data-disdetail]').attr('data-disdetail'))] = disclosures_list;
+                data['disdetail_id'] = $(this).find('div[data-disdetail]').attr('data-disdetail');
+                data['row_name'] = $(this).find('div[data-disdetail] .disdetail_name').text();
+                data['disclosures'] = disclosures_list;
+                result.push(data);
             });
             {#  TODO 資料送至後端  #}
-            alert('尚未實作檢查，目前回傳至後端的資料：\n' + JSON.stringify(data, null, 2));
+            console.log('目前回傳至後端的資料', result);
+            alert('尚未實作檢查，目前回傳至後端的資料：\n' + JSON.stringify(result, null, 2));
         });
 
         {# 按下「+」後，顯示附註格式設定 modal #}
@@ -296,6 +301,7 @@
                 disdetail_row.removeClass('hide');
             }
             var selected_disclosure_id_list = $.map($('#disclosure_checkboxes_fields .form-check-input:checkbox:checked'), (checked_disclosure) => {return checked_disclosure.value});
+            console.log('selected disclosure id list', selected_disclosure_id_list)
             $('div[data-disclosure]', disdetail_row).addClass('hide');
             selected_disclosure_id_list.forEach(function (id) {
                 var disclosure = $('.disdetail_row div[data-disclosure=' + id + ']');
