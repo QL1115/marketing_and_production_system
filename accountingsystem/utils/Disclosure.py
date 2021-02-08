@@ -60,9 +60,9 @@ def delete_disdetail(acc_id, disclosure_list, rpt_id):
     for i in range(len(disclosure_list)):
         disdetail = Disdetail.objects.filter(disdetail_id=disclosure_list[i])
         disdetail.delete()
-    delete_distitle(acc_id, countIdList, rpt_id)
+    delete_distitle(acc_id, rpt_id)
 
-def delete_distitle(acc_id, countIdList, rpt_id):
+def delete_distitle(acc_id, rpt_id):
     print('>>> delete_distitle')
     disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
     Distitle.objects.filter(dis_name=disname[0]['acc_name'], rpt_id=rpt_id).delete()
