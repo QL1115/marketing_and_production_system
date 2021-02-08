@@ -99,9 +99,9 @@ def delete_cash_preamount(rpt_id):
                 pass
             else:
                 countIdList.append(a.acc_id)
-                
+
+    delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
     for i in countIdList:
-        delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
         Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
     return
 
