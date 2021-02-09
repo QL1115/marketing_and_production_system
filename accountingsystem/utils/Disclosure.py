@@ -1,5 +1,8 @@
 from ..models import Cashinbanks, Depositaccount, Report, Account, Preamt, Company, Distitle, Disclosure, Disdetail
 
+"""
+接在 preamount 後開始建立及調整，不限科目皆可使用
+"""
 
 def create_disclosure_for_project_account(preamount_list, rpt_id, acc_id):
     """
@@ -60,6 +63,9 @@ def delete_disclosure(acc_id, countIdList, rpt_id):
     delete_disdetail(acc_id, disclosure_list, rpt_id)
 
 def delete_disdetail(acc_id, disclosure_list, rpt_id):
+    """
+    :param disclosure_list: delete_disclosure 中刪除的 disclosure_id list
+    """
     print('>>> delete_disdetail')
     for i in range(len(disclosure_list)):
         disdetail = Disdetail.objects.filter(dis_detail_id=disclosure_list[i])
@@ -73,27 +79,26 @@ def delete_distitle(acc_id, rpt_id):
     print(">>> Disclosure deleted successfully.")
 
 def fill_in_disclosure(preamt_qry_set, rpt_id):
-    # 讀 qry_set 中 pre_id 相同的，填入 pre_amt
+    """
+    :param preamt_qry_set: 從 fill_in_preamount 接來
+    讀 preamt_qry_set 中 pre_id 和 disclosure 相同的，填入 pre_amt
+    """
     print('>>> fill_in_disclosure')
-    dis_detail_list = []
+    disclosure_list = []
     #print('preamt_qry_set:', preamt_qry_set)
     for preamt in preamt_qry_set:
         disclosure = Disclosure.objects.filter(pre_id=preamt.pre_id)
         disclosure.update(pre_amt=preamt.pre_amt)
-        dis_detail_list.append(disclosure[0].dis_detail_id)
-    fill_in_disdetail(dis_detail_list, preamt_qry_set, rpt_id)
+        disclosure_list.append(disclosure[0].dis_detail_id)
+    fill_in_disdetail(disclosure_list, preamt_qry_set, rpt_id)
 
-def fill_in_disdetail(dis_detail_list, preamt_qry_set, rpt_id):
-    # 讀 qry_set 中 dis_detail_id 相同的，填入 row_amt
+def fill_in_disdetail(disclosure_list, preamt_qry_set, rpt_id):
+    """
+    :param disclosure_list: 從 fill_in_disclosure 來
+    讀 disclosure_list 中和 disdetail 的 dis_detail_id 相同的，把 pre_amt 金額填入 row_amt
+    """
     print('>>> fill_in_disdetail')
-    for i in range(len(dis_detail_list)):
-        dis_detail = Disdetail.objects.filter(dis_detail_id=dis_detail_list[i])\
+    for i in range(len(disclosure_list)):
+        dis_detail = Disdetail.objects.filter(dis_detail_id=disclosure_list[i])\
                     .update(row_amt=preamt_qry_set[i].pre_amt)
     print('>>> finish fill in disclosure and disdetail')
-
-
-
-
-
-
-
