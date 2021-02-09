@@ -4,29 +4,23 @@ from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, E
 from django.db import connection
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q
-from .Disclosure import create_disclosure_for_project_account
+from .Disclosure import create_disclosure_for_project_account, fill_in_disclosure
 
 
 def create_preamount_and_adjust_entries_for_project_account(comp_id: object, rpt_id: object, acc_id: object) -> object:
-    print('create_preamount_and_adjust_entries_for_project_account')
+    print('>>> create_preamount_and_adjust_entries_for_project_account')
     #建立調整和附註格式
     create_preamount(comp_id, rpt_id, acc_id)
     #建立分錄
     create_adjust_entries(comp_id, rpt_id, acc_id) 
 
 def create_preamount(comp_id, rpt_id, acc_id):
+    print('>>> create_preamount')
     if acc_id==1:
         create_cash_preamount(rpt_id, acc_id)
-        print('create_preamount')
 
-def create_adjust_entries(comp_id, rpt_id, acc_id):
-    #如果科目是現金，建立現金的分錄
-    if acc_id==1:
-        create_cash_adjust_entries(comp_id,rpt_id, acc_id)
-        print('create_adjust_entries')
-
-'''def create_cash_preamount(rpt_id):
-    print('create cash preamount')
+def create_cash_preamount(rpt_id, acc_id):
+    print('>>> create cash preamount')
     preamount_list = []  #用於建立 disdetail
     countIdList = []
     acc_id = 1
@@ -43,19 +37,28 @@ def create_adjust_entries(comp_id, rpt_id, acc_id):
     number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
     number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
     number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
-    preamount_list.append(number23, number24, number25, number26)
-    print('preamount_list >>>', preamount_list)
+    preamount_list.append(number23)
+    preamount_list.append(number24)
+    preamount_list.append(number25)
+    preamount_list.append(number26)
+    #print('>>> number23', number23[0].acc_id)
+    #print('preamount_list >>>', preamount_list)
 
     for i in countIdList:
         preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
         preamount_list.append(preamount)
 
-    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id);
-    return'''
-    
+    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id)
+
+def create_adjust_entries(comp_id, rpt_id, acc_id):
+    #如果科目是現金，建立現金的分錄
+    print('>>> create_adjust_entries')
+    if acc_id==1:
+        create_cash_adjust_entries(comp_id,rpt_id, acc_id)
+
 def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
     # 建立所有現金的 adjust entry
-    print('create_cash_adjust_entries')
+    print('>>> create_cash_adjust_entries')
 
     Depositaccount.objects.filter(rpt_id=rpt_id).update(already_adjust=0)
 
@@ -80,6 +83,7 @@ def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
 
 # 銀行存款-外匯存款
 def create_foreign_currency_deposit_entry(comp_id,cash_qry_set, rpt_id):
+    print('>>> create_foreign_currency_deposit_entry')
     cash_in_banks = cash_qry_set['cash_in_banks']
     total_difference = 0
     exchangerate = 0
@@ -138,6 +142,7 @@ def create_foreign_currency_deposit_entry(comp_id,cash_qry_set, rpt_id):
 # 銀行存款-外幣定存
 # 此method請放在定期存款調整後
 def create_foreign_currency_time_deposit(comp_id,cash_qry_set, rpt_id):
+    print('>>> create_foreign_currency_time_deposit')
     exchangerate = 0
     total_difference = 0
     # 重新撈定期存款，因為會需要查看有沒有調整
@@ -199,6 +204,7 @@ def create_foreign_currency_time_deposit(comp_id,cash_qry_set, rpt_id):
 
 # 銀行存款-超過三個月定存
 def create_over_three_month_time_deposit(comp_id,cash_qry_set, rpt_id):
+    print('>>> create_over_three_month_time_deposit')
     exchangerate = 0
     total_difference = 0
     # 重新撈定期存款，因為會需要查看有沒有調整
@@ -260,7 +266,7 @@ def create_over_three_month_time_deposit(comp_id,cash_qry_set, rpt_id):
 #定期存款-超過三個月定存
 def create_over_3_month_deposit_entry(comp_id,cash_qry_set, rpt_id):
     #建立超過三個月定存調整分錄
-    print('create_over_3_month_deposit_entry')
+    print('>>> create_over_3_month_deposit_entry')
     ntd_total = 0
     foreign_currency_total = 0
     deposit_account = cash_qry_set['deposit_account']
@@ -317,7 +323,7 @@ def create_over_3_month_deposit_entry(comp_id,cash_qry_set, rpt_id):
 
 #定期存款-質押存款
 def create_pledge_deposit_account_entry(comp_id,cash_qry_set, rpt_id):
-    print('create_pledge_deposit_account_entry')
+    print('>>> create_pledge_deposit_account_entry')
     plege_total = 0
     deposit_account = cash_qry_set['deposit_account']
 
@@ -355,37 +361,6 @@ def create_pledge_deposit_account_entry(comp_id,cash_qry_set, rpt_id):
     return{"質押定存": credit_pledge_total,
            "原幣定存": debit_ntd_deposit_total}
 
-def create_cash_preamount(rpt_id, acc_id):
-    print('create cash preamount')
-    preamount_list = []  #用於建立 disdetail
-    countIdList = []
-    acc_id = 1
-    countIdList.append(acc_id)
-    for i in countIdList:
-        childList = Account.objects.filter(acc_parent=i)
-        for a in childList:
-            if a.acc_id in countIdList:
-                pass
-            else:
-                countIdList.append(a.acc_id)
-                # 要接一個account object
-    number23 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=23))
-    number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
-    number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
-    number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
-    preamount_list.append(number23)
-    preamount_list.append(number24)
-    preamount_list.append(number25)
-    preamount_list.append(number26)
-    #print('>>> number23', number23[0].acc_id)
-    #print('preamount_list >>>', preamount_list)
-
-    for i in countIdList:
-        preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
-        preamount_list.append(preamount)
-
-    create_disclosure_for_project_account(preamount_list, rpt_id, acc_id)
-
 def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
     '''
     將 adjust entry 中計算完成的 preamount 塞回。
@@ -394,7 +369,8 @@ def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
     '''
 
     # if acc_id == 1: # TODO 待確定，這個科目到底是 「現金及約當現金(id: 1)」還是「現金(id: 4)」?
-    print('list >>> ', list)
+    print('>>> fill in preamount')
+    #print('list >>> ', list)
     try:
         # 1. 撈 cashinbank 及 depositaccount 這兩個 table 內的 type，找出對應的 account id 後決定邏輯。
         cash_in_bank_qry_set = Cashinbanks.objects.filter(rpt__rpt_id=rpt_id)
@@ -478,10 +454,12 @@ def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
         # # 3. 回傳資料
         # print('尚未測試 fill_in_preamount。 程式碼沒有報錯，但是要檢查金額是否正確。')
         # return {"status_code": 200, "returnObject": ""}
-        print('fill_in_preamt')
+        print('finished fill_in_preamt.')
     except Cashinbanks.DoesNotExist or Depositaccount.DoesNotExist as e:
         print('「銀行存款」或者「定期存款」資料表中沒有對應的 records >>> ', e)
         # return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
+
+    fill_in_disclosure(preamt_qry_set, rpt_id)
 
         # TODO 測試時註解掉
         # except Exception as e:

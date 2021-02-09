@@ -1,4 +1,3 @@
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
@@ -98,7 +97,7 @@ def delete_cash_preamount(rpt_id):
                 countIdList.append(a.acc_id)
 
     delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
-    print('執行完了 delete_disclosure_for_project_account')
+    #print('執行完了 delete_disclosure_for_project_account')
     for i in countIdList:
         Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
 
@@ -452,8 +451,10 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                 disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure').filter(pre__rpt__rpt_id=rpt_id).values('disclosure_id', 'pre_amt', 'dis_detail__row_name')
                 acc_name=[]
                 # TODO 如何送回階層表 (根據用到的 account?)
-                #rpt_id 屬於該 report 往上找，根據 acc_id 找acc_parent,
-                #Disclosure_id_list: 同樣的 parent 放同一個
+                """
+                rpt_id 屬於該 report 往上找，根據 acc_id 找 acc_parent,
+                Disclosure_id_list: 同樣的 parent 放同一個
+                """
                 disdetail_editor = {}
                 acc_parent_list = []
                 for disclosure in disclosure_qry_set:
