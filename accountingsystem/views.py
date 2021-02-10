@@ -477,6 +477,7 @@ def get_dashboard_page(request, comp_id):
     # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
     return render(request, 'dashboard_page.html', {"acc_id": 1, 'comp_id': comp_id, 'rpt_id': 1})
 
+
 @csrf_exempt
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
     """
@@ -501,7 +502,8 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                 #                                                               'dis_detail__row_name')
                 disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
                     filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
-                                                                              'pre__acc__acc_name', 'dis_detail__dis_detail_id')
+                                                                              'pre__acc__acc_name',
+                                                                              'dis_detail__dis_detail_id')
 
                 """
                 找出需回傳階層表
@@ -531,6 +533,8 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                             'disclosure_id_list': level_1_disclosure_list
                         })
                         level_1_disclosure_list = []
+                print('disdetail_qry_set:', disdetail_qry_set)
+                print('disclosure_qry_set:', disclosure_qry_set)
                 print('disdetail_editor:', disdetail_editor)
             else:
                 msg = uploadFile.get('msg')
@@ -546,19 +550,22 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
 
     if request.method == 'POST' and request.is_ajax():
         data = json.loads(request.body)
-        print('傳的 data', data)
+        #print('傳的 data:', data)
         # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
         # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
         try:
             for disdetail_obj in data:
-                # 更新 row_name
-                Disdetail.objects.filter(disdetail_id=disdetail_obj.disdetail_id) \
-                    .update(row_name=disdetail_obj.row_name)
-                # 更新 pre_amt 和所關聯的 disdetail
-                Disclosure.objects.filter(disclosure_id=disdetail_obj.disclosures.get('disclosure_id')) \
-                    .update(dis_detail_id=disdetail_obj.disdetail_id,
-                            pre_amt=disdetail_obj.disclosures.get('pre_amt'))
+                # 更新 disclosure 所關聯的 disdetail
+                disclosures = disdetail_obj['disclosures']
+                total_pre_amt = 0
+                for disclosure in disclosures:
+                    a = Disclosure.objects.filter(disclosure_id=disclosure['disclosure_id'])
+                    a.update(dis_detail_id=disdetail_obj['disdetail_id'])
+                    total_pre_amt += a[0].pre_amt
+                # 更新 disdetail row_name，並根據 pre_amt 總和更新 row_amt
+                Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id'])\
+                    .update(row_name=disdetail_obj['row_name'], row_amt=total_pre_amt)
         except Exception as e:
             print('update_disclosure exception >>> ', e)
-            # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
-            return {"status_code": 500, "msg": "發生不明錯誤。"}
+            #return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
+        return {"status_code": 500, "msg": "發生不明錯誤。"}
