@@ -477,7 +477,7 @@ def get_dashboard_page(request, comp_id):
     # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
     return render(request, 'dashboard_page.html', {"acc_id": 1, 'comp_id': comp_id, 'rpt_id': 1})
 
-
+@csrf_exempt
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
     """
     如果 method 是 GET，回傳正確 disclosure 頁面
@@ -496,9 +496,12 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                 depositData = uploadFile.get('returnObject')
                 disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
                     filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
+                # disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
+                #     filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
+                #                                                               'dis_detail__row_name')
                 disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
                     filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
-                                                                              'dis_detail__row_name')
+                                                                              'pre__acc__acc_name', 'dis_detail__dis_detail_id')
 
                 """
                 找出需回傳階層表
@@ -543,6 +546,7 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
 
     if request.method == 'POST' and request.is_ajax():
         data = json.loads(request.body)
+        print('傳的 data', data)
         # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
         # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
         try:
