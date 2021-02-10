@@ -436,7 +436,6 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
     如果 method 是 GET，回傳正確 disclosure 頁面
     如果 method 是 POST，將傳回的 disclosure 檢查後存進資料庫
     """
-
     #確認銀行存款和定期存款有被上傳
     if request.method == 'GET':
         table_name = 'cash_in_banks'
@@ -445,24 +444,41 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
             table_name = 'deposit_account'
             uploadFile = get_uploaded_file(rpt_id, table_name)
             cibData = uploadFile.get('returnObject')
+            #成功被上傳，找出需回傳的 disdetail 和 disclosure (排除金額為0的)
             if uploadFile.get('status_code') == 200:
                 depositData = uploadFile.get('returnObject')
-                disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail').filter(dis_title__rpt__rpt_id=rpt_id).values()
-                disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure').filter(pre__rpt__rpt_id=rpt_id).values('disclosure_id', 'pre_amt', 'dis_detail__row_name')
-                acc_name=[]
-                # TODO 如何送回階層表 (根據用到的 account?)
+                disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail').\
+                                    filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
+                disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure').\
+                                    filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
+                                                                           'dis_detail__row_name')
+
                 """
-                rpt_id 屬於該 report 往上找，根據 acc_id 找 acc_parent,
-                Disclosure_id_list: 同樣的 parent 放同一個
+                找出需回傳階層表
+                1. 找出 Level 2 科目，和其 Level 1 子科目
+                2. Level 1 子科目找出對應的 disclosure
+                3. 組成 disdetail_editor
                 """
-                disdetail_editor = {}
-                acc_parent_list = []
-                for disclosure in disclosure_qry_set:
-                    a = Account.objects.filter(account__preamt__disclosure__disclosure_id=disclosure['disclosure_id']).values('acc_parent')
-                    if a in acc_parent_list:
-                        pass # 新增到屬於他的那個 key value pair
-                    else:
-                        acc_parent_list.append(a)
+                disdetail_editor = []
+                level_1_disclosure_list = []
+                level_2_account = Account.objects.filter(acc_parent=acc_id)
+                for account_l2 in level_2_account:
+                    level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+                    for account_l1 in level_1_account:
+                        if account_l1 is not None:
+                            level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                       pre__rpt_id=rpt_id).exclude(pre_amt=0)
+                        for disclosure in level_1_disclosure:
+                            level_1_disclosure_list.append(disclosure.disclosure_id)
+                            #print('level_1_disclosure_list:', level_1_disclosure_list)
+                        else:
+                            pass
+                    disdetail_editor.append({
+                        'acc_parent_name': account_l2.acc_name,
+                        'disclosure_id_list': level_1_disclosure_list
+                    })
+                    level_1_disclosure_list = []
+                print('disdetail_editor:', disdetail_editor)
             else:
                 msg = uploadFile.get('msg')
                 return render(request, 'disclosure_page.html',
@@ -471,7 +487,6 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
             msg = uploadFile.get('msg')
             return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id':rpt_id, 'acc_id':acc_id, 'msg':msg})
         return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set, 'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor})
-
 
     if request.method == 'POST' and request.is_ajax():
         data = json.loads(request.body)
