@@ -13,7 +13,7 @@ from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate,
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
-
+from datetime import datetime
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
@@ -433,19 +433,67 @@ def new_report(request, comp_id):
     
 @csrf_exempt  
 def get_dashboard_page(request, comp_id):
+    # 撈出公司的所有個體報表(datasource for 合併報表modal #1選擇報表)
+    # Note: 如果採用點擊「合併報表」icon後才送ajax回傳html寫入modal，會造成無法設定click event給td -> 一載入dashboard就先去撈該公司所有的個體報表，把data塞進modal
+    reports_to_combine = Report.objects.filter(com_id = comp_id, type='個體')
     # 暫時寫死為沒給的東西都是1，讓頁面其他按鈕有效果
     # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
-    return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1})
+    return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1, 'reports_to_combine': reports_to_combine})
 
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
     return render(request, 'disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
 
-def test(request,comp_id):
-    start_date='2020-01-01'
-    end_date='2020-12-31'
-    rpt_id=create_consolidated_report(comp_id,start_date,end_date)
-    create_consolidated_report_preamt(rpt_id,comp_id,start_date,end_date)
-#,start_date,end_date
+def consolidated_report(request, comp_id):
+    comp_id = request.GET['comp_id']
+    report_dates = request.GET['report_dates']
+    temp_dates = report_dates.replace('年', '/').replace('月', '/').replace('日', '').replace('<span>', '').replace('</span>', '')
+    start_date = temp_dates[:temp_dates.find('~')]
+    end_date = temp_dates[temp_dates.find('~')+1:]
+    
+    # 取得欲合併報表期間的所有報表(母/子公司) (datasource for 合併報表modal #2簽名狀態)
+    if request.GET['type'] == 'get_reports_with_status':
+        print('modal #2')
+        reports = Report.objects.raw('''
+                                        WITH RECURSIVE cte_report AS (
+                                            -- anchor
+                                            SELECT c.com_name, r.*
+                                            FROM Report AS r
+                                            INNER JOIN Company AS c on r.com_id = c.com_id
+                                            WHERE r.com_id = 1 AND r.start_date = \'''' + start_date + '\' AND r.end_date = \'' + end_date + '\' AND type = \'個體\''
+                                      + '''UNION ALL
+                                            -- recursive
+                                            SELECT c.com_name, r.*
+                                            FROM Report AS r
+                                            INNER JOIN Company AS c on r.com_id = c.com_id
+                                            INNER JOIN cte_report cr on c.com_parent = cr.com_id
+                                            WHERE r.start_date = \'''' + start_date + '\' AND r.end_date = \'' + end_date + '\''
+                                      + ''')
+                                        SELECT * FROM cte_report;
+                                    ''')
+        tdStr1 = '<tr id="report_data"><td><span>company</span></td>'
+        tdStr2 = '<td><span>已簽名</span></td>'
+        tdStr3 = '<td><span>未簽名</span></td></tr>'
+        returnStr = ''
+        for report in reports:
+            returnStr += tdStr1.replace('company', report.com_name)
+            if report.signer != 0:
+                returnStr += tdStr2
+            else:
+                returnStr += tdStr3
+    # 點擊合併button後確認是否須建立合併Report/Preamt，導至consolidated_statement_page
+    if request.GET['type'] == 'consolidate_report':
+        # 前端傳回來的日期格式是'YYYY/MM/DD'，但query裡的日期格式必須是'YYYY-MM-DD'
+        start_date = start_date.replace('/', '-')
+        end_date = end_date.replace('/', '-')
+        consolidate_rpt = Report.objects.filter(com_id = comp_id, type='合併',start_date=start_date, end_date = end_date)
+        if len(consolidate_rpt) == 0:
+            print('no consolidated report yet!!!! Now new create!')
+            rpt_id=create_consolidated_report(comp_id,start_date,end_date)
+            create_consolidated_report_preamt(rpt_id,comp_id,start_date,end_date)
+            returnStr = 'projects/' + str(rpt_id) + '/'
+        else:
+            returnStr = 'projects/' + str(consolidate_rpt[0].rpt_id) + '/' # 回傳url會有error，暫時用替換url的方式(dashboard_page -> projects/rpt_id)
+    return JsonResponse({'returnStr':returnStr})
 
 def get_consolidated_statement_page(request,comp_id,rpt_id):
     def check_null_or_not(i,amt):
