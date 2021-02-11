@@ -497,9 +497,6 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                 depositData = uploadFile.get('returnObject')
                 disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
                     filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
-                # disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
-                #     filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
-                #                                                               'dis_detail__row_name')
                 disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
                     filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
                                                                               'pre__acc__acc_name',
@@ -565,7 +562,8 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                 # 更新 disdetail row_name，並根據 pre_amt 總和更新 row_amt
                 Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id'])\
                     .update(row_name=disdetail_obj['row_name'], row_amt=total_pre_amt)
+            return JsonResponse({"status_code": 200, "msg": "成功更新附註格式。"})
         except Exception as e:
             print('update_disclosure exception >>> ', e)
             #return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
-        return {"status_code": 500, "msg": "發生不明錯誤。"}
+            return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})

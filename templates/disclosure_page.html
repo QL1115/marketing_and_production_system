@@ -201,7 +201,6 @@
                 data['disclosures'] = disclosures_list;
                 result.push(data);
             });
-            {#  TODO 資料送至後端  #}
             console.log('目前回傳至後端的資料', result);
             $.ajax({
                 dataType: "json",
@@ -210,7 +209,7 @@
                 url: "{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
                 data: JSON.stringify(result),
                 success: function(data) {
-                    alert(data)
+                    alert(data['msg'])
                 },
                 error: function(error) {
                     alert(error)
@@ -298,6 +297,7 @@
         });
     });
 
+    {# 按下「新增附註格式分類」 #}
     $('#add_disdetail_btn').on('click', function() {
         $('#disclosure_checkboxes_fields').empty();
         acc_level = 1;
@@ -309,10 +309,13 @@
         {% endfor %}
         {# 檢查目前的 disdetail 是否已經超過 disclosure 數量 #}
         var disclosure_length = {{ disclosure_qry_set.count }};
-        if ($('.disdetail_row.hide').length == 0 || $('.disdetail_row.hide').length > disclosure_length) {
+        if ($('.disdetail_row.hide').length === 0 || $('.disdetail_row.hide').length > disclosure_length) {
             alert('附註格式分類不可比附註格式多！');
         } else {
-            disdetail_row = null;
+            {# 「編輯」按鈕變「確定」按鈕 #}
+            $('.disclosure_format_plus').removeClass('hide');
+            $('#show_disclosure_format_plus_btn').addClass('hide');
+            $('#update_disclosure_format_btn').removeClass('hide');
             disdetail_row = $('.disdetail_row.hide:first');
             disdetail_row.find('.disdetail_name').text('');
 
