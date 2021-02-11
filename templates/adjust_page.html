@@ -21,6 +21,9 @@
         body {
             min-height: 100vh;
         }
+        .adj-row {
+            border-bottom-style: dashed;
+        }
     </script>
     <!--start of navbar-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -90,7 +93,7 @@
                 '"icon": "fa fa-inbox",' +
                 '"nodes": [' +
 
-                
+
 
                 '{' +
                 '"icon": "fa fa-inbox",' +
@@ -112,7 +115,7 @@
                 '"icon": "fa fa-inbox",' +
                 '"nodes": [' +
 
-                
+
 
                 '{' +
                 '"icon": "fa fa-inbox",' +
@@ -131,7 +134,7 @@
                 '"icon": "fa fa-inbox",' +
                 '"nodes": [' +
 
-                
+
 
                 '{' +
                 '"icon": "fa fa-inbox",' +
@@ -150,7 +153,7 @@
                 '"icon": "fa fa-inbox",' +
                 '"nodes": [' +
 
-                
+
 
                 '{' +
                 '"icon": "fa fa-inbox",' +
@@ -169,7 +172,7 @@
                 '"icon": "fa fa-inbox",' +
                 '"nodes": [' +
 
-                
+
 
                 '{' +
                 '"icon": "fa fa-inbox",' +
@@ -409,7 +412,7 @@
             {% if adj_entries %}
                 {% with temp_num=0 %}
                 {% for entries_pair in adj_entries %}
-                    <div class="row">
+                    <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;">
                     <div class="col-sm-2">{{ forloop.counter }}</div>
                     <div class="col-sm-3">{{ entries_pair.debit.0.entry_name|default:'這是說明' }}</div>
                     <div class="col-sm-2">
@@ -439,12 +442,12 @@
                 {% endwith %}
             {% endif %}
             </div>
-            <br><hr class="col-sm-10"><br>
+
             {#    明細資訊_調整表    #}
-            <div id="details_adjust" class="col-sm-10">
+            <div id="details_adjust" class="col-sm-10" style="margin-top: 3em;">
                 <h5 class="col-sm-12">明細資訊 調整表</h5>
                 <div class="col-sm-12">
-                <div class="row">
+                <div class="row table_title">
                     <div class="col-sm"></div>
                     <div class="col-sm">帳列數</div>
                     <div class="col-sm">調整</div>
@@ -452,7 +455,7 @@
                 </div>
                 {% for preamt in preamts %}
                     {% if preamt.book_amt != 0 or preamt.adj_amt != 0 %}
-                    <div class="row">
+                    <div class="row adj-row" style="border-bottom-style: dashed; border-bottom-color: darkgray;">
                         <div class="col-sm">{{ preamt.acc__acc_name }}</div>
                         <div class="col-sm">{{ preamt.book_amt|floatformat:0|intcomma:False }}</div>
                         {% if preamt.adj_amt == 0 %}

@@ -501,13 +501,15 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                     filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
                                                                               'pre__acc__acc_name',
                                                                               'dis_detail__dis_detail_id')
+                # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+                unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[:(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+                print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
 
-                """
-                找出需回傳階層表
-                1. 找出 Level 2 科目，和其 Level 1 子科目
-                2. Level 1 子科目找出對應的 disclosure
-                3. 組成 disdetail_editor
-                """
+                # 找出需回傳階層表
+                # 1. 找出 Level 2 科目，和其 Level 1 子科目
+                # 2. Level 1 子科目找出對應的 disclosure
+                # 3. 組成 disdetail_editor
                 disdetail_editor = []
                 level_1_disclosure_list = []
                 level_2_account = Account.objects.filter(acc_parent=acc_id)
@@ -543,7 +545,7 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                           {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
         return render(request, 'disclosure_page.html',
                       {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
-                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor})
+                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
 
     if request.method == 'POST' and request.is_ajax():
         data = json.loads(request.body)

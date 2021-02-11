@@ -69,23 +69,36 @@
 
     {% for disdetail in disdetail_qry_set %}
         <div class="disdetail_row row">
-        <div class="col-sm-10">
-            <div data-disdetail="{{ disdetail.dis_detail_id }}" class="row font-weight-bold lead">
-                <div class="disdetail_name col-sm-7">{{ disdetail.row_name }}</div>
-                <div class="disdetail_sum col-sm-4 text-right"></div>
-                <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+            <div class="col-sm-10">
+                <div data-disdetail="{{ disdetail.dis_detail_id }}" class="row font-weight-bold lead" style="border-bottom-style: solid; border-bottom-color: darkgray;">
+                    <div class="disdetail_name col-sm-7">{{ disdetail.row_name }}</div>
+                    <div class="disdetail_sum col-sm-4 text-right"></div>
+                    <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+                </div>
+                {% for disclosure in disclosure_qry_set %}
+                    {% if disclosure.dis_detail__dis_detail_id == disdetail.dis_detail_id %}
+                        <div data-disclosure="{{ disclosure.disclosure_id }}" class="row">
+                            <div class="col-sm-6 offset-2">{{ disclosure.pre__acc__acc_name }}</div>
+                            <div class="disclosure_amount col-sm-3 text-right">{{ disclosure.pre_amt|floatformat:0|intcomma:False }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
             </div>
-            {% for disclosure in disclosure_qry_set %}
-                {% if disclosure.dis_detail__dis_detail_id == disdetail.dis_detail_id %}
-                    <div data-disclosure="{{ disclosure.disclosure_id }}" class="row">
-                        <div class="col-sm-6 offset-2">{{ disclosure.pre__acc__acc_name }}</div>
-                        <div class="disclosure_amount col-sm-3 text-right">{{ disclosure.pre_amt|floatformat:0|intcomma }}</div>
-                    </div>
-                {% endif %}
-            {% endfor %}
         </div>
-    </div>
     {% endfor %}
+    {% for unspecified_disdetail in unspecified_disdetail_qry_set %}
+        <div class="disdetail_row row">
+            <div class="col-sm-10">
+                <div data-disdetail="{{ unspecified_disdetail.dis_detail_id }}" class="row font-weight-bold lead">
+                    <div class="disdetail_name col-sm-7"></div>
+                    <div class="disdetail_sum col-sm-4 text-right"></div>
+                    <div class="col-sm-1 text-right"><span class="disclosure_format_plus hide">➕</span></div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
 </div>
 
 
