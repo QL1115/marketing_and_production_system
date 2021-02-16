@@ -181,7 +181,11 @@
             <!-- 每次點開modal都是沒有報表被選擇的狀態 -->
             trSeq = undefined;
             $('#combine_report_select_modal tr').removeClass("highlight");
-            console.log(window.location.href);
+            <!-- 拿網址的company id作為傳ajax回去時的param  #TODO:找找看更好的做法來拿取comp_id-->
+            current_url = window.location.href;
+            var start_idx = current_url.indexOf('companies/')+'companies/'.length;
+            var end_idx = current_url.substr(start_idx, current_url.length-start_idx).indexOf('/')+start_idx;
+            company_id = current_url.substring(start_idx, end_idx);
         })
         
         <!-- highlight被點擊的row -->
@@ -205,7 +209,7 @@
                 report_dates = $('#combine_report_select_modal table').find('tr').eq(trSeq+1).find('td:nth-child(2)').html();
                 $.ajax({
                     url: "{% url 'consolidated_report' comp_id=comp_id%}",
-                    data: { "comp_id": 1, "type":"get_reports_with_status", "report_dates": report_dates},
+                    data: { "comp_id": company_id, "type":"get_reports_with_status", "report_dates": report_dates},
                     type:"GET",
                     success: function (response) {
                         console.log('ajax success');
@@ -229,7 +233,7 @@
         $('#combine_report_combine_button').click(function(){
             $.ajax({
                     url: "{% url 'consolidated_report' comp_id=comp_id%}",
-                    data: { "comp_id": 1, "type":"consolidate_report", "report_dates": report_dates},
+                    data: { "comp_id": company_id, "type":"consolidate_report", "report_dates": report_dates},
                     type:"GET",
                     success: function (response) {
                         console.log('ajax success');
