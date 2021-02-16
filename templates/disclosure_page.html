@@ -197,7 +197,11 @@
             $('#show_disclosure_format_plus_btn').removeClass('hide');
             $('#update_disclosure_format_btn').addClass('hide');
             $('.disclosure_format_plus').addClass('hide');
-            {#  TODO 檢查有無重複勾選或未選到的 disclosure  #}
+            {#  檢查有無未選到的 disclosure  #}
+            if ($('[data-disclosure]').not('.hide').length < {{ disclosure_qry_set.count }}) {
+                alert('有尚未選到的 disclosure，無法更新。');
+                return;
+            }
             {# 抓取要傳回後端的資料 #}
             result = [];
             $('.disdetail_row').each(function() {
