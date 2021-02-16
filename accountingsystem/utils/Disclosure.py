@@ -55,7 +55,7 @@ def delete_disclosure(acc_id, countIdList, rpt_id):
     #print('>>> countIdList:', countIdList)
     for i in range(len(countIdList)):
         # print('countIdList >>> ', countIdList)
-        disclosure = Disclosure.objects.filter(pre__acc__acc_id=countIdList[i]).first()
+        disclosure = Disclosure.objects.filter(pre__acc__acc_id=countIdList[i], pre__rpt_id=rpt_id).first()
         # print('disclosure >>> ', disclosure)
         if disclosure is not None:
             disclosure_list.append(disclosure.dis_detail_id)
@@ -68,7 +68,7 @@ def delete_disdetail(acc_id, disclosure_list, rpt_id):
     """
     print('>>> delete_disdetail')
     for i in range(len(disclosure_list)):
-        disdetail = Disdetail.objects.filter(dis_detail_id=disclosure_list[i])
+        disdetail = Disdetail.objects.filter(dis_detail_id=disclosure_list[i], dis_title__rpt_id=rpt_id)
         disdetail.delete()
     delete_distitle(acc_id, rpt_id)
 
