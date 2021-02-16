@@ -780,3 +780,142 @@ def get_consolidated_statement_page(request,comp_id,rpt_id):
     return render(request, 'consolidated_statement.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'com_list':company_list,'demand_deposit_list':demand_deposit_list,
                             'check_deposit_list':check_deposit_list,'foreign_currency_deposit_list':foreign_currency_deposit_list,
                             'currency_cd_list':currency_cd_list,'foreign_currency_cd_list':foreign_currency_cd_list})
+
+
+def get_consolidated_disclosure_page(request,comp_id,rpt_id):
+    # TODO 根據下拉式選單做改變
+    ''' 此function內的ajax是for合併報表附註格式設定頁的科目下拉選單，更新附註格式的部分目前還是傳到原本的get_disclosure_page'''
+    if request.is_ajax():
+        print('in views via ajax nowwwwww')
+        acc_name = request.GET['acc_name']
+        print('acc_name >>>     ', acc_name)
+        acc_id = Account.objects.get(acc_name=acc_name).acc_id
+        print('acc_id >>>    ', acc_id)
+        disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+            filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
+        disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
+            filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
+                                                                      'pre__acc__acc_name',
+                                                                      'dis_detail__dis_detail_id')
+        all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+            filter(dis_title__rpt__rpt_id=rpt_id).values()
+        # 新增(disclosure - disdetail) 個disdetail備用
+        diff_count = disclosure_qry_set.count() - disdetail_qry_set.count()
+        print('diff_count >>>     ', diff_count)
+        # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用 # disclosure數量 - 有使用的disdetail數量
+        if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
+        # 先取出report對應的distitle
+            sb = '''
+                   SELECT A.dis_title_id, A.dis_name
+                   FROM Distitle A
+                   INNER JOIN Account B ON A.dis_name = B.acc_name
+                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+            distitle = Distitle.objects.raw(sb)[0]
+            # print('distitle_id >>>>>>>>>', distitle.dis_title_id)
+            # 新增(disclosure - disdetail)個 disdetail
+            for i in range(diff_count):
+                Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
+        # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+        unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[:(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+        print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
+
+        # 找出需回傳階層表
+        # 1. 找出 Level 2 科目，和其 Level 1 子科目
+        # 2. Level 1 子科目找出對應的 disclosure
+        # 3. 組成 disdetail_editor
+        disdetail_editor = []
+        level_1_disclosure_list = []
+        level_2_account = Account.objects.filter(acc_parent=acc_id)
+        for account_l2 in level_2_account:
+            level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+            for account_l1 in level_1_account:
+                if account_l1 is not None:
+                    level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                   pre__rpt_id=rpt_id).exclude(pre_amt=0)
+                for disclosure in level_1_disclosure:
+                    level_1_disclosure_list.append(disclosure.disclosure_id)
+                    # print('level_1_disclosure_list:', level_1_disclosure_list)
+                else:
+                    pass
+            if not level_1_disclosure_list:
+                pass
+            else:
+                disdetail_editor.append({
+                    'acc_parent_name': account_l2.acc_name,
+                    'disclosure_id_list': level_1_disclosure_list
+                })
+                level_1_disclosure_list = []
+        print('disdetail_qry_set:', disdetail_qry_set)
+        print('disclosure_qry_set:', disclosure_qry_set)
+        print('disdetail_editor:', disdetail_editor)
+        return JsonResponse({'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
+                             'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+    # method == GET
+    else:
+        # Default進來會顯示現金及約當現金的附註格式
+        acc_name = "現金及約當現金"
+        print('acc_name >>>     ', acc_name)
+        acc_id = Account.objects.get(acc_name=acc_name).acc_id
+        print('acc_id >>>    ', acc_id)
+        disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+            filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
+        disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
+            filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
+                                                                      'pre__acc__acc_name',
+                                                                      'dis_detail__dis_detail_id')
+        all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+            filter(dis_title__rpt__rpt_id=rpt_id).values()
+        # 新增(disclosure - disdetail) 個disdetail備用
+        diff_count = disclosure_qry_set.count() - disdetail_qry_set.count() # disclosure數量 - 有使用的disdetail數量
+        print('diff_count >>>     ', diff_count)
+        # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用
+        if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
+        # 先取出report對應的distitle
+            sb = '''
+                   SELECT A.dis_title_id, A.dis_name
+                   FROM Distitle A
+                   INNER JOIN Account B ON A.dis_name = B.acc_name
+                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+            distitle = Distitle.objects.raw(sb)[0]
+            # print('distitle_id >>>>>>>>>', distitle.dis_title_id)
+            # 新增(disclosure - disdetail)個 disdetail
+            for i in range(diff_count):
+                Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
+        # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+        unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[:(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+        print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
+
+        # 找出需回傳階層表
+        # 1. 找出 Level 2 科目，和其 Level 1 子科目
+        # 2. Level 1 子科目找出對應的 disclosure
+        # 3. 組成 disdetail_editor
+        disdetail_editor = []
+        level_1_disclosure_list = []
+        level_2_account = Account.objects.filter(acc_parent=acc_id)
+        for account_l2 in level_2_account:
+            level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+            for account_l1 in level_1_account:
+                if account_l1 is not None:
+                    level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                   pre__rpt_id=rpt_id).exclude(pre_amt=0)
+                for disclosure in level_1_disclosure:
+                    level_1_disclosure_list.append(disclosure.disclosure_id)
+                    # print('level_1_disclosure_list:', level_1_disclosure_list)
+                else:
+                    pass
+            if not level_1_disclosure_list:
+                pass
+            else:
+                disdetail_editor.append({
+                    'acc_parent_name': account_l2.acc_name,
+                    'disclosure_id_list': level_1_disclosure_list
+                })
+                level_1_disclosure_list = []
+        print('disdetail_qry_set:', disdetail_qry_set)
+        print('disclosure_qry_set:', disclosure_qry_set)
+        print('disdetail_editor:', disdetail_editor)
+        return render(request, 'consolidated_disclosure_page.html',
+                      {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
+                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})

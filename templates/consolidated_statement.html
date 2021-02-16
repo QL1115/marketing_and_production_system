@@ -53,7 +53,7 @@
                     <option value="2">c</option>
                 </select>
             </div>
-            <div class="col-sm-2"><button class="btn btn-secondary">下一步</button></div>
+            <div class="col-sm-2"><button class="btn btn-secondary" onclick="location.href='{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id%}'">下一步</button></div>
         </div>
         <br>
         <br>
@@ -169,6 +169,21 @@
             alert("2");
         }
     }
+    
+    $('#next_btn').click(function(){
+        $.ajax({
+                url: "{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id%}",
+                data: {"acc_id": $("#selectId option:selected").text()},
+                type:"GET",
+                success: function (response) {
+                    console.log('ajax success');
+                    location.reload();
+                }, error: function (error) {
+                    alert('Error to get datasource!');
+                    console.log(error);
+                }
+            });
+    });
 </script>
 </html>
  

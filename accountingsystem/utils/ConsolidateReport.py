@@ -1,4 +1,4 @@
-from ..models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group,Reltrx
+from ..models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group, Reltrx, Distitle, Disdetail, Disclosure
 from django.db import connection
 
 
@@ -150,7 +150,9 @@ def create_consolidated_report_cash_preamt(rpt_id,comp_id,start_date,end_date):
     foreign_currency_cd=Preamt.objects.create(book_amt=total_book_amt_foreign_currency_cd,adj_amt=total_adj_amt_foreign_currency_cd
                                         ,pre_amt=total_book_amt_foreign_currency_cd+total_adj_amt_foreign_currency_cd
                                         ,rpt=rpt_id,acc=foreign_currency_cd_acc_id)
-
+    # 建立Distitle, Disdetail, Disclosure
+    create_disclosure_for_consolidated_report_by_acc_id(rpt_id, comp_id, start_date, end_date, 1) # 現金及約當現金的acc_id為1(建Preamt時是寫死的，這裡acc_id也暫時先直接寫死)
+    
     print(total_book_amt_demand_deposit)
     print(total_book_amt_check_deposit)
     print(total_book_amt_foreign_currency_deposit)
@@ -162,3 +164,82 @@ def create_consolidated_report_cash_preamt(rpt_id,comp_id,start_date,end_date):
     print(total_adj_amt_currency_cd)
     print(total_adj_amt_foreign_currency_cd)
     print('~~')
+
+def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_date,end_date, acc_id):
+    '''合併報表附註格式設定需參考母公司在個體報表時的設定，故不採用個體報表時建立Disclosure的方法'''
+    print('create disclosure series..')
+    # 建立Distitle
+    acc_name = Account.objects.get(acc_id=acc_id).acc_name
+    distitle = Distitle.objects.create(dis_name=acc_name, rpt=rpt_id)
+    # 根據母公司的附註格式設定建立Disdetail
+    raw_cursor = connection.cursor()    
+    cre_disdetail = '''
+                       INSERT INTO Disdetail(row_name, row_amt, dis_title_id)
+                        SELECT DISTINCT A.row_name, 0 AS row_amt, dis_title_param as dis_title_id 
+                        FROM Disdetail A
+                        INNER JOIN Distitle B ON A.dis_title_id = B.dis_title_id
+                        INNER JOIN Report C ON B.rpt_id = C.rpt_id
+                        -- 只能撈出指定科目的Disdetail -> 需Join Disclosure/Preamt/Account確認撈出來的Disdetail的acc_parent是指定的acc_id
+                        INNER JOIN Disclosure D ON A.dis_detail_id = D.dis_detail_id
+                        INNER JOIN Preamt E ON D.pre_id = E.pre_id
+                        INNER JOIN Account F ON E.acc_id = F.acc_id
+                        INNER JOIN Account G ON F.acc_parent = G.acc_id
+                        WHERE A.row_amt != 0 AND C.com_id = com_param AND C.type = '個體' AND C.start_date = \'start_date_param\' AND C.end_date = \'end_date_param\'
+                              AND G.acc_parent = acc_param'''\
+                       .replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
+                       .replace('start_date_param', str(start_date)).replace('end_date_param', str(end_date)).replace('acc_param', str(acc_id))
+    print(cre_disdetail)
+    raw_cursor.execute(cre_disdetail)
+    print('-'*100)
+    # 根據Disdetail跟Disclosure的關係建立Disclosure
+    cre_disclosure = '''
+                        INSERT INTO Disclosure(pre_amt, dis_detail_id, pre_id)
+                        SELECT A.pre_amt, C.dis_detail_id, A.pre_id
+                        FROM (
+                            -- 合併Report新建立的Preamt
+                            SELECT * FROM Preamt WHERE rpt_id = rpt_param
+                        ) A
+                        INNER JOIN (
+                            -- 母公司個體Report下Disclosure及Disdetail的關係
+                            SELECT E.acc_id, A.*, B.row_name, B.row_amt, B.dis_title_id, AA.acc_parent AS parent, AAA.acc_parent AS ancestor
+                            FROM Disclosure A
+                            INNER JOIN Preamt E ON A.pre_id = E.pre_id
+                            INNER JOIN Account AA ON E.acc_id = AA.acc_id
+                            INNER JOIN Account AAA ON AA.acc_parent = AAA.acc_id
+                            INNER JOIN Disdetail B ON A.dis_detail_id = B.dis_detail_id
+                            INNER JOIN Distitle C ON B.dis_title_id = C.dis_title_id
+                            INNER JOIN Report D ON C.rpt_id = D.rpt_id
+                            WHERE A.pre_amt != 0 AND D.com_id = com_param AND D.type = '個體' AND D.start_date = \'start_date_param\' AND D.end_date = \'end_date_param\'
+                                  AND AAA.acc_parent = acc_param -- Disclosure這裡存的都是level 1的科目 直接確認最上層acc_parent(level 3)是指定的acc_id就可以惹
+                        ) B ON A.acc_id = B.acc_id
+                        INNER JOIN (
+                            -- 合併Report新建立的Disdetail
+                            SELECT * FROM Disdetail WHERE dis_title_id = dis_title_param
+                        ) C ON B.row_name = C.row_name''' \
+                       .replace('rpt_param', str(rpt_id.rpt_id)).replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
+                       .replace('start_date_param', str(start_date)).replace('end_date_param', str(end_date)).replace('acc_param', str(acc_id))
+    print(cre_disclosure)
+    raw_cursor.execute(cre_disclosure)
+    print('-'*100)
+    # 建立Disdetail的時候row_amt是塞0，Disclosure建立完後要來更新Disdetail的row_amt
+    update_disdetail = '''
+                        UPDATE
+                        Disdetail AS dest,
+                        (
+                            SELECT SUM(A.pre_amt) AS summ, A.disclosure_id, A.dis_detail_id
+                            FROM Disclosure A
+                            INNER JOIN Preamt B ON A.pre_id = B.pre_id
+                            INNER JOIN Report C ON B.rpt_id = C.rpt_id
+                            -- INNER JOIN Account D ON B.acc_id = D.acc_id
+                            WHERE C.rpt_id = rpt_param AND B.pre_amt != 0
+                            GROUP BY A.dis_detail_id
+                        ) AS src
+                        SET
+                           dest.row_amt = src.summ
+                        WHERE
+                            dest.dis_detail_id = src.dis_detail_id'''\
+                       .replace('rpt_param', str(rpt_id.rpt_id))
+    print(update_disdetail)
+    raw_cursor.execute(update_disdetail)
+    print('-'*100)
+    print('Create distitle/disdetail/disclosure successfully.')
