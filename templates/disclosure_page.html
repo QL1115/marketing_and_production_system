@@ -1,4 +1,5 @@
-{% load humanize %}
+{% load static %}{% load humanize %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,6 +22,7 @@
     </style>
 </head>
 <body>
+
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="#">OurLogo</a>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -57,9 +59,106 @@
     </div>
 </nav>
 <br>
-<div class="container">
+ 
+<div class="container-fulid">
+<!-- start tree -->
+ <div class="row">
 
-    <div class="row col-sm-10 justify-content-between">
+    <div class="col-md-2 pt-5">
+        <div id="tree">
+
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+        <script src="{% static 'js/bstreeview.js' %}">
+    </script>
+    <script>
+        $(function () {
+
+            var json = '[' +
+                '{' +
+                '"text": "資產",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "負債",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "權益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "損益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+                '{' +
+                '"text": "其他",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '}' +
+                ']';
+
+            $('#tree').bstreeview({ data: json });
+
+        });
+    </script>
+    <!-- endof tree-->
+
+    <div class="col-10 justify-content-between">
         <button id="add_disdetail_btn" type="button" class="col-sm-3 btn btn-secondary">新增附註格式分類</button>
         <button id="show_disclosure_format_plus_btn" type="button" class="col-sm-1 btn btn-secondary">編輯</button>
         <button id="update_disclosure_format_btn" type="button" class="col-sm-1 btn btn-secondary hide">確定</button>
@@ -100,7 +199,7 @@
     {% endfor %}
 
 </div>
-
+   
 
 <!-- 附註格式 Modal -->
 <div class="modal fade" id="disclosure_format_modal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -132,20 +231,22 @@
         </div>
     </div>
 </div>
+</div>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>
+<!--這個卡到tree  <script src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.js" crossorigin="anonymous"></script>
 <script type="text/javascript">
+    
     $(document).ready(function () {
-
+        var anotherVariable = jQuery.noConflict()
         disdetail_row = null;
         acc_level = 1;
 
-        refresh_disclosure_amount_in_disdetail();
-
+       
+    refresh_disclosure_amount_in_disdetail();
         {# 更新畫面的 disdetail 金額，金額為底下的 disclosure 金額相加 #}
         function refresh_disclosure_amount_in_disdetail() {
-            $('.disdetail_row').each(function() {
+            jQuery('.disdetail_row').each(function() {
                 if ($('div[data-disclosure]:not(".hide")', this).length == 0) {
                     $(this).addClass('hide');
                 } else {
@@ -158,7 +259,7 @@
             });
             {#$('#disclosure_checkboxes_fields').empty();#}
         }
-
+        
         {# 顯示哪些科目已經被選取了 #}
         function set_acc_checked() {
             {#$('#disclosure_checkboxes_fields .form-check-input').prop('checked', false);#}
@@ -185,14 +286,14 @@
         }
 
         {# 「編輯」按鈕按下後，在 disdetail 旁邊顯示「+」 #}
-        $('#show_disclosure_format_plus_btn').on('click', function() {
+        jQuery('#show_disclosure_format_plus_btn').on('click', function() {
             $('.disclosure_format_plus').removeClass('hide');
             $('#show_disclosure_format_plus_btn').addClass('hide');
             $('#update_disclosure_format_btn').removeClass('hide');
         });
 
         {#  資料送至後端  #}
-        $('#update_disclosure_format_btn').on('click', function() {
+        jQuery('#update_disclosure_format_btn').on('click', function() {
             {# 畫面變更 #}
             $('#show_disclosure_format_plus_btn').removeClass('hide');
             $('#update_disclosure_format_btn').addClass('hide');
@@ -235,7 +336,7 @@
         });
 
         {# 按下「+」後，顯示附註格式設定 modal #}
-        $('.disclosure_format_plus').on('click', function () {
+        jQuery('.disclosure_format_plus').on('click', function () {
             disdetail_row = $(this).parents('.disdetail_row');
             $('#disclosure_checkboxes_fields').empty();
             {# 顯示科目層級及可選的科目，預設顯示 level 1 的科目 #}
@@ -253,7 +354,7 @@
         });
 
         {# 按下 acc level btn #}
-        $('.acc_level_btn').on('click', function() {
+        jQuery('.acc_level_btn').on('click', function() {
             $('#disclosure_checkboxes_fields').empty();
             if ($(this).prop('id') === 'level_1_acc_btn') {
                 acc_level = 1;
@@ -276,7 +377,7 @@
         });
 
         {# 按下附註格式設定 modal 的「暫時儲存」後，關閉 modal 並更新前端 #}
-        $('#update_frontend_notes_btn').on('click', function () {
+        jQuery('#update_frontend_notes_btn').on('click', function () {
             {# 更新畫面 #}
             if (disdetail_row.hasClass('hide')) {
                 if ($('#disclosure_format_modal .modal-body .disdetail_name').val().trim() == '' || $('#disclosure_checkboxes_fields .form-check-input:checkbox:checked').length == 0) {
@@ -292,7 +393,7 @@
             } else if (acc_level == 2) {
                 {% for acc_level in disdetail_editor %}
                     if ("{{ acc_level.acc_parent_name }}" == $('#disclosure_checkboxes_fields .form-check-input:checkbox:checked').siblings('label.form-check-label').text()) {
-                        selected_disclosure_id_list.push.apply(selected_disclosure_id_list, {{ acc_level.disclosure_id_list }});
+                        selected_disclosure_id_list.push.apply(selected_disclosure_id_list, {{ acc_level.disclosure_id_list }} );
                     }
                 {% endfor %}
             }
@@ -315,7 +416,7 @@
     });
 
     {# 按下「新增附註格式分類」 #}
-    $('#add_disdetail_btn').on('click', function() {
+    jQuery('#add_disdetail_btn').on('click', function() {
         $('#disclosure_checkboxes_fields').empty();
         acc_level = 1;
         {% for disclosure in disclosure_qry_set %}
