@@ -173,7 +173,7 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
     distitle = Distitle.objects.create(dis_name=acc_name, rpt=rpt_id)
     # 根據母公司的附註格式設定建立Disdetail
     raw_cursor = connection.cursor()    
-    cre_disdetail = '''
+    cre_disdetail = ''' 
                        INSERT INTO Disdetail(row_name, row_amt, dis_title_id)
                         SELECT DISTINCT A.row_name, 0 AS row_amt, dis_title_param as dis_title_id 
                         FROM Disdetail A

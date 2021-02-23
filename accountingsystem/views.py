@@ -497,15 +497,21 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
             # 成功被上傳，找出需回傳的 disdetail 和 disclosure (排除金額為0的)
             if uploadFile.get('status_code') == 200:
                 depositData = uploadFile.get('returnObject')
+                disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
                 disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                    filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
-                disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
-                    filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
-                                                                              'pre__acc__acc_name',
-                                                                              'dis_detail__dis_detail_id')
+                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
+                    exclude(row_amt=0).\
+                    values()
+                disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
+                    exclude(pre_amt=0). \
+                    values('disclosure_id', 'pre_amt',
+                           'pre__acc__acc_name',
+                           'dis_detail__dis_detail_id')
                 # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
                 unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[:(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+                                                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[
+                                                :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
                 print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
 
                 # 找出需回傳階層表
@@ -547,11 +553,12 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                           {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
         return render(request, 'disclosure_page.html',
                       {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
-                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor,
+                       'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
 
     if request.method == 'POST' and request.is_ajax():
         data = json.loads(request.body)
-        #print('傳的 data:', data)
+        # print('傳的 data:', data)
         # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
         # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
         try:
@@ -564,12 +571,12 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                     a.update(dis_detail_id=disdetail_obj['disdetail_id'])
                     total_pre_amt += a[0].pre_amt
                 # 更新 disdetail row_name，並根據 pre_amt 總和更新 row_amt
-                Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id'])\
+                Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id']) \
                     .update(row_name=disdetail_obj['row_name'], row_amt=total_pre_amt)
             return JsonResponse({"status_code": 200, "msg": "成功更新附註格式。"})
         except Exception as e:
             print('update_disclosure exception >>> ', e)
-            #return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
+            # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
             return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})
 
 
@@ -791,17 +798,22 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
         print('acc_name >>>     ', acc_name)
         acc_id = Account.objects.get(acc_name=acc_name).acc_id
         print('acc_id >>>    ', acc_id)
+        disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
         disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-            filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
-        disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
-            filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
-                                                                      'pre__acc__acc_name',
-                                                                      'dis_detail__dis_detail_id')
+                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
+                    exclude(row_amt=0).\
+                    values()
+        disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
+                    exclude(pre_amt=0). \
+                    values('disclosure_id', 'pre_amt',
+                           'pre__acc__acc_name',
+                           'dis_detail__dis_detail_id')
         all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
             filter(dis_title__rpt__rpt_id=rpt_id).values()
         # 新增(disclosure - disdetail) 個disdetail備用
         diff_count = disclosure_qry_set.count() - disdetail_qry_set.count()
-        print('diff_count >>>     ', diff_count)
+        print('all_disdetail_qry_set >>>     ', all_disdetail_qry_set)
         # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用 # disclosure數量 - 有使用的disdetail數量
         if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
         # 先取出report對應的distitle
@@ -817,7 +829,8 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
                 Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
         # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
         unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[:(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+                                                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[
+                                                :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
         print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
 
         # 找出需回傳階層表
@@ -846,18 +859,19 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
                     'disclosure_id_list': level_1_disclosure_list
                 })
                 level_1_disclosure_list = []
-        print('disdetail_qry_set:', disdetail_qry_set)
-        print('disclosure_qry_set:', disclosure_qry_set)
-        print('disdetail_editor:', disdetail_editor)
+
+        disdetail_qry_set=list(disdetail_qry_set)
+        disclosure_qry_set=list(disclosure_qry_set)
+        unspecified_disdetail_qry_set=list(unspecified_disdetail_qry_set)
         return JsonResponse({'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
                              'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
     # method == GET
     else:
         # Default進來會顯示現金及約當現金的附註格式
         acc_name = "現金及約當現金"
-        print('acc_name >>>     ', acc_name)
+        print('acc_name >>>   ', acc_name)
         acc_id = Account.objects.get(acc_name=acc_name).acc_id
-        print('acc_id >>>    ', acc_id)
+        print('acc_id >>>  ', acc_id)
         disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
             filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
         disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \

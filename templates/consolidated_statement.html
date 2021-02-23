@@ -59,6 +59,7 @@
         <br>
         <div id='cash'>
             <div class="row">
+                <div class="col">明細資訊</div>
                 {% for company in com_list %}
                 
                     <div class="col-sm">{{ company}}</div>
@@ -69,7 +70,10 @@
                 <div class="col-sm">合計查核數</div>
             </div>
 
+
+            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
             <div class="row">
+                <div class="col-sm">活期存款</div>
                 {% for demand_deposit in demand_deposit_list %}
                     {% if demand_deposit == 0 %}
                         <div class="col-sm">--</div>
@@ -82,8 +86,9 @@
                     {% endif %}  
                 {% endfor %}
             </div>
-
+            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
             <div class="row">
+                <div class="col-sm">支票存款</div>
                 {% for check_deposit in check_deposit_list %}
                     {% if check_deposit == 0 %}
                         <div class="col-sm">--</div>
@@ -96,8 +101,9 @@
                     {% endif %}  
                 {% endfor %}
             </div>
-
+            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
             <div class="row">
+                <div class="col-sm">定期存款</div>
                 {% for foreign_currency_deposit in foreign_currency_deposit_list %}
                     {% if foreign_currency_deposit == 0 %}
                         <div class="col-sm">--</div>
@@ -110,8 +116,9 @@
                     {% endif %}  
                 {% endfor %}
             </div>
-
+            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
             <div class="row">
+                <div class="col-sm">定期存款（原幣）</div>
                 {% for currency_cd in currency_cd_list %}
                     {% if currency_cd == 0 %}
                         <div class="col-sm">--</div>
@@ -124,7 +131,9 @@
                     {% endif %}  
                 {% endfor %}
             </div>
+            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
             <div class="row">
+                <div class="col-sm">定期存款（外幣）</div>
                 {% for foreign_currency_cd in foreign_currency_cd_list %}
                     {% if foreign_currency_cd == 0 %}
                         <div class="col-sm">--</div>
