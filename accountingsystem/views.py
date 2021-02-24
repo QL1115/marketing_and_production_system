@@ -810,7 +810,7 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
                            'pre__acc__acc_name',
                            'dis_detail__dis_detail_id')
         all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-            filter(dis_title__rpt__rpt_id=rpt_id).values()
+            filter(dis_title__rpt__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).values()
         # 新增(disclosure - disdetail) 個disdetail備用
         diff_count = disclosure_qry_set.count() - disdetail_qry_set.count()
         print('all_disdetail_qry_set >>>     ', all_disdetail_qry_set)
@@ -872,14 +872,19 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
         print('acc_name >>>   ', acc_name)
         acc_id = Account.objects.get(acc_name=acc_name).acc_id
         print('acc_id >>>  ', acc_id)
+        disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
         disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-            filter(dis_title__rpt__rpt_id=rpt_id).exclude(row_amt=0).values()
-        disclosure_qry_set = Disclosure.objects.select_related('rpt__pre__disclosure'). \
-            filter(pre__rpt__rpt_id=rpt_id).exclude(pre_amt=0).values('disclosure_id', 'pre_amt',
-                                                                      'pre__acc__acc_name',
-                                                                      'dis_detail__dis_detail_id')
+                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
+                    exclude(row_amt=0).\
+                    values()
+        disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
+                    exclude(pre_amt=0). \
+                    values('disclosure_id', 'pre_amt',
+                           'pre__acc__acc_name',
+                           'dis_detail__dis_detail_id')
         all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-            filter(dis_title__rpt__rpt_id=rpt_id).values()
+            filter(dis_title__rpt__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).values()
         # 新增(disclosure - disdetail) 個disdetail備用
         diff_count = disclosure_qry_set.count() - disdetail_qry_set.count() # disclosure數量 - 有使用的disdetail數量
         print('diff_count >>>     ', diff_count)
