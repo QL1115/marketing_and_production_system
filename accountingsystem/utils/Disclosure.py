@@ -9,7 +9,7 @@ def create_disclosure_for_project_account(preamount_list, rpt_id, acc_id):
     目前依順序建立: Preamount > Distitle > DisDetail > Disclosure，
     """
     print('>>> create_disclosure_for_project_account')
-    create_distitle(preamount_list, rpt_id, acc_id)
+    create_distitle(preamount_list, acc_id, rpt_id)
 
 def create_distitle(preamount_list, rpt_id, acc_id):
     """
