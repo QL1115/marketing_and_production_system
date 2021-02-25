@@ -1,11 +1,19 @@
-{% load static %}{% load humanize %}
+{% load static %}
+<!--{% load humanize %}-->
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
+     <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+        <!-- FontAwesome -->
+        <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>
+
+    <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" crossorigin="anonymous">-->
     <style type="text/css">
         .disdetail_row{
             margin-bottom: 1em;
@@ -19,11 +27,9 @@
         #disclosure_checkboxes_fields .form-check {
             margin-left: 0.8em;
         }
-    </style>
-</head>
-<body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    </style>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="#">OurLogo</a>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
@@ -58,12 +64,14 @@
         </div>
     </div>
 </nav>
-<br>
+</head>
+<body>
+
+
  
 <div class="container-fulid">
-<!-- start tree -->
  <div class="row">
-
+<!-- start tree -->
     <div class="col-md-2 pt-5">
         <div id="tree">
 
@@ -157,8 +165,100 @@
         });
     </script>
     <!-- endof tree-->
+    <!--硬做的版本-->
+    <!--start of tree--><!--
+    <div id='tree' class="bstreeview"> 
+        <div herf="#tree-item-0" class="list-group-item" data-toggle="collapse" style="padding-left: 1.25rem">
+            <i class="state-icon fa fa-angle-right" aria-hidden="true">
+                ::before
+            </i>
+            <i class="item-icon fa fa-inbox" area-hidden="true">
+                ::before
+            </i>
+            "資產"
+        </div> 
+        <div herf="tree-item-1" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="tree-item-2" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="#tree-item-3" class="list-group-item" data-toggle="collapse" style="padding-left: 1.25rem">
+            <i class="state-icon fa fa-angle-right" aria-hidden="true">
+                ::before
+            </i>
+            <i class="item-icon fa fa-inbox" area-hidden="true">
+                ::before
+            </i>
+            "資產"
+        </div> 
+        <div herf="tree-item-4" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="tree-item-5" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="#tree-item-6" class="list-group-item" data-toggle="collapse" style="padding-left: 1.25rem">
+            <i class="state-icon fa fa-angle-right" aria-hidden="true">
+                ::before
+            </i>
+            <i class="item-icon fa fa-inbox" area-hidden="true">
+                ::before
+            </i>
+            "資產"
+        </div> 
+        <div herf="tree-item-7" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="tree-item-8" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="#tree-item-9" class="list-group-item" data-toggle="collapse" style="padding-left: 1.25rem">
+            <i class="state-icon fa fa-angle-right" aria-hidden="true">
+                ::before
+            </i>
+            <i class="item-icon fa fa-inbox" area-hidden="true">
+                ::before
+            </i>
+            "資產"
+        </div> 
+        <div herf="tree-item-10" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="tree-item-11" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="#tree-item-12" class="list-group-item" data-toggle="collapse" style="padding-left: 1.25rem">
+            <i class="state-icon fa fa-angle-right" aria-hidden="true">
+                ::before
+            </i>
+            <i class="item-icon fa fa-inbox" area-hidden="true">
+                ::before
+            </i>
+            "資產"
+        </div> 
+        <div herf="tree-item-13" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>
+        <div herf="tree-item-14" class='list-group-item' data-toggle='collapse' style='padding-left: 2.5rem'>
+            <i class="item-icon fa fa-inbox" aria-hidden='true'>
+                "Others"
+        </div>-->
+    <!-- end tree-->
 
-    <div class="col-10 justify-content-between">
+
+
+<br>
+   <div class="col-10 justify-content-between">
         <button id="add_disdetail_btn" type="button" class="col-sm-3 btn btn-secondary">新增附註格式分類</button>
         <button id="show_disclosure_format_plus_btn" type="button" class="col-sm-1 btn btn-secondary">編輯</button>
         <button id="update_disclosure_format_btn" type="button" class="col-sm-1 btn btn-secondary hide">確定</button>
@@ -232,7 +332,6 @@
     </div>
 </div>
 </div>
-
 <!--這個卡到tree  <script src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.js" crossorigin="anonymous"></script>
 <script type="text/javascript">
@@ -445,4 +544,12 @@
     });
 </script>
 </body>
+<style type="text/css">
+            .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: 0px;
+            margin-left: 0px; 
+        }
+</style>
 </html>
