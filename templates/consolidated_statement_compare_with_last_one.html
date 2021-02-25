@@ -65,33 +65,48 @@
         </div>
         <br>
         <br>
-        <div>
 
-        </div>
-        <div>
+        <div class="row">
+            
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">明細資訊</div>
+                {% for disdetail in disdetail_qry_set %}
+                    <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {{ disdetail.row_name }}
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">總和</div>
+            </div>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{end_date}}</div>
+                {% for disdetail in disdetail_qry_set %}
+                    <div class="col-sm">
+                        {% csrf_token %}
+                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                        {{ disdetail.row_amt |floatformat:0|intcomma:False}}
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">{{total_disdetail|floatformat:0|intcomma:False}}</div>
+            </div>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{last_end_date}}</div>
+                {% for prior_disdetail in prior_disdetail_qry_set %}
+                    <div class="col-sm">
+                        {% csrf_token %}
+                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                        {{ prior_disdetail.row_amt |floatformat:0|intcomma:False}}
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">{{total_prior_disdetail|floatformat:0|intcomma:False}}</div>
+            </div>
             
         </div>
-        <div>
-            <table class="table-responsive" id="deposit_account_table">
-                <thead>
-                    <tr class="table-active">
-                        <th style="padding:8px;">明細資訊(單位:元)</th>
-                        <th style="padding:8px;">CURENDDATE</th>
-                        <th style="padding:8px;">PRIORENDDATE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for disdetail_qry_set in zipdata %}
-                    <tr class="input_row">
-                        {% csrf_token %}
-                        <p>{{ disdetail_qry_set.row_amt }}</p>
-                        <td><input type="text" name="cur_row_amt" value="{{ disdetail_qry_set.row_amt }}" disabled/></td>
-                        <td><input type="text" name="prior_row_amt" value="{{ prior_disdetail_qry_set.row_amt }}" disabled/></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        <div>
+        
 
 
         <div id=property style="display:none">
