@@ -1008,14 +1008,24 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
     '''.replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
                         .replace('start_date_param', str(last_start_date)).replace('end_date_param', str(last_end_date))
                         
-    prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)[0]
+    prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)
     print('a',prior_disdetail_qry_set)
+    print(type(prior_disdetail_qry_set))
     
     # 撈本期的disdetail
     disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
                     .filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).exclude(row_amt=0).order_by("row_name").values()
     print('b',disdetail_qry_set)
-    return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id})
+    print(type(disdetail_qry_set))
+    zipdata=zip(prior_disdetail_qry_set, disdetail_qry_set)
+    return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
+                'zipdata':zipdata,
+                'disdetail_qry_set':disdetail_qry_set,
+                'prior_disdetail_qry_set':prior_disdetail_qry_set,
+                'start_date':start_date,
+                'end_date':end_date,
+                'last_start_date':last_start_date,
+                'last_end_date':last_end_date})
 
 
    

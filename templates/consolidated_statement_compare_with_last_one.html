@@ -65,7 +65,35 @@
         </div>
         <br>
         <br>
-        
+        <div>
+
+        </div>
+        <div>
+            
+        </div>
+        <div>
+            <table class="table-responsive" id="deposit_account_table">
+                <thead>
+                    <tr class="table-active">
+                        <th style="padding:8px;">明細資訊(單位:元)</th>
+                        <th style="padding:8px;">CURENDDATE</th>
+                        <th style="padding:8px;">PRIORENDDATE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for disdetail_qry_set in zipdata %}
+                    <tr class="input_row">
+                        {% csrf_token %}
+                        <p>{{ disdetail_qry_set.row_amt }}</p>
+                        <td><input type="text" name="cur_row_amt" value="{{ disdetail_qry_set.row_amt }}" disabled/></td>
+                        <td><input type="text" name="prior_row_amt" value="{{ prior_disdetail_qry_set.row_amt }}" disabled/></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        <div>
+
+
         <div id=property style="display:none">
             <p>hi</p>
         <div>
