@@ -226,7 +226,7 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
                         UPDATE
                         Disdetail AS dest,
                         (
-                            SELECT SUM(A.pre_amt) AS summ, A.disclosure_id, A.dis_detail_id
+                            SELECT SUM(A.pre_amt) AS summ,  A.dis_detail_id
                             FROM Disclosure A
                             INNER JOIN Preamt B ON A.pre_id = B.pre_id
                             INNER JOIN Report C ON B.rpt_id = C.rpt_id

@@ -480,7 +480,7 @@ def get_dashboard_page(request, comp_id):
     reports_to_combine = Report.objects.filter(com_id = comp_id, type='個體')
     # 暫時寫死為沒給的東西都是1，讓頁面其他按鈕有效果
     # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
-    return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1, 'reports_to_combine': reports_to_combine})
+    return render(request, 'dashboard_page.html',{ 'comp_id':comp_id, 'reports_to_combine': reports_to_combine})
 
 
 @csrf_exempt
