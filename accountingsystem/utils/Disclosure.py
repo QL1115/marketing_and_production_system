@@ -11,7 +11,7 @@ def create_disclosure_for_project_account(preamount_list, rpt_id, acc_id):
     print('>>> create_disclosure_for_project_account')
     create_distitle(preamount_list, acc_id, rpt_id)
 
-def create_distitle(preamount_list, rpt_id, acc_id):
+def create_distitle(preamount_list, acc_id, rpt_id):
     """
     根據科目名稱建立 distitle
     """
