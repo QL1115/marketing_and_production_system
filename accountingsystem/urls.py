@@ -12,4 +12,7 @@ urlpatterns = [
     path('companies/<int:comp_id>/new_report', views.new_report, name='new_report'),
     path('companies/<int:comp_id>/dashboard_page', views.get_dashboard_page, name='dash_board'),
     path('companies/<int:comp_id>/projects/<int:rpt_id>/accounts/<int:acc_id>/disclosure', views.get_disclosure_page, name='disclosure_page'),
+    path('compaines/<int:comp_id>/consolidated_report', views.consolidated_report, name='consolidated_report'),
+    path('companies/<int:comp_id>/projects/<int:rpt_id>/',views.get_consolidated_statement_page, name='get_consolidated_statement_page'),
+    path('companies/<int:comp_id>/projects/<int:rpt_id>/disclosure',views.get_consolidated_disclosure_page, name='get_consolidated_disclosure_page')
 ]
