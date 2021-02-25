@@ -333,7 +333,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         # 取定期存款外幣金額不為NULL的
         depositDataInCIBpage = depositData.filter(foreign_currency_amount__isnull=False)
         # 取得匯率
-        exchangeRate = Exchangerate.objects.filter(rpt_id=1)
+        exchangeRate = Exchangerate.objects.filter(rpt_id=rpt_id)
         rateDict = {}
         for exchangerate in exchangeRate:
             rateDict[exchangerate.currency_name] = exchangerate.rate
