@@ -13,8 +13,10 @@ from .utils.Disclosure import delete_disclosure_for_project_account
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd  # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
+#from datetime import datetime
 from datetime import datetime
-
+import calendar
+from datetime import timedelta
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
@@ -942,3 +944,78 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
                       {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
                        'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
 
+def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
+    start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
+    end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
+    start_date_month=start_date.month
+    end_date_month=end_date.month
+    diff_month=end_date_month-start_date_month
+    start_date = datetime.strftime(start_date,'%Y-%m-%d')
+    end_date=datetime.strftime(end_date,'%Y-%m-%d')
+    #是年報
+    if end_date_month-start_date_month==11:
+        cursor = connection.cursor()
+        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 YEAR)'%(start_date))
+        last_start_date= cursor.fetchone()[0]
+        print(last_start_date)
+        cursor = connection.cursor()
+        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 YEAR)'%(end_date))
+        last_end_date= cursor.fetchone()[0]
+        print(last_end_date)
+    #是季報
+    elif end_date_month-start_date_month==3:
+        #SELECT DATE_ADD('2021-10-31', INTERVAL -3 MONTH);
+        cursor = connection.cursor()
+        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -3 MONTH)'%(start_date))
+        last_start_date= cursor.fetchone()
+        print(last_start_date)
+        cursor = connection.cursor()
+        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -3 MONTH)'%(end_date))
+        last_end_date= cursor.fetchone()
+        print(last_end_date)
+
+    #是月報
+    else:
+        #SELECT DATE_ADD('2021-03-31', INTERVAL -1 MONTH);
+        cursor = connection.cursor()
+        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 MONTH)'%(start_date))
+        last_start_date= cursor.fetchone()
+        print(last_start_date)
+        cursor = connection.cursor()
+        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 MONTH)'%(end_date))
+        last_end_date= cursor.fetchone()
+        print(last_end_date)
+
+    acc_id=1
+    sb = '''
+                   SELECT A.dis_title_id, A.dis_name
+                   FROM Distitle A
+                   INNER JOIN Account B ON A.dis_name = B.acc_name
+                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+    distitle = Distitle.objects.raw(sb)[0]
+    print('distitle',distitle)
+    # 根據本期的row_name撈前期的disdetail
+    select_prior = '''
+    SELECT A.*
+    FROM Disdetail A
+    INNER JOIN Distitle B ON A.dis_title_id = B.dis_title_id
+    INNER JOIN Report C ON B.rpt_id = C.rpt_id
+    WHERE A.row_name IN (SELECT B.row_name FROM Disdetail B WHERE B.dis_title_id = dis_title_param AND row_amt!=0)
+    AND C.start_date = \'start_date_param\' AND C.end_date = \'end_date_param\'
+    AND com_id = com_param
+    AND type = '合併'
+    ORDER BY A.row_name
+    '''.replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
+                        .replace('start_date_param', str(last_start_date)).replace('end_date_param', str(last_end_date))
+                        
+    prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)[0]
+    print('a',prior_disdetail_qry_set)
+    
+    # 撈本期的disdetail
+    disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
+                    .filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).exclude(row_amt=0).order_by("row_name").values()
+    print('b',disdetail_qry_set)
+    return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id})
+
+
+   
