@@ -243,3 +243,33 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
     raw_cursor.execute(update_disdetail)
     print('-'*100)
     print('Create distitle/disdetail/disclosure successfully.')
+
+def delete_consolidate_report(comp_id, rpt_id):
+    #被呼叫到地方在views.py中的def delete_file()＆def update_raw_file()中
+    def check_null_or_not(i,amt):
+        if not i:
+            i=0
+        else:
+            i=i.values()[0][amt]
+        return i
+    #撈出母公司所屬的集團
+    group_id=Company.objects.filter(com_id=comp_id).values()[0]['grp_id']
+    #撈出同個集團的所有公司
+    com_list=Company.objects.filter(grp=group_id)
+    #撈出該rpt的start_date:
+    start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
+    #撈出該rpt的end_date
+    end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
+    for i in com_list:
+        #.values()[0]['rpt_id']
+        #com_id=com_list[0]
+        #撈出該公司個體報表rpt_id(報表要是個體,且報表符合所選日期)
+        report_id=Report.objects.filter(com=i).filter(type='合併').filter(start_date=start_date).filter(end_date=end_date)
+        #report_id=Report.objects.filter(com=com_id).filter(type='合併').filter(start_date=start_date).filter(end_date=end_date)
+        if not report_id:
+            pass
+        else:
+            report_id=report_id.values()[0]['rpt_id']
+            Report.objects.filter(rpt_id=report_id).delete()
+
+

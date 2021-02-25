@@ -6,7 +6,7 @@ from django.views.decorators.http import require_http_methods
 from pandas._libs import json
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
-from .utils.ConsolidateReport import create_consolidated_report,create_consolidated_report_preamt
+from .utils.ConsolidateReport import create_consolidated_report,create_consolidated_report_preamt,delete_consolidate_report
 from django.db import connection
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group, Reltrx, Disclosure, Disdetail, Distitle
 from .utils.Disclosure import delete_disclosure_for_project_account
@@ -77,6 +77,7 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     try:
         delete_uploaded_file(rpt_id, table_name)
         delete_preamount(rpt_id, acc_id)
+        delete_consolidate_report(comp_id,rpt_id)
     except Exception as e:
         print('刪除錯誤：', e)
 
@@ -241,6 +242,7 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                         'isUpdated': False
                     })
             delete_preamount(rpt_id, acc_id)
+            delete_consolidate_report(comp_id,rpt_id)
             create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return JsonResponse({
                 'table_name': 'cash_in_banks',
@@ -261,6 +263,7 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                         'isUpdated': False
                     })
             delete_preamount(rpt_id, acc_id)
+            delete_consolidate_report(comp_id,rpt_id)
             create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return JsonResponse({
                 'table_name': 'deposit_account',
@@ -938,3 +941,4 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
         return render(request, 'consolidated_disclosure_page.html',
                       {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
                        'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+
