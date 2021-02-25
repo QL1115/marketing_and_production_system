@@ -68,7 +68,7 @@
           </div> 
         </div>
         <div class="col mb-4">
-          <div class="shadow p-3 mb-5 bg-white rounded" align="middle">
+          <div class="shadow p-3 mb-5 bg-white rounded" align="middle" data-toggle="modal" data-target="#combine_report_select_modal">
             <i class="far fa-object-group fa-5x"></i>
               <h5>產生合併報表</h5>
           </div> 
@@ -114,9 +114,140 @@
         </div>
       </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <!-- 合併報表 選擇報表modal -->
+    <div class="modal" id="combine_report_select_modal" tabindex="-1" aria-labelledby="combine_report_select_modal_label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="combine_report_select_modal_label">請選擇欲合併報表起始及結束日期:</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <table class="table table-bordered text-center" data-toggle="table">
+            <thead style="background-color:  #7d7d7c;">
+            <tr>
+                <th><span style="color:white;">報表編號</span></th>
+                <th><span style="color:white;">報表日期</span></th>
+            </tr>
+            </thead>
+            {% for report in reports_to_combine %}
+            <tr id="report_data">
+                <td><span>{{ report.rpt_id }}</span></td>
+                <td><span>{{ report.start_date }}~{{ report.end_date }}</span></td>
+            </tr>
+            {% endfor %}
+            </table>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="combine_report_next_button">下一步</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 合併報表 簽名狀態modal -->
+    <div class="modal" id="combine_report_sign_modal" tabindex="-1" aria-labelledby="combine_report_sign_modal_label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="combine_report_sign_modal_label">報表簽名狀態:</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <table class="table table-bordered text-center" data-toggle="table">
+            <thead style="background-color:  #7d7d7c;">
+            <tr>
+                <th><span style="color:white;">公司</span></th>
+                <th><span style="color:white;">簽名狀態</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="combine_report_cancel_button" data-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" id="combine_report_combine_button">合併</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
     <script type="text/javascript">
         <!--modal shown on click--!>
-        {$('#new_project_modal').on('show.bs.modal', function (event){})
+        {$('#new_project_modal').on('show.bs.modal', function (event){})}
+        $('#combine_report_select_modal').on('show.bs.modal', function (event){
+            <!-- 每次點開modal都是沒有報表被選擇的狀態 -->
+            trSeq = undefined;
+            $('#combine_report_select_modal tr').removeClass("highlight");
+            <!-- 拿網址的company id作為傳ajax回去時的param  #TODO:找找看更好的做法來拿取comp_id-->
+            current_url = window.location.href;
+            var start_idx = current_url.indexOf('companies/')+'companies/'.length;
+            var end_idx = current_url.substr(start_idx, current_url.length-start_idx).indexOf('/')+start_idx;
+            company_id = current_url.substring(start_idx, end_idx);
+        })
+        
+        <!-- highlight被點擊的row -->
+        $('#combine_report_select_modal td').click(function(){
+            <!-- highlight被點擊的row -->
+            trSeq = $(this).parent().parent().find('tr').index($(this).parent()[0]);
+            var selected = $('#combine_report_select_modal table').find('tr').eq(trSeq+1).hasClass('highlight'); <!-- 因為是用td去找 row要+1 -->
+            $('#combine_report_select_modal tr').removeClass("highlight");
+            if(!selected)
+                $('#combine_report_select_modal table').find('tr').eq(trSeq+1).addClass('highlight');
+        });
+        <!-- 合併報表modal #1 點擊下一步button -->
+        $('#combine_report_next_button').click(function(){
+            if (typeof trSeq !== 'undefined'){
+                <!-- 把選擇報表modal 藏起來 -->
+                $('#combine_report_select_modal').modal('hide');
+                $('.modal-backdrop').remove()
+                $('body').removeClass('modal-open');
+                console.log('trSeq >>>>>>', trSeq);
+                <!-- 根據報表日期來找子公司的個體報表 -->
+                report_dates = $('#combine_report_select_modal table').find('tr').eq(trSeq+1).find('td:nth-child(2)').html();
+                $.ajax({
+                    url: "{% url 'consolidated_report' comp_id=comp_id%}",
+                    data: { "comp_id": company_id, "type":"get_reports_with_status", "report_dates": report_dates},
+                    type:"GET",
+                    success: function (response) {
+                        console.log('ajax success');
+                        $('#combine_report_sign_modal .modal-content table tbody').html(response.returnStr);
+                        if(response.returnStr.indexOf('未簽名')!=-1){
+                            $('#combine_report_sign_modal .modal-footer').html('<p style="color:red;font-size:14px;">* 須待個體報表皆簽名後才能進行合併報表。</p>\
+                                                                                <button type="button" class="btn btn-secondary" id="combine_report_cancel_button" data-dismiss="modal">取消</button>')
+                        }
+                        $('#combine_report_sign_modal').modal('show');
+                    }, error: function (error) {
+                        alert('Error to get datasource!');
+                        console.log(error);
+                    }
+                });
+            }
+            else{
+                alert('請選擇欲合併報表');
+            }
+        });
+        <!-- 合併報表modal #2 點擊合併button -->
+        $('#combine_report_combine_button').click(function(){
+            $.ajax({
+                    url: "{% url 'consolidated_report' comp_id=comp_id%}",
+                    data: { "comp_id": company_id, "type":"consolidate_report", "report_dates": report_dates},
+                    type:"GET",
+                    success: function (response) {
+                        console.log('ajax success');
+                        console.log('returnStr >>>>>>>>>>>', window.location.href.replace('dashboard_page', response.returnStr));
+                        window.location.href = response.returnStr;
+                    }, error: function (error) {
+                        alert('Error to get datasource!');
+                        console.log(error);
+                    }
+                });
+        });
+        
     </script>
+    <style>
+        .highlight { background-color: Gainsboro; }
+    </style>
+</html>

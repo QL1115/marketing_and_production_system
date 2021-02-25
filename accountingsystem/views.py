@@ -4,17 +4,16 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pandas._libs import json
-from .utils.Entries import create_preamount_and_adjust_entries_for_project_account
-from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
-    get_uploaded_file
-from .utils.Disclosure import delete_disclosure_for_project_account
+from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, fill_in_preamount
+from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks,check_and_save_deposit_account, get_uploaded_file
+from .utils.ConsolidateReport import create_consolidated_report,create_consolidated_report_preamt,delete_consolidate_report
 from django.db import connection
-from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Disclosure, Disdetail, \
-    Distitle
+from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group, Reltrx, Disclosure, Disdetail, Distitle
+from .utils.Disclosure import delete_disclosure_for_project_account
 from .forms import CashinbanksForm, DepositAccountForm
 import xlrd  # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 from django.db.models import Q
-
+from datetime import datetime
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
@@ -78,6 +77,7 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
     try:
         delete_uploaded_file(rpt_id, table_name)
         delete_preamount(rpt_id, acc_id)
+        delete_consolidate_report(comp_id,rpt_id)
     except Exception as e:
         print('刪除錯誤：', e)
 
@@ -242,6 +242,7 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                         'isUpdated': False
                     })
             delete_preamount(rpt_id, acc_id)
+            delete_consolidate_report(comp_id,rpt_id)
             create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return JsonResponse({
                 'table_name': 'cash_in_banks',
@@ -262,6 +263,7 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
                         'isUpdated': False
                     })
             delete_preamount(rpt_id, acc_id)
+            delete_consolidate_report(comp_id,rpt_id)
             create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return JsonResponse({
                 'table_name': 'deposit_account',
@@ -473,9 +475,12 @@ def new_report(request, comp_id):
 
 @csrf_exempt
 def get_dashboard_page(request, comp_id):
+    # 撈出公司的所有個體報表(datasource for 合併報表modal #1選擇報表)
+    # Note: 如果採用點擊「合併報表」icon後才送ajax回傳html寫入modal，會造成無法設定click event給td -> 一載入dashboard就先去撈該公司所有的個體報表，把data塞進modal
+    reports_to_combine = Report.objects.filter(com_id = comp_id, type='個體')
     # 暫時寫死為沒給的東西都是1，讓頁面其他按鈕有效果
     # 可修正為拿除dashboard頁上的navbar東西，就不需要這些
-    return render(request, 'dashboard_page.html', {"acc_id": 1, 'comp_id': comp_id, 'rpt_id': 1})
+    return render(request, 'dashboard_page.html',{"acc_id":1, 'comp_id':comp_id, 'rpt_id':1, 'reports_to_combine': reports_to_combine})
 
 
 @csrf_exempt
@@ -576,3 +581,364 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
             print('update_disclosure exception >>> ', e)
             # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
             return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})
+
+
+def consolidated_report(request, comp_id):
+    comp_id = request.GET['comp_id']
+    report_dates = request.GET['report_dates']
+    temp_dates = report_dates.replace('年', '/').replace('月', '/').replace('日', '').replace('<span>', '').replace('</span>', '')
+    start_date = temp_dates[:temp_dates.find('~')]
+    end_date = temp_dates[temp_dates.find('~')+1:]
+    
+    # 取得欲合併報表期間的所有報表(母/子公司) (datasource for 合併報表modal #2簽名狀態)
+    if request.GET['type'] == 'get_reports_with_status':
+        print('modal #2')
+        reports = Report.objects.raw('''
+                                        WITH RECURSIVE cte_report AS (
+                                            -- anchor
+                                            SELECT c.com_name, r.*
+                                            FROM Report AS r
+                                            INNER JOIN Company AS c on r.com_id = c.com_id
+                                            WHERE r.com_id = 1 AND r.start_date = \'''' + start_date + '\' AND r.end_date = \'' + end_date + '\' AND type = \'個體\''
+                                      + '''UNION ALL
+                                            -- recursive
+                                            SELECT c.com_name, r.*
+                                            FROM Report AS r
+                                            INNER JOIN Company AS c on r.com_id = c.com_id
+                                            INNER JOIN cte_report cr on c.com_parent = cr.com_id
+                                            WHERE r.start_date = \'''' + start_date + '\' AND r.end_date = \'' + end_date + '\''
+                                      + ''')
+                                        SELECT * FROM cte_report;
+                                    ''')
+        tdStr1 = '<tr id="report_data"><td><span>company</span></td>'
+        tdStr2 = '<td><span>已簽名</span></td>'
+        tdStr3 = '<td><span>未簽名</span></td></tr>'
+        returnStr = ''
+        for report in reports:
+            returnStr += tdStr1.replace('company', report.com_name)
+            if report.signer != 0:
+                returnStr += tdStr2
+            else:
+                returnStr += tdStr3
+    # 點擊合併button後確認是否須建立合併Report/Preamt，導至consolidated_statement_page
+    if request.GET['type'] == 'consolidate_report':
+        # 前端傳回來的日期格式是'YYYY/MM/DD'，但query裡的日期格式必須是'YYYY-MM-DD'
+        start_date = start_date.replace('/', '-')
+        end_date = end_date.replace('/', '-')
+        consolidate_rpt = Report.objects.filter(com_id = comp_id, type='合併',start_date=start_date, end_date = end_date)
+        if len(consolidate_rpt) == 0:
+            print('no consolidated report yet!!!! Now new create!')
+            rpt_id=create_consolidated_report(comp_id,start_date,end_date)
+            create_consolidated_report_preamt(rpt_id,comp_id,start_date,end_date)
+            returnStr = 'projects/' + str(rpt_id) + '/'
+        else:
+            returnStr = 'projects/' + str(consolidate_rpt[0].rpt_id) + '/' # 回傳url會有error，暫時用替換url的方式(dashboard_page -> projects/rpt_id)
+    return JsonResponse({'returnStr':returnStr})
+
+
+def get_consolidated_statement_page(request,comp_id,rpt_id):
+    def check_null_or_not(i,amt):
+        if not i:
+            i=0
+        else:
+            i=i.values()[0][amt]
+        return i
+    #撈日期
+    start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
+    end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
+    #此處rpt_id是合併報表的
+    company_list=[]
+    demand_deposit_list = []#活期存款
+    check_deposit_list = []#支票存款
+    foreign_currency_deposit_list = []#外匯存款
+    currency_cd_list = []#原幣定存
+    foreign_currency_cd_list = []#外幣定存
+    total_book_amt_demand_deposit=0 #活期存款book_amt
+    total_book_amt_check_deposit=0 #支票存款book_amt
+    total_book_amt_foreign_currency_deposit=0 #外匯存款book_amt
+    total_book_amt_currency_cd=0 #原幣定存book_amt
+    total_book_amt_foreign_currency_cd=0 #外幣定存book_amt
+    total_adj_amt_demand_deposit=0#活期存款adj_amt
+    total_adj_amt_check_deposit=0#支票存款adj_amt
+    total_adj_amt_foreign_currency_deposit=0#外匯存款adj_amt
+    total_adj_amt_currency_cd=0#原幣定存adj_amt
+    total_adj_amt_foreign_currency_cd=0#外幣定存adj_amts
+    #先撈舊報表的
+    #撈出母公司所屬的集團
+    group_id=Company.objects.filter(com_id=comp_id).values()[0]['grp_id']
+    #撈出同個集團的所有公司
+    com_list=Company.objects.filter(grp=group_id)
+    #撈出母公司幣別
+    parent_currency=Company.objects.filter(com_id=comp_id).values()[0]['currency']
+    #撈出母公司rpt_id，以便在下方撈出匯率
+    parent_rpt_id=Report.objects.filter(com_id=comp_id).filter(start_date=start_date).filter(end_date=end_date).values()[0]['rpt_id']
+    for i in com_list:
+        #查看該公司所使用的幣別
+        currency=Company.objects.filter(com_id=i.com_id).values()[0]['currency']
+        #撈出該公司個體報表rpt_id(報表要是個體,且報表符合所選日期)
+        report_id=Report.objects.filter(com=i).filter(type='個體').filter(start_date=start_date).filter(end_date=end_date).values()[0]['rpt_id']
+        #撈活期存款 acc_id=11
+        pre_amt_demand_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=11)
+        pre_amt_demand_deposit=check_null_or_not(pre_amt_demand_deposit,'pre_amt')
+        demand_deposit_list.append(pre_amt_demand_deposit)
+        #撈支票存款 acc_id=14
+        pre_amt_check_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=14)
+        pre_amt_check_deposit=check_null_or_not(pre_amt_check_deposit,'pre_amt')
+        check_deposit_list.append(pre_amt_check_deposit)
+        #撈外匯存款 acc_id=17
+        pre_amt_foreign_currency_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=17)
+        pre_amt_foreign_currency_deposit=check_null_or_not(pre_amt_foreign_currency_deposit,'pre_amt')
+        foreign_currency_deposit_list.append(pre_amt_foreign_currency_deposit)
+        #撈原幣定存 acc_id=21
+        pre_amt_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=21)
+        pre_amt_currency_cd=check_null_or_not(pre_amt_currency_cd,'pre_amt')
+        currency_cd_list.append(pre_amt_currency_cd)
+        #撈外幣定存 acc_id=22
+        pre_amt_foreign_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=22)
+        pre_amt_foreign_currency_cd=check_null_or_not(pre_amt_foreign_currency_cd,'pre_amt')
+        foreign_currency_cd_list.append(pre_amt_foreign_currency_cd)
+        if currency==parent_currency:
+            #新增公司料表
+            company_list.append(i.com_name+'('+parent_currency+')')
+            #company_list.append(i)
+            #活期存款 
+            total_book_amt_demand_deposit=total_book_amt_demand_deposit+pre_amt_demand_deposit
+            #支票存款
+            total_book_amt_check_deposit=total_book_amt_check_deposit+pre_amt_check_deposit
+            #外匯存款
+            total_book_amt_foreign_currency_deposit=total_book_amt_foreign_currency_deposit+pre_amt_foreign_currency_deposit
+            #原幣定存
+            total_book_amt_currency_cd=total_book_amt_currency_cd+pre_amt_currency_cd
+            #外幣定存
+            total_book_amt_foreign_currency_cd=total_book_amt_foreign_currency_cd+pre_amt_foreign_currency_cd
+        else:
+            #新增公司料表
+            original_currency_company_name=i.com_name+'('+currency+')'
+            company_list.append(original_currency_company_name)
+            parrent_currency_company_name=i.com_name+'('+parent_currency+')'
+            company_list.append(parrent_currency_company_name)
+        #     company_list.append({'name':})
+            #撈出匯率
+            exchange_rate=Exchangerate.objects.filter(currency_name=currency).filter(rpt=parent_rpt_id).values()[0]['rate']
+            #活期存款
+            pre_amt_demand_deposit=pre_amt_demand_deposit*exchange_rate
+            demand_deposit_list.append(pre_amt_demand_deposit)
+            total_book_amt_demand_deposit=total_book_amt_demand_deposit+pre_amt_demand_deposit
+            #支票存款 
+            pre_amt_check_deposit=pre_amt_check_deposit*exchange_rate
+            check_deposit_list.append(pre_amt_check_deposit)
+            total_book_amt_check_deposit=total_book_amt_check_deposit+pre_amt_check_deposit
+            #外匯存款
+            pre_amt_foreign_currency_deposit=pre_amt_foreign_currency_deposit*exchange_rate
+            foreign_currency_deposit_list.append(pre_amt_foreign_currency_deposit)
+            total_book_amt_foreign_currency_deposit=total_book_amt_foreign_currency_deposit+pre_amt_foreign_currency_deposit
+            #原幣定存
+            pre_amt_currency_cd=pre_amt_currency_cd*exchange_rate
+            currency_cd_list.append(pre_amt_currency_cd)
+            total_book_amt_currency_cd=total_book_amt_currency_cd+pre_amt_currency_cd
+            #外幣定存
+            pre_amt_foreign_currency_cd=pre_amt_foreign_currency_cd*exchange_rate
+            foreign_currency_cd_list.append(pre_amt_foreign_currency_cd)
+            total_book_amt_foreign_currency_cd=total_book_amt_foreign_currency_cd+pre_amt_foreign_currency_cd
+        #計算合併沖銷，撈出每間公司的關係人交易分錄
+        #先由每間公司對應的pre_amt_id，再撈出關係人交易，把關係人交易相加。
+        #撈活期存款pre_id acc_id=11
+        pre_id_demand_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=11).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_demand_deposit=Reltrx.objects.filter(pre=pre_id_demand_deposit)
+        adj_amt_demand_deposit=check_null_or_not(adj_amt_demand_deposit,'related_amt')
+        total_adj_amt_demand_deposit=total_adj_amt_demand_deposit+adj_amt_demand_deposit
+        #撈支票存款pre_id acc_id=14
+        pre_id_check_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=14).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_check_deposit=Reltrx.objects.filter(pre=pre_id_check_deposit)
+        adj_amt_check_deposit=check_null_or_not(adj_amt_check_deposit,'related_amt')
+        total_adj_amt_check_deposit=total_adj_amt_check_deposit+adj_amt_check_deposit
+        #撈外匯存款pre_id acc_id=17
+        pre_id_foreign_currency_deposit=Preamt.objects.filter(rpt=report_id).filter(acc=17).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_foreign_currency_deposit=Reltrx.objects.filter(pre=pre_id_foreign_currency_deposit)
+        adj_amt_foreign_currency_deposit=check_null_or_not(adj_amt_foreign_currency_deposit,'related_amt')
+        total_adj_amt_foreign_currency_deposit=total_adj_amt_foreign_currency_deposit+adj_amt_foreign_currency_deposit
+        #撈原幣定存pre_id acc_id=21
+        pre_id_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=21).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_currency_cd=Reltrx.objects.filter(pre=pre_id_currency_cd)
+        adj_amt_currency_cd=check_null_or_not(adj_amt_currency_cd,'related_amt')
+        total_adj_amt_currency_cd=total_adj_amt_currency_cd+adj_amt_currency_cd
+        #撈外幣定存pre_id acc_id=22
+        pre_id_foreign_currency_cd=Preamt.objects.filter(rpt=report_id).filter(acc=22).values()[0]['pre_id']
+        #再撈出關係人交易
+        adj_amt_foreign_currency_cd=Reltrx.objects.filter(pre=pre_id_foreign_currency_cd)
+        adj_amt_foreign_currency_cd=check_null_or_not(adj_amt_foreign_currency_cd,'related_amt')
+        total_adj_amt_foreign_currency_cd=total_adj_amt_foreign_currency_cd+adj_amt_foreign_currency_cd
+    demand_deposit_list.append(total_book_amt_demand_deposit)
+    demand_deposit_list.append(total_adj_amt_demand_deposit)
+    demand_deposit_list.append(total_book_amt_demand_deposit+total_adj_amt_demand_deposit)
+    check_deposit_list.append(total_book_amt_check_deposit)
+    check_deposit_list.append(total_adj_amt_check_deposit)
+    check_deposit_list.append(total_book_amt_check_deposit+total_adj_amt_check_deposit)
+    foreign_currency_deposit_list.append(total_book_amt_foreign_currency_deposit)
+    foreign_currency_deposit_list.append(total_adj_amt_foreign_currency_deposit)
+    foreign_currency_deposit_list.append(total_book_amt_foreign_currency_deposit+total_adj_amt_foreign_currency_deposit)
+    currency_cd_list.append(total_book_amt_currency_cd)
+    currency_cd_list.append(total_adj_amt_currency_cd)
+    currency_cd_list.append(total_book_amt_currency_cd+total_adj_amt_currency_cd)
+    foreign_currency_cd_list.append(total_book_amt_foreign_currency_cd)
+    foreign_currency_cd_list.append(total_adj_amt_foreign_currency_cd)
+    foreign_currency_cd_list.append(total_book_amt_foreign_currency_cd+total_adj_amt_foreign_currency_cd)
+    return render(request, 'consolidated_statement.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'com_list':company_list,'demand_deposit_list':demand_deposit_list,
+                            'check_deposit_list':check_deposit_list,'foreign_currency_deposit_list':foreign_currency_deposit_list,
+                            'currency_cd_list':currency_cd_list,'foreign_currency_cd_list':foreign_currency_cd_list})
+
+
+def get_consolidated_disclosure_page(request,comp_id,rpt_id):
+    # TODO 根據下拉式選單做改變
+    ''' 此function內的ajax是for合併報表附註格式設定頁的科目下拉選單，更新附註格式的部分目前還是傳到原本的get_disclosure_page'''
+    if request.is_ajax():
+        print('in views via ajax nowwwwww')
+        acc_name = request.GET['acc_name']
+        print('acc_name >>>     ', acc_name)
+        acc_id = Account.objects.get(acc_name=acc_name).acc_id
+        print('acc_id >>>    ', acc_id)
+        disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
+        disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
+                    exclude(row_amt=0).\
+                    values()
+        disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
+                    exclude(pre_amt=0). \
+                    values('disclosure_id', 'pre_amt',
+                           'pre__acc__acc_name',
+                           'dis_detail__dis_detail_id')
+        all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+            filter(dis_title__rpt__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).values()
+        # 新增(disclosure - disdetail) 個disdetail備用
+        diff_count = disclosure_qry_set.count() - disdetail_qry_set.count()
+        print('all_disdetail_qry_set >>>     ', all_disdetail_qry_set)
+        # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用 # disclosure數量 - 有使用的disdetail數量
+        if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
+        # 先取出report對應的distitle
+            sb = '''
+                   SELECT A.dis_title_id, A.dis_name
+                   FROM Distitle A
+                   INNER JOIN Account B ON A.dis_name = B.acc_name
+                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+            distitle = Distitle.objects.raw(sb)[0]
+            # print('distitle_id >>>>>>>>>', distitle.dis_title_id)
+            # 新增(disclosure - disdetail)個 disdetail
+            for i in range(diff_count):
+                Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
+        # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+        unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                                                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[
+                                                :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+        print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
+
+        # 找出需回傳階層表
+        # 1. 找出 Level 2 科目，和其 Level 1 子科目
+        # 2. Level 1 子科目找出對應的 disclosure
+        # 3. 組成 disdetail_editor
+        disdetail_editor = []
+        level_1_disclosure_list = []
+        level_2_account = Account.objects.filter(acc_parent=acc_id)
+        for account_l2 in level_2_account:
+            level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+            for account_l1 in level_1_account:
+                if account_l1 is not None:
+                    level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                   pre__rpt_id=rpt_id).exclude(pre_amt=0)
+                for disclosure in level_1_disclosure:
+                    level_1_disclosure_list.append(disclosure.disclosure_id)
+                    # print('level_1_disclosure_list:', level_1_disclosure_list)
+                else:
+                    pass
+            if not level_1_disclosure_list:
+                pass
+            else:
+                disdetail_editor.append({
+                    'acc_parent_name': account_l2.acc_name,
+                    'disclosure_id_list': level_1_disclosure_list
+                })
+                level_1_disclosure_list = []
+
+        disdetail_qry_set=list(disdetail_qry_set)
+        disclosure_qry_set=list(disclosure_qry_set)
+        unspecified_disdetail_qry_set=list(unspecified_disdetail_qry_set)
+        return JsonResponse({'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
+                             'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+    # method == GET
+    else:
+        # Default進來會顯示現金及約當現金的附註格式
+        acc_name = "現金及約當現金"
+        print('acc_name >>>   ', acc_name)
+        acc_id = Account.objects.get(acc_name=acc_name).acc_id
+        print('acc_id >>>  ', acc_id)
+        disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
+        disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
+                    exclude(row_amt=0).\
+                    values()
+        disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
+                    exclude(pre_amt=0). \
+                    values('disclosure_id', 'pre_amt',
+                           'pre__acc__acc_name',
+                           'dis_detail__dis_detail_id')
+        all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+            filter(dis_title__rpt__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).values()
+        # 新增(disclosure - disdetail) 個disdetail備用
+        diff_count = disclosure_qry_set.count() - disdetail_qry_set.count() # disclosure數量 - 有使用的disdetail數量
+        print('diff_count >>>     ', diff_count)
+        # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用
+        if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
+        # 先取出report對應的distitle
+            sb = '''
+                   SELECT A.dis_title_id, A.dis_name
+                   FROM Distitle A
+                   INNER JOIN Account B ON A.dis_name = B.acc_name
+                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+            distitle = Distitle.objects.raw(sb)[0]
+            # print('distitle_id >>>>>>>>>', distitle.dis_title_id)
+            # 新增(disclosure - disdetail)個 disdetail
+            for i in range(diff_count):
+                Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
+        # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+        unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[:(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+        print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
+
+        # 找出需回傳階層表
+        # 1. 找出 Level 2 科目，和其 Level 1 子科目
+        # 2. Level 1 子科目找出對應的 disclosure
+        # 3. 組成 disdetail_editor
+        disdetail_editor = []
+        level_1_disclosure_list = []
+        level_2_account = Account.objects.filter(acc_parent=acc_id)
+        for account_l2 in level_2_account:
+            level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+            for account_l1 in level_1_account:
+                if account_l1 is not None:
+                    level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                   pre__rpt_id=rpt_id).exclude(pre_amt=0)
+                for disclosure in level_1_disclosure:
+                    level_1_disclosure_list.append(disclosure.disclosure_id)
+                    # print('level_1_disclosure_list:', level_1_disclosure_list)
+                else:
+                    pass
+            if not level_1_disclosure_list:
+                pass
+            else:
+                disdetail_editor.append({
+                    'acc_parent_name': account_l2.acc_name,
+                    'disclosure_id_list': level_1_disclosure_list
+                })
+                level_1_disclosure_list = []
+        print('disdetail_qry_set:', disdetail_qry_set)
+        print('disclosure_qry_set:', disclosure_qry_set)
+        print('disdetail_editor:', disdetail_editor)
+        return render(request, 'consolidated_disclosure_page.html',
+                      {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
+                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+

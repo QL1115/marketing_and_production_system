@@ -468,10 +468,3 @@ def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
     # else:
     #     return {"status_code": 501, "msg": "尚未實作該科目。"}
 
-
-
-
-
-
-
-
