@@ -17,6 +17,7 @@ from django.db.models import Q
 from datetime import datetime
 import calendar
 from datetime import timedelta
+import math
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
@@ -1011,9 +1012,18 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
     prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)
     total_disdetail=0
     total_prior_disdetail=0
-    for i in prior_disdetail_qry_set:
-        row_amt=i.row_amt
-        total_prior_disdetail=total_prior_disdetail+row_amt
+    total_prior_round_row_amt=0
+    round_prior_disdetail_qry_set=[]
+    if not prior_disdetail_qry_set:
+        print('here')
+        prior_disdetail_qry_set=0
+        print('prior_disdetail_qry_set',prior_disdetail_qry_set)
+    else:
+        for i in prior_disdetail_qry_set:
+            row_amt=i.row_amt
+            total_prior_disdetail=total_prior_disdetail+row_amt
+            total_prior_round_row_amt=total_prior_round_row_amt+round(i.row_amt/1000)*1000#學姊範例中的39185
+
     # 撈本期的disdetail
     disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
                     .filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).exclude(row_amt=0).order_by("row_name").values()

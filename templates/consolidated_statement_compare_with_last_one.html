@@ -69,7 +69,7 @@
         <div class="row">
             
             <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">明細資訊</div>
+                <div class="col-sm">明細資訊(單位:元)</div>
                 {% for disdetail in disdetail_qry_set %}
                     <div class="col-sm">
                             {% csrf_token %}
@@ -94,17 +94,30 @@
             </div>
             <div class="col-sm" style="padding:0px 0px;">
                 <div class="col-sm">{{last_end_date}}</div>
-                {% for prior_disdetail in prior_disdetail_qry_set %}
-                    <div class="col-sm">
-                        {% csrf_token %}
-                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                        {{ prior_disdetail.row_amt |floatformat:0|intcomma:False}}
-                    </div>
-                {% endfor %}
+                {% if prior_disdetail_qry_set != 0 %}
+                    {% for prior_disdetail in prior_disdetail_qry_set %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {{ prior_disdetail.row_amt |floatformat:0|intcomma:False}}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% for disdetail in disdetail_qry_set %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            --
+                        </div>
+                    {% endfor %}
+                {% endif %}  
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                <div class="col-sm">{{total_prior_disdetail|floatformat:0|intcomma:False}}</div>
+                {% if total_prior_disdetail != 0 %}
+                    <div class="col-sm">{{total_prior_disdetail|floatformat:0|intcomma:False}}</div>
+                {% else %}
+                    <div class="col-sm">--</div>      
+                {% endif %}  
             </div>
-            
         </div>
         
 
