@@ -148,7 +148,7 @@
             </div>
             <div class="col-sm" style="padding:0px 0px;">
                 <div class="col-sm">{{last_end_date}}</div>
-                {% if prior_disdetail_list != 0 %}
+                {% if prior_disdetail_qry_set != 0 %}
                     {% for round_prior_disdetail in round_prior_disdetail_list %}
                         <div class="col-sm">
                             {% csrf_token %}

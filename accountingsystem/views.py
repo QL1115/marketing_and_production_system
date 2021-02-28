@@ -1020,14 +1020,11 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
     total_prior_disdetail=0
     round_prior_disdetail_list=[]
     round_total_prior_disdetail=0
-    update_prior = True # 用於判斷是否需要update Disdetail的row_amt_in_thou
     if not prior_disdetail_qry_set:
         print('here')
         prior_disdetail_qry_set=0
         print('prior_disdetail_qry_set',prior_disdetail_qry_set)
     else:
-        if prior_disdetail_qry_set[0].row_amt_in_thou is not None:
-            update_prior = False # 如果不是NULL(已有金額) -> 不update
         for prior_disdetail in prior_disdetail_qry_set:
             row_amt=prior_disdetail.row_amt
             total_prior_disdetail=total_prior_disdetail+row_amt
@@ -1036,9 +1033,8 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
             round_total_prior_disdetail+=row_amt_in_thou
             round_prior_disdetail_list.append(row_amt_in_thou)
             # update千元表示金額至DB
-            if update_prior:
-                prior_disdetail.row_amt_in_thou = row_amt_in_thou
-                prior_disdetail.save()
+            prior_disdetail.row_amt_in_thou = row_amt_in_thou
+            prior_disdetail.save()
 
     # 撈本期的disdetail
     disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
@@ -1046,9 +1042,6 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
     total_disdetail=0
     round_disdetail_list = []
     round_total_disdetail=0
-    update_current= True # 用於判斷是否需要update Disdetail的row_amt_in_thou
-    if prior_disdetail_qry_set[0].row_amt_in_thou is not None:
-            update_prior = False # 如果不是NULL(已有金額) -> 不update
     for i in disdetail_qry_set:
         print(i)
         disdetail = Disdetail.objects.get(dis_detail_id=i['dis_detail_id']) # 原本loop query set取出來的會是dict,因為要update金額進DB，拿dict的dis_detail_id去拿出object
@@ -1059,10 +1052,8 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
         round_total_disdetail+=row_amt_in_thou
         round_disdetail_list.append(row_amt_in_thou)
         # update千元表示金額至DB
-        if update_current:
-            disdetail.row_amt_in_thou = row_amt_in_thou
-            disdetail.save() 
-        
+        disdetail.row_amt_in_thou = row_amt_in_thou
+        disdetail.save()
     return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
                 'disdetail_qry_set':disdetail_qry_set,
                 'prior_disdetail_qry_set':prior_disdetail_qry_set,
