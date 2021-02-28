@@ -61,7 +61,7 @@
                     <option value="2">c</option>
                 </select>
             </div>
-            <div class="col-sm-2"><button class="btn btn-secondary" onclick="location.href='{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id%}'">下一步</button></div>
+            <!-- <div class="col-sm-2"><button class="btn btn-secondary" onclick="location.href='{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id%}'">下一步</button></div> -->
         </div>
         <br>
         <br>
@@ -119,8 +119,60 @@
                 {% endif %}  
             </div>
         </div>
-        
-
+        <br>
+        <div class="row">
+            
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">明細資訊(單位:千元)</div>
+                {% for disdetail in disdetail_qry_set %}
+                    <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {{ disdetail.row_name }}
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">總和</div>
+            </div>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{end_date}}</div>
+                {% for round_disdetail in round_disdetail_list %}
+                    <div class="col-sm">
+                        {% csrf_token %}
+                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                        {{ round_disdetail |floatformat:0|intcomma:False}}
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">{{round_total_disdetail|floatformat:0|intcomma:False}}</div>
+            </div>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{last_end_date}}</div>
+                {% if prior_disdetail_list != 0 %}
+                    {% for round_prior_disdetail in round_prior_disdetail_list %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {{ round_prior_disdetail |floatformat:0|intcomma:False}}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% for round_disdetail in round_disdetail_list %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            --
+                        </div>
+                    {% endfor %}
+                {% endif %}  
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                {% if round_total_prior_disdetail != 0 %}
+                    <div class="col-sm">{{round_total_prior_disdetail|floatformat:0|intcomma:False}}</div>
+                {% else %}
+                    <div class="col-sm">--</div>      
+                {% endif %}  
+            </div>
+        </div>
 
         <div id=property style="display:none">
             <p>hi</p>

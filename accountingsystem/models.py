@@ -88,6 +88,7 @@ class Disdetail(models.Model):
     dis_detail_id = models.AutoField(primary_key=True)
     row_name = models.CharField(max_length=50)
     row_amt = models.DecimalField(max_digits=22, decimal_places=2)
+    row_amt_in_thou = models.IntegerField()
     dis_title = models.ForeignKey('Distitle', models.CASCADE)
 
     class Meta:

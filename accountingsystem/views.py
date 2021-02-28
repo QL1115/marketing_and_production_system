@@ -946,6 +946,13 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
                        'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
 
 def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
+    # 千元表示
+    # 因為round()的進位方式是「四捨六入五成雙」，跟一般的四捨五入不完全相同，故重新定義一個四捨五入的function
+    def normal_round(amt):
+        if amt/1000 - math.floor(amt/1000) < 0.5:
+            return math.floor(amt/1000)
+        else:
+            return math.ceil(amt/1000)
     start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
     end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
     start_date_month=start_date.month
@@ -1010,27 +1017,52 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
                         .replace('start_date_param', str(last_start_date)).replace('end_date_param', str(last_end_date))
                         
     prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)
-    total_disdetail=0
     total_prior_disdetail=0
-    total_prior_round_row_amt=0
-    round_prior_disdetail_qry_set=[]
+    round_prior_disdetail_list=[]
+    round_total_prior_disdetail=0
+    update_prior = True # 用於判斷是否需要update Disdetail的row_amt_in_thou
     if not prior_disdetail_qry_set:
         print('here')
         prior_disdetail_qry_set=0
         print('prior_disdetail_qry_set',prior_disdetail_qry_set)
     else:
-        for i in prior_disdetail_qry_set:
-            row_amt=i.row_amt
+        if prior_disdetail_qry_set[0].row_amt_in_thou is not None:
+            update_prior = False # 如果不是NULL(已有金額) -> 不update
+        for prior_disdetail in prior_disdetail_qry_set:
+            row_amt=prior_disdetail.row_amt
             total_prior_disdetail=total_prior_disdetail+row_amt
-            total_prior_round_row_amt=total_prior_round_row_amt+round(i.row_amt/1000)*1000#學姊範例中的39185
+            # 千元表示
+            row_amt_in_thou = normal_round(row_amt)
+            round_total_prior_disdetail+=row_amt_in_thou
+            round_prior_disdetail_list.append(row_amt_in_thou)
+            # update千元表示金額至DB
+            if update_prior:
+                prior_disdetail.row_amt_in_thou = row_amt_in_thou
+                prior_disdetail.save()
 
     # 撈本期的disdetail
     disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
                     .filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).exclude(row_amt=0).order_by("row_name").values()
+    total_disdetail=0
+    round_disdetail_list = []
+    round_total_disdetail=0
+    update_current= True # 用於判斷是否需要update Disdetail的row_amt_in_thou
+    if prior_disdetail_qry_set[0].row_amt_in_thou is not None:
+            update_prior = False # 如果不是NULL(已有金額) -> 不update
     for i in disdetail_qry_set:
         print(i)
-        row_amt=i['row_amt']
+        disdetail = Disdetail.objects.get(dis_detail_id=i['dis_detail_id']) # 原本loop query set取出來的會是dict,因為要update金額進DB，拿dict的dis_detail_id去拿出object
+        row_amt = disdetail.row_amt
         total_disdetail=total_disdetail+row_amt
+        # 千元表示
+        row_amt_in_thou = normal_round(row_amt)
+        round_total_disdetail+=row_amt_in_thou
+        round_disdetail_list.append(row_amt_in_thou)
+        # update千元表示金額至DB
+        if update_current:
+            disdetail.row_amt_in_thou = row_amt_in_thou
+            disdetail.save() 
+        
     return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
                 'disdetail_qry_set':disdetail_qry_set,
                 'prior_disdetail_qry_set':prior_disdetail_qry_set,
@@ -1039,7 +1071,11 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
                 'last_start_date':last_start_date,
                 'last_end_date':last_end_date,
                 'total_prior_disdetail':total_prior_disdetail,
-                'total_disdetail':total_disdetail})
+                'total_disdetail':total_disdetail,
+                'round_prior_disdetail_list':round_prior_disdetail_list,
+                'round_disdetail_list':round_disdetail_list,
+                'round_total_prior_disdetail':round_total_prior_disdetail,
+                'round_total_disdetail':round_total_disdetail})
 
 
    
