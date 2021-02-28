@@ -285,7 +285,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         # 這裡要傳errorPage回去嗎
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').values('pre__acc__acc_name',
+    entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').filter(pre__rpt_id=rpt_id).values('pre__acc__acc_name',
                                                                                               'amount', 'adj_num',
                                                                                               'credit_debit',
                                                                                               'entry_name')
@@ -367,7 +367,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
 
     # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').values('pre__acc__acc_name',
+    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').filter(pre__rpt_id=rpt_id).values('pre__acc__acc_name',
                                                                                               'amount', 'adj_num',
                                                                                               'credit_debit',
                                                                                               'entry_name',
