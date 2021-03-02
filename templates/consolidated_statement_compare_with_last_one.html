@@ -61,6 +61,12 @@
                     <option value="2">c</option>
                 </select>
             </div>
+            <div id="editBtnGroup" class="btn-group col-sm-2 float-right" role="group"
+                             aria-label="Basic example">
+                <button id="Edit" type="button" class="btn btn-secondary">編輯</button>
+                <button id="save" type="button" class="btn btn-secondary" disabled>確定</button>
+            </div>
+            
             <!-- <div class="col-sm-2"><button class="btn btn-secondary" onclick="location.href='{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id%}'">下一步</button></div> -->
         </div>
         <br>
@@ -128,7 +134,7 @@
                     <div class="col-sm">
                             {% csrf_token %}
                             <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            {{ disdetail.row_name }}
+                            <input type="text"  value="{{ disdetail.row_name }}" disabled required/>
                     </div>
                 {% endfor %}
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
@@ -140,11 +146,11 @@
                     <div class="col-sm">
                         {% csrf_token %}
                         <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                        {{ round_disdetail |floatformat:0|intcomma:False}}
+                        <input type="text" name='disdetail_rowamt' value="{{ round_disdetail |floatformat:0|intcomma:False}}" disabled required/>
                     </div>
                 {% endfor %}
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                <div class="col-sm">{{round_total_disdetail|floatformat:0|intcomma:False}}</div>
+                <div class="col-sm"><input type="text" name='disdetail_total_rowamt' value="{{round_total_disdetail|floatformat:0|intcomma:False}}" disabled required/></div>
             </div>
             <div class="col-sm" style="padding:0px 0px;">
                 <div class="col-sm">{{last_end_date}}</div>
@@ -153,7 +159,7 @@
                         <div class="col-sm">
                             {% csrf_token %}
                             <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            {{ round_prior_disdetail |floatformat:0|intcomma:False}}
+                            <input type="text" name='prior_disdetail_rowamt' value="{{ round_prior_disdetail |floatformat:0|intcomma:False}}" disabled required/>
                         </div>
                     {% endfor %}
                 {% else %}
@@ -161,15 +167,15 @@
                         <div class="col-sm">
                             {% csrf_token %}
                             <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            --
+                            <input type="text"  value="--" disabled required/>
                         </div>
                     {% endfor %}
                 {% endif %}  
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
                 {% if round_total_prior_disdetail != 0 %}
-                    <div class="col-sm">{{round_total_prior_disdetail|floatformat:0|intcomma:False}}</div>
+                    <div class="col-sm"><input type="text" name='total_prior_disdetail_rowamt' value="{{round_total_prior_disdetail|floatformat:0|intcomma:False}}" disabled required/></div>
                 {% else %}
-                    <div class="col-sm">--</div>      
+                    <div class="col-sm"><input type="text"  value="--" disabled required/></div>    
                 {% endif %}  
             </div>
         </div>
@@ -180,7 +186,50 @@
     </div>
 </body>
 
-<script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+
+        {# 編輯按鈕 #}
+        $('#Edit').on('click', function () {
+            console.log('in')
+            $('#save').prop('disabled', false)
+            {#$('#Edit').prop('disabled', true)#}
+                $("input[name='disdetail_rowamt']").prop("disabled", false)
+                $("input[name='disdetail_total_rowamt']").prop("disabled", false)
+                $("input[name='prior_disdetail_rowamt']").prop("disabled", false)
+                $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false)
+
+        });
+        {# 儲存按鈕 #}
+        $('#save').on('click', function (event) {
+            event.preventDefault()
+            $('#save').prop('disabled', true)
+            msg = '';
+            $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
+            $("input[name='disdetail_total_rowamt']").prop("disabled", 'disabled')
+            $("input[name='prior_disdetail_rowamt']").prop("disabled", 'disabled')
+            $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled')
+
+            {# 將關聯的所有商品包裝成 JSON 格式 [{},{},{},...]，送至後端處理，一筆筆塞入 StrategyProductRel 資料表 #}
+            var dp_acc_list = $('#round').map(function () {
+                        return {
+                            'disdetail_rowamt':parseInt($(this).find("input[name=disdetail_rowamt]").val()),
+                            'disdetail_total_rowamt':parseInt($(this).find("input[name=disdetail_total_rowamt]").val()),
+                            'prior_disdetail_rowamt':parseInt($(this).find("input[name=prior_disdetail_rowamt]").val()),
+                            'total_prior_disdetail_rowamt':parseInt($(this).find("input[name=total_prior_disdetail_rowamt]").val())
+                            
+                        };
+                    }).get();
+                    console.log(parseInt($("input[name=disdetail_rowamt]").val()))
+                    console.log(parseInt($("input[name=disdetail_total_rowamt]").val()))
+                    console.log(parseInt($("input[name=prior_disdetail_rowamt]").val()))
+                    console.log('dp_acc_list >>> ', dp_acc_list);
+
+        });
+    });
+
+
     function GetSelectValue(obj) {
         var selectObj = document.getElementById(obj);
         return selectObj.options[selectObj.options.selectedIndex].value;
@@ -206,7 +255,7 @@
         }
     }
     
-    
 </script>
+
 </html>
  
