@@ -163,7 +163,7 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    {% for round_disdetail in round_disdetail_list %}
+                    {% for round_disdetail in disdetail_qry_set %}
                         <div class="col-sm">
                             {% csrf_token %}
                             <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
@@ -196,8 +196,6 @@
             $('#save').prop('disabled', false)
             {#$('#Edit').prop('disabled', true)#}
                 $("input[name='disdetail_rowamt']").prop("disabled", false)
-                $("input[name='disdetail_total_rowamt']").prop("disabled", false)
-                $("input[name='prior_disdetail_rowamt']").prop("disabled", false)
                 <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false) -->
 
         });
@@ -207,8 +205,6 @@
             $('#save').prop('disabled', true)
             msg = '';
             $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
-            $("input[name='disdetail_total_rowamt']").prop("disabled", 'disabled')
-            $("input[name='prior_disdetail_rowamt']").prop("disabled", 'disabled')
             <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled') -->
             var returnArr = []
             $("input[name='disdetail_rowamt']").each(function() {

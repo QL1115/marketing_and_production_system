@@ -960,7 +960,12 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
         # print('unprocessed_data >>>', data)
         data = data['data']
         print('data >>> ', data)
-        
+        for i in data:
+            item = Disdetail.objects.get(dis_detail_id=i['id'])
+            item.row_amt_in_thou=i['row_amt_in_thou']
+            print(item.row_amt_in_thou,'row_amt_in_thou')
+            item.save()
+            print('!',Disdetail.objects.get(dis_detail_id=i['id']).row_amt_in_thou)
         print('-'*100)
         return JsonResponse({
                 'isUpdated': True
@@ -1047,8 +1052,8 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
                 round_total_prior_disdetail+=row_amt_in_thou
                 round_prior_disdetail_dict[prior_disdetail.dis_detail_id] = row_amt_in_thou
                 # update千元表示金額至DB
-                prior_disdetail.row_amt_in_thou = row_amt_in_thou
-                prior_disdetail.save()
+                #prior_disdetail.row_amt_in_thou = row_amt_in_thou
+                #prior_disdetail.save()
 
         # 撈本期的disdetail
         disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
@@ -1064,12 +1069,12 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
             # 千元表示
             row_amt_in_thou = normal_round(row_amt)
             round_total_disdetail+=row_amt_in_thou
-            round_disdetail_dict[disdetail.dis_detail_id] = row_amt_in_thou
+            round_disdetail_dict[disdetail.dis_detail_id] = disdetail.row_amt_in_thou
             # update千元表示金額至DB
-            disdetail.row_amt_in_thou = row_amt_in_thou
-            disdetail.save()
+            #disdetail.row_amt_in_thou = row_amt_in_thou
+            #disdetail.save()
         # print(round_disdetail_dict)
-        # TODO 手動調整尾差 記得更新總和!!!
+        print(round_disdetail_dict)
         
         return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
                     'disdetail_qry_set':disdetail_qry_set,

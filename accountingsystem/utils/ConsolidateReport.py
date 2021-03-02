@@ -1,5 +1,6 @@
 from ..models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group, Reltrx, Distitle, Disdetail, Disclosure
 from django.db import connection
+import math
 
 
 def create_consolidated_report(comp_id,start_date,end_date):
@@ -241,7 +242,34 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
                        .replace('rpt_param', str(rpt_id.rpt_id))
     print(update_disdetail)
     raw_cursor.execute(update_disdetail)
+
     print('-'*100)
+    total_disdetail=0
+    round_disdetail_dict={}
+    round_total_disdetail=0
+    def normal_round(amt):
+        if amt/1000 - math.floor(amt/1000) < 0.5:
+            return math.floor(amt/1000)
+        else:
+            return math.ceil(amt/1000)
+    disdetail_qry_set = Disdetail.objects.filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).order_by("row_name").values()
+    print(disdetail_qry_set)
+    print('rpt_id',rpt_id)
+    print('distitle.dis_title_id',distitle.dis_title_id)
+    print('!')
+    for i in disdetail_qry_set:
+        print(i)
+
+        disdetail = Disdetail.objects.get(dis_detail_id=i['dis_detail_id']) # 原本loop query set取出來的會是dict,因為要update金額進DB，拿dict的dis_detail_id去拿出object
+        row_amt = disdetail.row_amt
+        total_disdetail=total_disdetail+row_amt
+        # 千元表示
+        row_amt_in_thou = normal_round(row_amt)
+        round_total_disdetail+=row_amt_in_thou
+        # update千元表示金額至DB
+        disdetail.row_amt_in_thou = row_amt_in_thou
+        disdetail.save()
+        print('savedis')
     print('Create distitle/disdetail/disclosure successfully.')
 
 def delete_consolidate_report(comp_id, rpt_id):
