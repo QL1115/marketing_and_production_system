@@ -142,11 +142,11 @@
             </div>
             <div class="col-sm" style="padding:0px 0px;">
                 <div class="col-sm">{{end_date}}</div>
-                {% for round_disdetail in round_disdetail_list %}
+                {% for key, value in round_disdetail_dict.items %}
                     <div class="col-sm">
                         {% csrf_token %}
                         <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                        <input type="text" name='disdetail_rowamt' value="{{ round_disdetail |floatformat:0|intcomma:False}}" disabled required/>
+                        <input type="text" name='disdetail_rowamt' data-disdetail="{{ key }}"value="{{ value |floatformat:0|intcomma:False}}" disabled required/>
                     </div>
                 {% endfor %}
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
@@ -155,11 +155,11 @@
             <div class="col-sm" style="padding:0px 0px;">
                 <div class="col-sm">{{last_end_date}}</div>
                 {% if prior_disdetail_qry_set != 0 %}
-                    {% for round_prior_disdetail in round_prior_disdetail_list %}
+                    {% for key, value in round_prior_disdetail_dict.items %}
                         <div class="col-sm">
                             {% csrf_token %}
                             <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            <input type="text" name='prior_disdetail_rowamt' value="{{ round_prior_disdetail |floatformat:0|intcomma:False}}" disabled required/>
+                            <input type="text" name='prior_disdetail_rowamt' data-disdetail="{{ key }}" value="{{ value |floatformat:0|intcomma:False}}" disabled required/>
                         </div>
                     {% endfor %}
                 {% else %}
@@ -198,7 +198,7 @@
                 $("input[name='disdetail_rowamt']").prop("disabled", false)
                 $("input[name='disdetail_total_rowamt']").prop("disabled", false)
                 $("input[name='prior_disdetail_rowamt']").prop("disabled", false)
-                $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false)
+                <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false) -->
 
         });
         {# 儲存按鈕 #}
@@ -209,22 +209,33 @@
             $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
             $("input[name='disdetail_total_rowamt']").prop("disabled", 'disabled')
             $("input[name='prior_disdetail_rowamt']").prop("disabled", 'disabled')
-            $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled')
+            <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled') -->
+            var returnArr = []
+            $("input[name='disdetail_rowamt']").each(function() {
+                var id = $(this).attr('data-disdetail');
+                var row_amt = parseInt($(this).val().replaceAll(',', ''));
+                returnArr.push({'id':id, 'row_amt_in_thou': row_amt});
+                <!-- console.log('data-disdetail >>>>>> ', $(this).attr('data-disdetail')); -->
+                <!-- console.log('value >>>>>> ', $(this).val()); -->
+            });
+            var postData = {
+                        'data': returnArr,
+                    };
+            console.log(returnArr);
+            $.ajax({
+                    url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id%}",
+                    dataType: "json",
+                    contentType: 'application/json',
+                    data: JSON.stringify(postData),
+                    type:"POST",
+                    success: function (response) {
+                        console.log('ajax success');
+                    }, error: function (error) {
+                        alert('Error to updateeeee!');
+                        console.log(error);
+                    }
+                });
 
-            {# 將關聯的所有商品包裝成 JSON 格式 [{},{},{},...]，送至後端處理，一筆筆塞入 StrategyProductRel 資料表 #}
-            var dp_acc_list = $('#round').map(function () {
-                        return {
-                            'disdetail_rowamt':parseInt($(this).find("input[name=disdetail_rowamt]").val()),
-                            'disdetail_total_rowamt':parseInt($(this).find("input[name=disdetail_total_rowamt]").val()),
-                            'prior_disdetail_rowamt':parseInt($(this).find("input[name=prior_disdetail_rowamt]").val()),
-                            'total_prior_disdetail_rowamt':parseInt($(this).find("input[name=total_prior_disdetail_rowamt]").val())
-                            
-                        };
-                    }).get();
-                    console.log(parseInt($("input[name=disdetail_rowamt]").val()))
-                    console.log(parseInt($("input[name=disdetail_total_rowamt]").val()))
-                    console.log(parseInt($("input[name=prior_disdetail_rowamt]").val()))
-                    console.log('dp_acc_list >>> ', dp_acc_list);
 
         });
     });

@@ -945,6 +945,8 @@ def get_consolidated_disclosure_page(request,comp_id,rpt_id):
                       {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
                        'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
 
+
+@csrf_exempt
 def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
     # 千元表示
     # 因為round()的進位方式是「四捨六入五成雙」，跟一般的四捨五入不完全相同，故重新定義一個四捨五入的function
@@ -953,120 +955,135 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
             return math.floor(amt/1000)
         else:
             return math.ceil(amt/1000)
-    start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
-    end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
-    start_date_month=start_date.month
-    end_date_month=end_date.month
-    diff_month=end_date_month-start_date_month
-    start_date = datetime.strftime(start_date,'%Y-%m-%d')
-    end_date=datetime.strftime(end_date,'%Y-%m-%d')
-    #是年報
-    if end_date_month-start_date_month==11:
-        cursor = connection.cursor()
-        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 YEAR)'%(start_date))
-        last_start_date= cursor.fetchone()[0]
-        print(last_start_date)
-        cursor = connection.cursor()
-        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 YEAR)'%(end_date))
-        last_end_date= cursor.fetchone()[0]
-        print(last_end_date)
-    #是季報
-    elif end_date_month-start_date_month==3:
-        #SELECT DATE_ADD('2021-10-31', INTERVAL -3 MONTH);
-        cursor = connection.cursor()
-        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -3 MONTH)'%(start_date))
-        last_start_date= cursor.fetchone()
-        print(last_start_date)
-        cursor = connection.cursor()
-        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -3 MONTH)'%(end_date))
-        last_end_date= cursor.fetchone()
-        print(last_end_date)
-
-    #是月報
+    if request.is_ajax():
+        data = json.loads(request.body)  #
+        # print('unprocessed_data >>>', data)
+        data = data['data']
+        print('data >>> ', data)
+        
+        print('-'*100)
+        return JsonResponse({
+                'isUpdated': True
+            })
+    # method == GET
     else:
-        #SELECT DATE_ADD('2021-03-31', INTERVAL -1 MONTH);
-        cursor = connection.cursor()
-        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 MONTH)'%(start_date))
-        last_start_date= cursor.fetchone()
-        print(last_start_date)
-        cursor = connection.cursor()
-        cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 MONTH)'%(end_date))
-        last_end_date= cursor.fetchone()
-        print(last_end_date)
+        start_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
+        end_date=Report.objects.filter(rpt_id=rpt_id).values()[0]['end_date']
+        start_date_month=start_date.month
+        end_date_month=end_date.month
+        diff_month=end_date_month-start_date_month
+        start_date = datetime.strftime(start_date,'%Y-%m-%d')
+        end_date=datetime.strftime(end_date,'%Y-%m-%d')
+        #是年報
+        if end_date_month-start_date_month==11:
+            cursor = connection.cursor()
+            cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 YEAR)'%(start_date))
+            last_start_date= cursor.fetchone()[0]
+            print(last_start_date)
+            cursor = connection.cursor()
+            cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 YEAR)'%(end_date))
+            last_end_date= cursor.fetchone()[0]
+            print(last_end_date)
+        #是季報
+        elif end_date_month-start_date_month==3:
+            #SELECT DATE_ADD('2021-10-31', INTERVAL -3 MONTH);
+            cursor = connection.cursor()
+            cursor.execute('SELECT DATE_ADD("%s", INTERVAL -3 MONTH)'%(start_date))
+            last_start_date= cursor.fetchone()
+            print(last_start_date)
+            cursor = connection.cursor()
+            cursor.execute('SELECT DATE_ADD("%s", INTERVAL -3 MONTH)'%(end_date))
+            last_end_date= cursor.fetchone()
+            print(last_end_date)
 
-    acc_id=1
-    sb = '''
-                   SELECT A.dis_title_id, A.dis_name
-                   FROM Distitle A
-                   INNER JOIN Account B ON A.dis_name = B.acc_name
-                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
-    distitle = Distitle.objects.raw(sb)[0]
-    print('distitle',distitle)
-    # 根據本期的row_name撈前期的disdetail
-    select_prior = '''
-    SELECT A.*
-    FROM Disdetail A
-    INNER JOIN Distitle B ON A.dis_title_id = B.dis_title_id
-    INNER JOIN Report C ON B.rpt_id = C.rpt_id
-    WHERE A.row_name IN (SELECT B.row_name FROM Disdetail B WHERE B.dis_title_id = dis_title_param AND row_amt!=0)
-    AND C.start_date = \'start_date_param\' AND C.end_date = \'end_date_param\'
-    AND com_id = com_param
-    AND type = '合併'
-    ORDER BY A.row_name
-    '''.replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
-                        .replace('start_date_param', str(last_start_date)).replace('end_date_param', str(last_end_date))
-                        
-    prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)
-    total_prior_disdetail=0
-    round_prior_disdetail_list=[]
-    round_total_prior_disdetail=0
-    if not prior_disdetail_qry_set:
-        print('here')
-        prior_disdetail_qry_set=0
-        print('prior_disdetail_qry_set',prior_disdetail_qry_set)
-    else:
-        for prior_disdetail in prior_disdetail_qry_set:
-            row_amt=prior_disdetail.row_amt
-            total_prior_disdetail=total_prior_disdetail+row_amt
+        #是月報
+        else:
+            #SELECT DATE_ADD('2021-03-31', INTERVAL -1 MONTH);
+            cursor = connection.cursor()
+            cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 MONTH)'%(start_date))
+            last_start_date= cursor.fetchone()
+            print(last_start_date)
+            cursor = connection.cursor()
+            cursor.execute('SELECT DATE_ADD("%s", INTERVAL -1 MONTH)'%(end_date))
+            last_end_date= cursor.fetchone()
+            print(last_end_date)
+        
+        acc_id=1
+        sb = '''
+                       SELECT A.dis_title_id, A.dis_name
+                       FROM Distitle A
+                       INNER JOIN Account B ON A.dis_name = B.acc_name
+                       WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+        distitle = Distitle.objects.raw(sb)[0]
+        print('distitle',distitle)
+        # 根據本期的row_name撈前期的disdetail
+        select_prior = '''
+        SELECT A.*
+        FROM Disdetail A
+        INNER JOIN Distitle B ON A.dis_title_id = B.dis_title_id
+        INNER JOIN Report C ON B.rpt_id = C.rpt_id
+        WHERE A.row_name IN (SELECT B.row_name FROM Disdetail B WHERE B.dis_title_id = dis_title_param AND row_amt!=0)
+        AND C.start_date = \'start_date_param\' AND C.end_date = \'end_date_param\'
+        AND com_id = com_param
+        AND type = '合併'
+        ORDER BY A.row_name
+        '''.replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
+                            .replace('start_date_param', str(last_start_date)).replace('end_date_param', str(last_end_date))
+                            
+        prior_disdetail_qry_set = Disdetail.objects.raw(select_prior)
+        total_prior_disdetail=0
+        round_prior_disdetail_dict = {}
+        round_total_prior_disdetail=0
+        if not prior_disdetail_qry_set:
+            print('here')
+            prior_disdetail_qry_set=0
+            print('prior_disdetail_qry_set',prior_disdetail_qry_set)
+        else:
+            for prior_disdetail in prior_disdetail_qry_set:
+                row_amt=prior_disdetail.row_amt
+                total_prior_disdetail=total_prior_disdetail+row_amt
+                # 千元表示
+                row_amt_in_thou = normal_round(row_amt)
+                round_total_prior_disdetail+=row_amt_in_thou
+                round_prior_disdetail_dict[prior_disdetail.dis_detail_id] = row_amt_in_thou
+                # update千元表示金額至DB
+                prior_disdetail.row_amt_in_thou = row_amt_in_thou
+                prior_disdetail.save()
+
+        # 撈本期的disdetail
+        disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
+                        .filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).exclude(row_amt=0).order_by("row_name").values()
+        total_disdetail=0
+        round_disdetail_dict = {}
+        round_total_disdetail=0
+        for i in disdetail_qry_set:
+            print(i)
+            disdetail = Disdetail.objects.get(dis_detail_id=i['dis_detail_id']) # 原本loop query set取出來的會是dict,因為要update金額進DB，拿dict的dis_detail_id去拿出object
+            row_amt = disdetail.row_amt
+            total_disdetail=total_disdetail+row_amt
             # 千元表示
             row_amt_in_thou = normal_round(row_amt)
-            round_total_prior_disdetail+=row_amt_in_thou
-            round_prior_disdetail_list.append(row_amt_in_thou)
+            round_total_disdetail+=row_amt_in_thou
+            round_disdetail_dict[disdetail.dis_detail_id] = row_amt_in_thou
             # update千元表示金額至DB
-            prior_disdetail.row_amt_in_thou = row_amt_in_thou
-            prior_disdetail.save()
-
-    # 撈本期的disdetail
-    disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail')\
-                    .filter(dis_title__rpt_id=rpt_id, dis_title__dis_title_id = distitle.dis_title_id).exclude(row_amt=0).order_by("row_name").values()
-    total_disdetail=0
-    round_disdetail_list = []
-    round_total_disdetail=0
-    for i in disdetail_qry_set:
-        print(i)
-        disdetail = Disdetail.objects.get(dis_detail_id=i['dis_detail_id']) # 原本loop query set取出來的會是dict,因為要update金額進DB，拿dict的dis_detail_id去拿出object
-        row_amt = disdetail.row_amt
-        total_disdetail=total_disdetail+row_amt
-        # 千元表示
-        row_amt_in_thou = normal_round(row_amt)
-        round_total_disdetail+=row_amt_in_thou
-        round_disdetail_list.append(row_amt_in_thou)
-        # update千元表示金額至DB
-        disdetail.row_amt_in_thou = row_amt_in_thou
-        disdetail.save()
-    return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
-                'disdetail_qry_set':disdetail_qry_set,
-                'prior_disdetail_qry_set':prior_disdetail_qry_set,
-                'start_date':start_date,
-                'end_date':end_date,
-                'last_start_date':last_start_date,
-                'last_end_date':last_end_date,
-                'total_prior_disdetail':total_prior_disdetail,
-                'total_disdetail':total_disdetail,
-                'round_prior_disdetail_list':round_prior_disdetail_list,
-                'round_disdetail_list':round_disdetail_list,
-                'round_total_prior_disdetail':round_total_prior_disdetail,
-                'round_total_disdetail':round_total_disdetail})
+            disdetail.row_amt_in_thou = row_amt_in_thou
+            disdetail.save()
+        # print(round_disdetail_dict)
+        # TODO 手動調整尾差 記得更新總和!!!
+        
+        return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
+                    'disdetail_qry_set':disdetail_qry_set,
+                    'prior_disdetail_qry_set':prior_disdetail_qry_set,
+                    'start_date':start_date,
+                    'end_date':end_date,
+                    'last_start_date':last_start_date,
+                    'last_end_date':last_end_date,
+                    'total_prior_disdetail':total_prior_disdetail,
+                    'total_disdetail':total_disdetail,
+                    'round_prior_disdetail_dict':round_prior_disdetail_dict,
+                    'round_disdetail_dict':round_disdetail_dict,
+                    'round_total_prior_disdetail':round_total_prior_disdetail,
+                    'round_total_disdetail':round_total_disdetail})
 
 
    
