@@ -12,30 +12,7 @@
    
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'import' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
-            </li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="{% url 'check_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">檢查</a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="#">定期存款</a>
-                    <a class="dropdown-item" href="#">銀行存款</a>
-                </div>
-            </li>
-               <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="{% url 'adjust_acc' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-disabled="true" aria-expanded="false">調整</a>
-{#                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">#}
-{#                      <a class="dropdown-item" href="#">Action</a>#}
-{#                      <a class="dropdown-item" href="#">Another action</a>#}
-{#                    </div>#}
-              </li>        
-              <li class="nav-item">
-                  <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">合併勾稽</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link disabled" href="{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true">附註格式</a>
-              </li>
-
+            
             </ul>
                 
             <form class="form-inline my-2 my-lg-0">
