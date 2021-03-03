@@ -795,82 +795,114 @@ def get_consolidated_statement_page(request,comp_id,rpt_id):
                             'currency_cd_list':currency_cd_list,'foreign_currency_cd_list':foreign_currency_cd_list})
 
 
+@csrf_exempt
 def get_consolidated_disclosure_page(request,comp_id,rpt_id):
     # TODO 根據下拉式選單做改變
-    ''' 此function內的ajax是for合併報表附註格式設定頁的科目下拉選單，更新附註格式的部分目前還是傳到原本的get_disclosure_page'''
+    # 因為round()的進位方式是「四捨六入五成雙」，跟一般的四捨五入不完全相同，故重新定義一個四捨五入的function
+    def normal_round(amt):
+        if amt/1000 - math.floor(amt/1000) < 0.5:
+            return math.floor(amt/1000)
+        else:
+            return math.ceil(amt/1000)
     if request.is_ajax():
-        print('in views via ajax nowwwwww')
-        acc_name = request.GET['acc_name']
-        print('acc_name >>>     ', acc_name)
-        acc_id = Account.objects.get(acc_name=acc_name).acc_id
-        print('acc_id >>>    ', acc_id)
-        disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
-        disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
-                    exclude(row_amt=0).\
-                    values()
-        disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
-                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
-                    exclude(pre_amt=0). \
-                    values('disclosure_id', 'pre_amt',
-                           'pre__acc__acc_name',
-                           'dis_detail__dis_detail_id')
-        all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-            filter(dis_title__rpt__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).values()
-        # 新增(disclosure - disdetail) 個disdetail備用
-        diff_count = disclosure_qry_set.count() - disdetail_qry_set.count()
-        print('all_disdetail_qry_set >>>     ', all_disdetail_qry_set)
-        # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用 # disclosure數量 - 有使用的disdetail數量
-        if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
-        # 先取出report對應的distitle
-            sb = '''
-                   SELECT A.dis_title_id, A.dis_name
-                   FROM Distitle A
-                   INNER JOIN Account B ON A.dis_name = B.acc_name
-                   WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
-            distitle = Distitle.objects.raw(sb)[0]
-            # print('distitle_id >>>>>>>>>', distitle.dis_title_id)
-            # 新增(disclosure - disdetail)個 disdetail
-            for i in range(diff_count):
-                Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
-        # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
-        unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                                                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[
-                                                :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
-        print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
+        # for合併報表更新附註格式
+        if request.method == 'POST':
+            print('hereeeeee')
+            data = json.loads(request.body)
+            # print('傳的 data:', data)
+            # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
+            # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
+            try:
+                for disdetail_obj in data:
+                    # 更新 disclosure 所關聯的 disdetail
+                    disclosures = disdetail_obj['disclosures']
+                    total_pre_amt = 0
+                    for disclosure in disclosures:
+                        a = Disclosure.objects.filter(disclosure_id=disclosure['disclosure_id'])
+                        a.update(dis_detail_id=disdetail_obj['disdetail_id'])
+                        total_pre_amt += a[0].pre_amt
+                    # 更新 disdetail row_name，並根據 pre_amt 總和更新 row_amt
+                    Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id']) \
+                        .update(row_name=disdetail_obj['row_name'], row_amt=total_pre_amt, row_amt_in_thou=normal_round(total_pre_amt)) # 更新disdetail的同時也要更新row_amt_in_thou
+                return JsonResponse({"status_code": 200, "msg": "成功更新附註格式。"})
+            except Exception as e:
+                print('update_disclosure exception >>> ', e)
+                # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
+                return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})
+        # for合併報表附註格式設定頁的科目下拉選單
+        else:
+            print('in views via ajax nowwwwww')
+            acc_name = request.GET['acc_name']
+            print('acc_name >>>     ', acc_name)
+            acc_id = Account.objects.get(acc_name=acc_name).acc_id
+            print('acc_id >>>    ', acc_id)
+            disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
+            disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                        filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).\
+                        exclude(row_amt=0).\
+                        values()
+            disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                        filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name']). \
+                        exclude(pre_amt=0). \
+                        values('disclosure_id', 'pre_amt',
+                               'pre__acc__acc_name',
+                               'dis_detail__dis_detail_id')
+            all_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                filter(dis_title__rpt__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name']).values()
+            # 新增(disclosure - disdetail) 個disdetail備用
+            diff_count = disclosure_qry_set.count() - disdetail_qry_set.count()
+            print('all_disdetail_qry_set >>>     ', all_disdetail_qry_set)
+            # 如果disdetail的數量比disclosure少，就新增差異數目的disdetail作為備用 # disclosure數量 - 有使用的disdetail數量
+            if disclosure_qry_set.count() - all_disdetail_qry_set.count() != 0: # disclosure數量 - 所有disdetail數量
+            # 先取出report對應的distitle
+                sb = '''
+                       SELECT A.dis_title_id, A.dis_name
+                       FROM Distitle A
+                       INNER JOIN Account B ON A.dis_name = B.acc_name
+                       WHERE A.rpt_id = ''' + str(rpt_id) + ' AND B.acc_id = ' + str(acc_id)
+                distitle = Distitle.objects.raw(sb)[0]
+                # print('distitle_id >>>>>>>>>', distitle.dis_title_id)
+                # 新增(disclosure - disdetail)個 disdetail
+                for i in range(diff_count):
+                    Disdetail.objects.create(row_name='備用disdetail_'+str(i+1), row_amt=0, dis_title=Distitle.objects.get(dis_title_id=distitle.dis_title_id))
+            # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+            unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                                                        filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0)[
+                                                    :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+            print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
 
-        # 找出需回傳階層表
-        # 1. 找出 Level 2 科目，和其 Level 1 子科目
-        # 2. Level 1 子科目找出對應的 disclosure
-        # 3. 組成 disdetail_editor
-        disdetail_editor = []
-        level_1_disclosure_list = []
-        level_2_account = Account.objects.filter(acc_parent=acc_id)
-        for account_l2 in level_2_account:
-            level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
-            for account_l1 in level_1_account:
-                if account_l1 is not None:
-                    level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
-                                                                   pre__rpt_id=rpt_id).exclude(pre_amt=0)
-                for disclosure in level_1_disclosure:
-                    level_1_disclosure_list.append(disclosure.disclosure_id)
-                    # print('level_1_disclosure_list:', level_1_disclosure_list)
-                else:
+            # 找出需回傳階層表
+            # 1. 找出 Level 2 科目，和其 Level 1 子科目
+            # 2. Level 1 子科目找出對應的 disclosure
+            # 3. 組成 disdetail_editor
+            disdetail_editor = []
+            level_1_disclosure_list = []
+            level_2_account = Account.objects.filter(acc_parent=acc_id)
+            for account_l2 in level_2_account:
+                level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+                for account_l1 in level_1_account:
+                    if account_l1 is not None:
+                        level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                       pre__rpt_id=rpt_id).exclude(pre_amt=0)
+                    for disclosure in level_1_disclosure:
+                        level_1_disclosure_list.append(disclosure.disclosure_id)
+                        # print('level_1_disclosure_list:', level_1_disclosure_list)
+                    else:
+                        pass
+                if not level_1_disclosure_list:
                     pass
-            if not level_1_disclosure_list:
-                pass
-            else:
-                disdetail_editor.append({
-                    'acc_parent_name': account_l2.acc_name,
-                    'disclosure_id_list': level_1_disclosure_list
-                })
-                level_1_disclosure_list = []
+                else:
+                    disdetail_editor.append({
+                        'acc_parent_name': account_l2.acc_name,
+                        'disclosure_id_list': level_1_disclosure_list
+                    })
+                    level_1_disclosure_list = []
 
-        disdetail_qry_set=list(disdetail_qry_set)
-        disclosure_qry_set=list(disclosure_qry_set)
-        unspecified_disdetail_qry_set=list(unspecified_disdetail_qry_set)
-        return JsonResponse({'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
-                             'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+            disdetail_qry_set=list(disdetail_qry_set)
+            disclosure_qry_set=list(disclosure_qry_set)
+            unspecified_disdetail_qry_set=list(unspecified_disdetail_qry_set)
+            return JsonResponse({'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
+                                 'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor, 'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
     # method == GET
     else:
         # Default進來會顯示現金及約當現金的附註格式
@@ -960,15 +992,17 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
         # print('unprocessed_data >>>', data)
         data = data['data']
         print('data >>> ', data)
+        new_total = 0
         for i in data:
             item = Disdetail.objects.get(dis_detail_id=i['id'])
             item.row_amt_in_thou=i['row_amt_in_thou']
+            new_total += i['row_amt_in_thou']
             print(item.row_amt_in_thou,'row_amt_in_thou')
             item.save()
             print('!',Disdetail.objects.get(dis_detail_id=i['id']).row_amt_in_thou)
         print('-'*100)
         return JsonResponse({
-                'isUpdated': True
+                'isUpdated': True, 'new_total': new_total
             })
     # method == GET
     else:
@@ -1048,7 +1082,7 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
                 row_amt=prior_disdetail.row_amt
                 total_prior_disdetail=total_prior_disdetail+row_amt
                 # 千元表示
-                row_amt_in_thou = normal_round(row_amt)
+                row_amt_in_thou = prior_disdetail.row_amt_in_thou # 不拿row_amt重算千元表示(會跟使用者手動調的有出入) # normal_round(row_amt)
                 round_total_prior_disdetail+=row_amt_in_thou
                 round_prior_disdetail_dict[prior_disdetail.dis_detail_id] = row_amt_in_thou
                 # update千元表示金額至DB
@@ -1067,7 +1101,7 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
             row_amt = disdetail.row_amt
             total_disdetail=total_disdetail+row_amt
             # 千元表示
-            row_amt_in_thou = normal_round(row_amt)
+            row_amt_in_thou = disdetail.row_amt_in_thou # 不拿row_amt重算千元表示(會跟使用者手動調的有出入) # normal_round(row_amt)
             round_total_disdetail+=row_amt_in_thou
             round_disdetail_dict[disdetail.dis_detail_id] = disdetail.row_amt_in_thou
             # update千元表示金額至DB
