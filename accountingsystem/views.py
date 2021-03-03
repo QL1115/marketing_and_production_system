@@ -602,7 +602,7 @@ def consolidated_report(request, comp_id):
                                             SELECT c.com_name, r.*
                                             FROM Report AS r
                                             INNER JOIN Company AS c on r.com_id = c.com_id
-                                            WHERE r.com_id = 1 AND r.start_date = \'''' + start_date + '\' AND r.end_date = \'' + end_date + '\' AND type = \'個體\''
+                                            WHERE r.com_id = ''' + str(comp_id) + ' AND r.start_date = \'' + start_date + '\' AND r.end_date = \'' + end_date + '\' AND type = \'個體\''
                                       + '''UNION ALL
                                             -- recursive
                                             SELECT c.com_name, r.*
