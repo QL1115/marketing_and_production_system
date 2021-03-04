@@ -103,6 +103,7 @@
                 {% endfor %}
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
                 <div class="col-sm">{{total_disdetail|floatformat:0|intcomma:False}}</div>
+                <input type="hidden" name="total_disdetail_in_thou" value="{{ total_disdetail_in_thou }}" />
             </div>
             <div class="col-sm" style="padding:0px 0px;">
                 <div class="col-sm">{{last_end_date}}</div>
@@ -152,7 +153,7 @@
                     <div class="col-sm">
                         {% csrf_token %}
                         <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                        <input type="text" name='disdetail_rowamt' data-disdetail="{{ key }}"value="{{ value |floatformat:0|intcomma:False}}" disabled required/>
+                        <input type="text" name='disdetail_rowamt' data-disdetail="{{ key }}"value="{{ value |floatformat:0|intcomma:False}}" onchange="FreshTotal()" disabled required/>
                     </div>
                 {% endfor %}
                 <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
@@ -208,39 +209,49 @@
         {# 儲存按鈕 #}
         $('#save').on('click', function (event) {
             event.preventDefault()
-            $('#save').prop('disabled', true)
+            <!-- $('#save').prop('disabled', true); -->
             msg = '';
-            $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
+            <!-- $("input[name='disdetail_rowamt']").prop("disabled", 'disabled') -->
             <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled') -->
+            
+            
             var returnArr = []
+            var temp_total = 0
+            var total_disdetail_in_thou = parseInt($("input[name='total_disdetail_in_thou']").val()); <!-- 原始row_amt總和四捨五入後應為的千元表示總和 -->
             $("input[name='disdetail_rowamt']").each(function() {
                 var id = $(this).attr('data-disdetail');
                 var row_amt = parseInt($(this).val().replaceAll(',', ''));
                 returnArr.push({'id':id, 'row_amt_in_thou': row_amt});
+                temp_total = temp_total + row_amt;
                 <!-- console.log('data-disdetail >>>>>> ', $(this).attr('data-disdetail')); -->
                 <!-- console.log('value >>>>>> ', $(this).val()); -->
             });
-            var postData = {
-                        'data': returnArr,
-                    };
-            console.log(returnArr);
-            $.ajax({
-                    url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id%}",
-                    dataType: "json",
-                    contentType: 'application/json',
-                    data: JSON.stringify(postData),
-                    type:"POST",
-                    success: function (response) {
-                        console.log('ajax success');
-                        $("input[name='disdetail_total_rowamt']").val(parseInt(response.new_total).toLocaleString());  <!-- 更新總和 -->
-                        alert("成功更新千元表示。");
-                    }, error: function (error) {
-                        alert('更新千元表示失敗。');
-                        console.log(error);
-                    }
-                });
-
-
+            <!-- 總和一致才進行更新 -->
+            if (temp_total === total_disdetail_in_thou) { 
+                var postData = {
+                            'data': returnArr,
+                        };
+                console.log(returnArr);
+                $.ajax({
+                        url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id%}",
+                        dataType: "json",
+                        contentType: 'application/json',
+                        data: JSON.stringify(postData),
+                        type:"POST",
+                        success: function (response) {
+                            console.log('ajax success');
+                            alert("成功更新千元表示。");
+                            <!-- 成功更新才把button/input設為disabled -->
+                            $('#save').prop('disabled', true);
+                            $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
+                        }, error: function (error) {
+                            alert('Error. 更新千元表示失敗。');
+                            console.log(error);
+                        }
+                    });
+            } else {  <!-- 總和有差異，提醒使用者 -->
+                alert("千元表示的總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
+            }
         });
     });
 
@@ -270,6 +281,14 @@
         }
     }
     
+    
+    function FreshTotal() {
+        var new_total = 0;
+        $("input[name='disdetail_rowamt']").each(function() {
+            new_total = new_total + parseInt($(this).val().replaceAll(',', ''));
+        });
+        $("input[name='disdetail_total_rowamt']").val(parseInt(new_total).toLocaleString());
+    }
 </script>
 
 </html>

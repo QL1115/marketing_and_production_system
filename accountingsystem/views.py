@@ -1109,6 +1109,7 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
             #disdetail.save()
         # print(round_disdetail_dict)
         print(round_disdetail_dict)
+        total_disdetail_in_thou = normal_round(total_disdetail) # 根據原始row_amt總和四捨五入後調整成千元表示應為的數字
         
         return render(request,'consolidated_statement_compare_with_last_one.html',{'comp_id': comp_id, 'rpt_id': rpt_id,
                     'disdetail_qry_set':disdetail_qry_set,
@@ -1122,7 +1123,8 @@ def compare_with_last_consolidated_statement(request,comp_id,rpt_id):
                     'round_prior_disdetail_dict':round_prior_disdetail_dict,
                     'round_disdetail_dict':round_disdetail_dict,
                     'round_total_prior_disdetail':round_total_prior_disdetail,
-                    'round_total_disdetail':round_total_disdetail})
+                    'round_total_disdetail':round_total_disdetail,
+                    'total_disdetail_in_thou': total_disdetail_in_thou})
 
 
    
