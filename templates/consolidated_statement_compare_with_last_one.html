@@ -196,7 +196,14 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
-
+        setTimeout(function()
+        {
+            if ($("input[name='disdetail_total_rowamt']").val() !== $("input[name='total_disdetail_in_thou']").val()) {
+                alert("注意: 當前總和不一致！\n千元表示總和應為" + parseInt($("input[name='total_disdetail_in_thou']").val()).toLocaleString().toString() + "。請手動進行調整。");
+            }
+        }, 300);
+        
+        
         {# 編輯按鈕 #}
         $('#Edit').on('click', function () {
             console.log('in')
@@ -250,7 +257,7 @@
                         }
                     });
             } else {  <!-- 總和有差異，提醒使用者 -->
-                alert("千元表示的總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
+                alert("千元表示總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
             }
         });
     });
