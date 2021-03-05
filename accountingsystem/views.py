@@ -1238,7 +1238,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
                         r_amt += r_disclosure.pre_amt # 計算金額
                 # 更新 version 2 的 base disdetail 金額
                 relative_disdetail.row_amt = r_amt
-                relative_distitle.save()
+                relative_disdetail.save()
                 relative_result.append({'disdetail_name': b_disdetail.row_name, 'value': r_amt})
                 Disclosure.objects.bulk_create(new_r_disclosure) # bulk create 不會回傳 id
 
