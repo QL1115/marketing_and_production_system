@@ -2,6 +2,7 @@ import math
 import xlrd  # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 # from datetime import datetime
 from datetime import datetime
+from django.core.serializers import serialize
 from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -1178,8 +1179,6 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         '''計算並回傳前期比較。base: 基準，relative: 另一期'''
         # 確認期間是多久，取得「當期 rpt」和「前期 rpt」
         current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id)
-        base_result= []
-        relative_result = []
         if previous_rpt is not None:
             base_rpt = None # 基準期的 report
             relative_rpt = None # 另一期的 report
@@ -1223,14 +1222,12 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
                 # 更新 version 2 的 base disdetail 金額
                 base_disdetail.row_amt = b_amt
                 base_disdetail.save()
-                base_result.append({'disdetail_name': b_disdetail.row_name, 'value': b_amt})
                 Disclosure.objects.bulk_create(new_b_disclosure)
                 # relative 中是否有與 base 相符 disclosure
                 relative_disdetail = relative_disdetail_qryset_ver2.get(row_name=b_disdetail.row_name) # 找到與 row name 相同的 relative disdetail
                 new_r_disclosure = []
                 r_amt = 0
                 for r_disclosure in relative_disclosures:
-                    # print('r_disclosure.pre.acc_id >>> ', r_disclosure.pre.acc_id)
                     if r_disclosure.pre.acc_id in disclosures_in_b_disdetail:
                         new_r_disclosure.append(Disclosure(dis_detail=relative_disdetail, version_num=2, pre_amt=r_disclosure.pre_amt, pre=r_disclosure.pre))
                         relative_disclosures_list.remove(r_disclosure)
@@ -1239,7 +1236,6 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
                 # 更新 version 2 的 base disdetail 金額
                 relative_disdetail.row_amt = r_amt
                 relative_disdetail.save()
-                relative_result.append({'disdetail_name': b_disdetail.row_name, 'value': r_amt})
                 Disclosure.objects.bulk_create(new_r_disclosure) # bulk create 不會回傳 id
 
 
@@ -1247,10 +1243,8 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
             base_disclosures_list = list(set(base_disclosures_list) - set(minus_base_disclosures_list))
             if len(base_disclosures_list) != 0:
                 for remaining_b_disclosure in base_disclosures_list:
-                    row_name = remaining_b_disclosure.dis_detail.row_name
                     Disclosure.objects.create(dis_detail=relative_disdetail_qryset_ver2.get(row_name=remaining_b_disclosure.dis_detail.row_name),
                                               pre_amt=0, version_num=2, pre=Preamt.objects.get(acc_id=remaining_b_disclosure.pre.acc_id, rpt_id=relative_rpt))
-                    relative_result.append({'disdetail_name': remaining_b_disclosure.dis_detail.row_name, 'value': 0})
             # 處理 relative 中沒有被對應到的 disclosures。作法：為兩期分別建立新的 disdetail，每個 disdetail 對應一個剩餘的 disclosure。基準期的沒有的就補 0。
             if len(relative_disclosures_list) != 0:
                 for remaining_r_disclosure in relative_disclosures_list:
@@ -1261,14 +1255,8 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
                     Disclosure.objects.create(dis_detail=new_b_disdetail, pre=Preamt.objects.get(acc_id=remaining_r_disclosure.pre.acc_id, rpt_id=base_rpt), pre_amt=0, version_num=2)
                     Disclosure.objects.create(dis_detail=new_r_disdetail, pre=remaining_r_disclosure.pre, pre_amt=remaining_r_disclosure.pre_amt, version_num=2)
                     relative_disclosures_list.remove(remaining_r_disclosure)
-                    relative_result.append({'disdetail_name': new_r_disdetail.row_name, 'value': remaining_r_disclosure.pre_amt})
-                    base_result.append({'disdetail_name': new_b_disdetail.row_name, 'value': 0})
             # 組裝回傳結果，預設以前期為準
-            final_result = {'now': relative_result, 'past': base_result}
-            if base_period == 'now':
-                final_result = {'now': base_result, 'past': relative_result}
-            print('計算出的前期比較資料 >>> ', final_result)
-            return final_result
+            return  search_previous_comparision(rpt_id, acc_id)
         else:
             return None
 
@@ -1276,30 +1264,20 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         '''搜尋目前有無前期比較資料，若有則回傳資料，沒有則回傳 None'''
         current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id)
         if previous_rpt is not None:
-            current_result = []
             current_disdetails_ver2 = Disdetail.objects.filter(dis_title__rpt=current_rpt, dis_title__dis_name=Account.objects.get(acc_id=acc_id).acc_name, version_num=2)
             previous_disdetails_ver2 = Disdetail.objects.filter(dis_title__rpt=previous_rpt, dis_title__dis_name=Account.objects.get(acc_id=acc_id).acc_name, version_num=2)
-            if current_disdetails_ver2 and previous_disdetails_ver2:
-                for cur_disdetail in current_disdetails_ver2:
-                    current_result.append({'disdetail_name': cur_disdetail.row_name, 'value': cur_disdetail.row_amt})
-                previous_result = []
-
-                for past_disdetail in previous_disdetails_ver2:
-                    previous_result.append({'disdetail_name': past_disdetail.row_name, 'value': past_disdetail.row_amt})
-                final_result = {'now': current_result, 'past': previous_result}
-                print('查找到前期比較資料 >>> ', final_result)
-                return final_result
+            return current_disdetails_ver2, previous_disdetails_ver2
         return None
 
     if request.method == 'GET':
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # TODO 呼叫 search_previous_comparision
-        comparsion_data = search_previous_comparision(rpt_id, acc_id)
-        if comparsion_data is not None:  # 資料庫中有前期比較資料，則直接回傳
+        current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id)
+        if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
                 'previous_comparison_exists': True,
-                'comparison_data': comparsion_data
+                 "now": current_disdetails_ver2, "past": previous_disdetails_ver2
             })
         else:
             # 若還沒有前期比較，則傳回 previous_comparison_exists: False 提示使用者要選擇以哪一期為基準
@@ -1311,5 +1289,5 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         data = json.loads(request.body)
         base_period = data['base_period']
         # TODO 若是資料庫中已有前期比較資料，則需要先刪除。
-        comparsion_data = cal_previous_comparision(base_period, rpt_id, acc_id)
-        return JsonResponse({"status_code": 200, "base_period": base_period, "comparison_data": comparsion_data})
+        current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision(base_period, rpt_id, acc_id)
+        return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})
