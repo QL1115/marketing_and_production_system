@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>附註格式 - 前期比較</title>
+</head>
+<body>
+
+ {% if not previous_comparison_exists %}
+        請選擇以哪一期為基本格式 <br>
+        <input type="radio" name="base_period" value="now">當期<br>
+        <input type="radio" name="base_period" value="past">前期<br>
+        <button id="base_period_btn" type="button">確定</button>
+ {% endif %}
+
+
+ <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+        <script src="{% static 'js/bstreeview.js' %}">
+    </script>
+ <script type="text/javascript">
+    $(document).ready(function() {
+        {# 使用者選擇 「當期」或 「前期」 #}
+        $('#base_period_btn').on('click', function(e) {
+            if (! $('input[name="base_period"]:checked').length) {
+                alert('請選擇以哪一期為基準');
+                return;
+            }
+            base_period = $('input[name="base_period"]:checked').val();
+            $.ajax({
+                dataType: "json",
+                contentType: 'application/json',
+                type: "POST",
+                url: "{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
+                data: JSON.stringify({'base_period': base_period}),
+                success: function(data) {
+                    alert(data['base_period']);
+                    console.log('data["base_period"]', data['base_period']);
+                    {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
+        });
+    })
+ </script>
+</body>
+</html>
