@@ -78,6 +78,7 @@ class Disclosure(models.Model):
     pre_amt = models.DecimalField(max_digits=22, decimal_places=2)
     dis_detail = models.ForeignKey('Disdetail', models.CASCADE)
     pre = models.ForeignKey('Preamt', models.CASCADE)
+    version_num = models.PositiveSmallIntegerField(default=1)
 
     class Meta:
         managed = False
@@ -90,6 +91,7 @@ class Disdetail(models.Model):
     row_amt = models.DecimalField(max_digits=22, decimal_places=2)
     row_amt_in_thou = models.IntegerField()
     dis_title = models.ForeignKey('Distitle', models.CASCADE)
+    version_num = models.PositiveSmallIntegerField(default=1)
 
     class Meta:
         managed = False

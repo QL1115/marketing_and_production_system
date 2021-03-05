@@ -13,6 +13,8 @@
         <input type="radio" name="base_period" value="past">前期<br>
         <button id="base_period_btn" type="button">確定</button>
  {% endif %}
+<pre id="comparison_data">{{ comparison_data|pprint }}</pre>
+
 
 
  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -38,8 +40,9 @@
                 url: "{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
                 data: JSON.stringify({'base_period': base_period}),
                 success: function(data) {
-                    alert(data['base_period']);
                     console.log('data["base_period"]', data['base_period']);
+                    console.log('前期比較資料', data['comparison_data']);
+                    $('#comparison_data').text(JSON.stringify(data['comparison_data'], undefined, 3));
                     {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
                 },
                 error: function(error) {
