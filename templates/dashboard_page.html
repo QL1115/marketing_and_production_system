@@ -142,8 +142,7 @@
             </tbody>
           </table>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="combine_report_cancel_button" data-dismiss="modal">取消</button>
-            <button type="button" class="btn btn-primary" id="combine_report_combine_button">合併</button>
+            <p>Error. Ajax failed.</p>
           </div>
         </div>
       </div>
@@ -193,7 +192,11 @@
                         $('#combine_report_sign_modal .modal-content table tbody').html(response.returnStr);
                         if(response.returnStr.indexOf('未簽名')!=-1){
                             $('#combine_report_sign_modal .modal-footer').html('<p style="color:red;font-size:14px;">* 須待個體報表皆簽名後才能進行合併報表。</p>\
-                                                                                <button type="button" class="btn btn-secondary" id="combine_report_cancel_button" data-dismiss="modal">取消</button>')
+                                                                                <button type="button" class="btn btn-secondary" id="combine_report_cancel_button" data-dismiss="modal">取消</button>');
+                        }
+                        else {
+                            $('#combine_report_sign_modal .modal-footer').html('<button type="button" class="btn btn-secondary" id="combine_report_cancel_button" data-dismiss="modal">取消</button>\
+                                                                                <button type="button" class="btn btn-primary" id="combine_report_combine_button" onclick="CombineReport()">合併</button>');
                         }
                         $('#combine_report_sign_modal').modal('show');
                     }, error: function (error) {
@@ -207,7 +210,7 @@
             }
         });
         <!-- 合併報表modal #2 點擊合併button -->
-        $('#combine_report_combine_button').click(function(){
+        function CombineReport(){
             $.ajax({
                     url: "{% url 'consolidated_report' comp_id=comp_id%}",
                     data: { "comp_id": company_id, "type":"consolidate_report", "report_dates": report_dates},
@@ -221,8 +224,7 @@
                         console.log(error);
                     }
                 });
-        });
-        
+        }
     </script>
     <style>
         .highlight { background-color: Gainsboro; }

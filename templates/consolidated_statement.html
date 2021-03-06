@@ -33,6 +33,9 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link" href="{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id  %}"  tabindex="-1" aria-disabled="true"><strong>附註格式</strong></a>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id  %}"  tabindex="-1" aria-disabled="true"><strong>前期比較</strong></a>
+                </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
