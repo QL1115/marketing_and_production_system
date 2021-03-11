@@ -186,7 +186,7 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
                         INNER JOIN Account F ON E.acc_id = F.acc_id
                         INNER JOIN Account G ON F.acc_parent = G.acc_id
                         WHERE A.row_amt != 0 AND C.com_id = com_param AND C.type = '個體' AND C.start_date = \'start_date_param\' AND C.end_date = \'end_date_param\'
-                              AND G.acc_parent = acc_param'''\
+                              AND G.acc_parent = acc_param AND A.version_num = 1'''\
                        .replace('dis_title_param', str(distitle.dis_title_id)).replace('com_param', str(comp_id))\
                        .replace('start_date_param', str(start_date)).replace('end_date_param', str(end_date)).replace('acc_param', str(acc_id))
     print(cre_disdetail)
@@ -211,7 +211,7 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
                             INNER JOIN Distitle C ON B.dis_title_id = C.dis_title_id
                             INNER JOIN Report D ON C.rpt_id = D.rpt_id
                             WHERE A.pre_amt != 0 AND D.com_id = com_param AND D.type = '個體' AND D.start_date = \'start_date_param\' AND D.end_date = \'end_date_param\'
-                                  AND AAA.acc_parent = acc_param -- Disclosure這裡存的都是level 1的科目 直接確認最上層acc_parent(level 3)是指定的acc_id就可以惹
+                                  AND AAA.acc_parent = acc_param AND A.version_num = 1 -- Disclosure這裡存的都是level 1的科目 直接確認最上層acc_parent(level 3)是指定的acc_id就可以惹
                         ) B ON A.acc_id = B.acc_id
                         INNER JOIN (
                             -- 合併Report新建立的Disdetail
@@ -232,7 +232,7 @@ def create_disclosure_for_consolidated_report_by_acc_id(rpt_id,comp_id,start_dat
                             INNER JOIN Preamt B ON A.pre_id = B.pre_id
                             INNER JOIN Report C ON B.rpt_id = C.rpt_id
                             -- INNER JOIN Account D ON B.acc_id = D.acc_id
-                            WHERE C.rpt_id = rpt_param AND B.pre_amt != 0
+                            WHERE C.rpt_id = rpt_param AND B.pre_amt != 0 AND A.version_num = 1
                             GROUP BY A.dis_detail_id
                         ) AS src
                         SET

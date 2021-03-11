@@ -199,6 +199,7 @@
                 return;
             }
             {# 抓取要傳回後端的資料 #}
+            var acc_name=$('#selectId').find('option:selected').text();
             result = [];
             $('.disdetail_row').each(function() {
                 data = {};
@@ -220,7 +221,7 @@
                 contentType: 'application/json',
                 type: "POST",
                 url: "{% url 'get_consolidated_disclosure_page' comp_id=comp_id rpt_id=rpt_id %}",
-                data: JSON.stringify(result),
+                data: JSON.stringify({'result':result, 'acc_name':acc_name}),
                 success: function(data) {
                     alert(data['msg'])
                 },
