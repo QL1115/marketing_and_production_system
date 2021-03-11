@@ -1025,7 +1025,7 @@ def get_consolidated_disclosure_page(request, comp_id, rpt_id):
 def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
     rpt_type = '合併'
     if request.method == 'GET':
-        acc_id = 1 # Default進來會顯示現金及約當現金的附註格式
+        acc_id = Account.objects.get(acc_name=acc_name, acc_level=3).acc_id
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # 呼叫 search_previous_comparision
         current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
@@ -1060,13 +1060,12 @@ def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
         print('current >>> ', current_disdetails_ver2)
         print('previous >>> ', previous_disdetails_ver2)
         return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})    
-    
-
 
 @csrf_exempt
 def previous_comparison(request, comp_id, rpt_id, acc_id):
     '''前期比較'''
     rpt_type = '個體'
+    current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
     if request.method == 'GET':
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # 呼叫 search_previous_comparision
@@ -1075,22 +1074,44 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
                 'previous_comparison_exists': True,
-                 "now": current_disdetails_ver2, "past": previous_disdetails_ver2
+                 "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
+                 'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
             })
-        else:
-            # 若還沒有前期比較，則傳回 previous_comparison_exists: False 提示使用者要選擇以哪一期為基準
-            ## 改動附註格式時只會刪除當期因呈現前期比較而新增的Disdetail/Disclosure，會導致只刪掉version_num為2的
-            ## -> 如果沒有完整的前期比較，就把兩期rpt下version_num為2或3的Disdetail都刪掉
-            current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
-            delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
-            delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
-            return render(request, 'disclosure_previous_comparison_page.html', {
-                'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
-                'previous_comparison_exists': False,
-            })
+       # else:
+        # TODO 之後看情況要不要留 delete，這裡只是為了防止有沒有刪乾淨的 version
+        delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
+        delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
+        current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
+        return render(request, 'consolidated_statement_compare_with_last_one.html', {
+            'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+            'previous_comparison_exists': True,
+             "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
+             'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
+        })
     elif request.method == 'POST' and request.is_ajax():  # 使用者選擇「當期」或「前期」為主要格式
         data = json.loads(request.body)
-        base_period = data['base_period']
-        # TODO 若是資料庫中已有前期比較資料，則需要先刪除。
-        current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision(base_period, rpt_id, acc_id, rpt_type, comp_id)
-        return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})
+        print('data', data)
+        print('data type', type(data))
+        if type(data) == list: # 代表不是要調整前期比較格式，而是調整尾差
+            id_list = [item['id'] for item in data]
+            update_disdetail = []
+            disdetail_qry_set = Disdetail.objects.filter(dis_detail_id__in=id_list)
+            for item in data:
+                disdetail = disdetail_qry_set.get(dis_detail_id=item['id'])
+                disdetail.row_amt_in_thou = item['row_amt_in_thou']
+                update_disdetail.append(disdetail)
+            # 一次將 row_amt_in_thou 更新到資料庫
+            Disdetail.objects.bulk_update(update_disdetail, ['row_amt_in_thou'])
+            return JsonResponse({"status_code": 200, "msg": "成功更新尾差。"})
+        elif data['base_period'] is not None: # 代表使用者要調整前期比較格式
+            base_period = data['base_period']
+            acc_name = data['acc_name']
+            acc_id = Account.objects.get(acc_name=acc_name, acc_level=3).acc_id
+            # TODO （看之後要不要刪）若是資料庫中已有前期比較資料，則需要先刪除。
+            delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
+            delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
+            current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision(base_period, rpt_id, acc_id, rpt_type, comp_id)
+            return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})    
+           
+
+

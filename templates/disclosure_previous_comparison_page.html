@@ -15,19 +15,20 @@
  {% endif %}
  <pre id="data">
      {% if now %}
-        當期
+        當期 {{ now_end_date }}
         {% for disdetail in now %}
-            {{ disdetail.row_name }} {{ disdetail.row_amt }}
+            {{ disdetail.row_name }} {{ disdetail.row_amt }} {{disdetail.row_amt_in_thou}}
         {% endfor %}
      {% endif %}
      <br>
     {% if past %}
-        前期
-        {% for disdetail in past %}
-           {{ disdetail.row_name }} {{ disdetail.row_amt }}
+        前期 {{ past_end_date }} 
+        {% for disdetail in past %} 
+           {{ disdetail.row_name }} {{ disdetail.row_amt }} {{disdetail.row_amt_in_thou}}
         {% endfor %}
     {% endif %}
  </pre>
+ <button id="test_difference_btn" type="button">尾差回傳格式</button>
 
  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -63,6 +64,31 @@
                 }
             });
         });
+        $('#test_difference_btn').on('click', function(e) {
+            returnData = [];
+            // TODO: 需要修改底下的 code, 要撈取使用者實際改的千元表達的值
+            {% for disdetail in past %} 
+               returnData.push({"id": '{{disdetail.pk}}', 'row_amt_in_thou':'0'});
+            {% endfor %}
+            {% for disdetail in now %} 
+               returnData.push({"id": '{{disdetail.pk}}', 'row_amt_in_thou':'0'});
+            {% endfor %}
+            console.log('returnData', returnData);
+            $.ajax({
+                dataType: "json",
+                contentType: 'application/json',
+                type: "POST",
+                url: "{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
+                data: JSON.stringify(returnData),
+                success: function(data) {
+                    console.log('data', data);
+                    alert(data['msg'])
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
+        })
     })
  </script>
 </body>
