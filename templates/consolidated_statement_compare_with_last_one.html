@@ -77,115 +77,137 @@
         </div>
         <br>
         <br>
+        
+        {% if not previous_comparison_exists %}
+        請選擇以哪一期為基本格式 <br>
+        <input type="radio" name="base_period" value="now">當期<br>
+        <input type="radio" name="base_period" value="past">前期<br>
+        <button id="base_period_btn" type="button">確定</button>
+        {% endif %}
+         <pre id="data">
+             {% if now %}
+                當期
+                {% for disdetail in now %}
+                    {{ disdetail.row_name }} {{ disdetail.row_amt }}
+                {% endfor %}
+             {% endif %}
+             <br>
+            {% if past %}
+                前期
+                {% for disdetail in past %}
+                   {{ disdetail.row_name }} {{ disdetail.row_amt }}
+                {% endfor %}
+            {% endif %}
+         </pre>
+        <!-- <div class="row"> -->
+            
+            <!-- <div class="col-sm" style="padding:0px 0px;"> -->
+                <!-- <div class="col-sm">明細資訊(單位:元)</div> -->
+                <!-- {% for disdetail in current_disdetails_ver2 %} -->
+                    <!-- <div class="col-sm"> -->
+                            <!-- {% csrf_token %} -->
+                            <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                            <!-- {{ disdetail.row_name }} -->
+                    <!-- </div> -->
+                <!-- {% endfor %} -->
+                <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                <!-- <div class="col-sm">總和</div> -->
+            <!-- </div> -->
+            <!-- <div class="col-sm" style="padding:0px 0px;"> -->
+                <!-- <div class="col-sm">{{end_date}}</div> -->
+                <!-- {% for disdetail in current_disdetails_ver2 %} -->
+                    <!-- <div class="col-sm"> -->
+                        <!-- {% csrf_token %} -->
+                        <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                        <!-- {{ disdetail.row_amt |floatformat:0|intcomma:False}} -->
+                    <!-- </div> -->
+                <!-- {% endfor %} -->
+                <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                <!-- <div class="col-sm">{{total_disdetail|floatformat:0|intcomma:False}}</div> -->
+                <!-- <input type="hidden" name="total_disdetail_in_thou" value="{{ total_disdetail_in_thou }}" /> -->
+            <!-- </div> -->
+            <!-- <div class="col-sm" style="padding:0px 0px;"> -->
+                <!-- <div class="col-sm">{{last_end_date}}</div> -->
+                <!-- {% if previous_disdetails_ver2 != 0 %} -->
+                    <!-- {% for prior_disdetail in previous_disdetails_ver2 %} -->
+                        <!-- <div class="col-sm"> -->
+                            <!-- {% csrf_token %} -->
+                            <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                            <!-- {{ prior_disdetail.row_amt |floatformat:0|intcomma:False}} -->
+                        <!-- </div> -->
+                    <!-- {% endfor %} -->
+                <!-- {% else %} -->
+                    <!-- {% for disdetail in previous_disdetails_ver2 %} -->
+                        <!-- <div class="col-sm"> -->
+                            <!-- {% csrf_token %} -->
+                            <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                            <!-- -- -->
+                        <!-- </div> -->
+                    <!-- {% endfor %} -->
+                <!-- {% endif %}   -->
+                <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                <!-- {% if total_prior_disdetail != 0 %} -->
+                    <!-- <div class="col-sm">{{total_prior_disdetail|floatformat:0|intcomma:False}}</div> -->
+                <!-- {% else %} -->
+                    <!-- <div class="col-sm">--</div>       -->
+                <!-- {% endif %}   -->
+            <!-- </div> -->
+        <!-- </div> -->
 
-        <div class="row">
+        <!-- <br> -->
+        <!-- <div class="row"> -->
             
-            <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">明細資訊(單位:元)</div>
-                {% for disdetail in disdetail_qry_set %}
-                    <div class="col-sm">
-                            {% csrf_token %}
-                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            {{ disdetail.row_name }}
-                    </div>
-                {% endfor %}
-                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                <div class="col-sm">總和</div>
-            </div>
-            <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">{{end_date}}</div>
-                {% for disdetail in disdetail_qry_set %}
-                    <div class="col-sm">
-                        {% csrf_token %}
-                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                        {{ disdetail.row_amt |floatformat:0|intcomma:False}}
-                    </div>
-                {% endfor %}
-                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                <div class="col-sm">{{total_disdetail|floatformat:0|intcomma:False}}</div>
-                <input type="hidden" name="total_disdetail_in_thou" value="{{ total_disdetail_in_thou }}" />
-            </div>
-            <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">{{last_end_date}}</div>
-                {% if prior_disdetail_qry_set != 0 %}
-                    {% for prior_disdetail in prior_disdetail_qry_set %}
-                        <div class="col-sm">
-                            {% csrf_token %}
-                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            {{ prior_disdetail.row_amt |floatformat:0|intcomma:False}}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    {% for disdetail in disdetail_qry_set %}
-                        <div class="col-sm">
-                            {% csrf_token %}
-                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            --
-                        </div>
-                    {% endfor %}
-                {% endif %}  
-                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                {% if total_prior_disdetail != 0 %}
-                    <div class="col-sm">{{total_prior_disdetail|floatformat:0|intcomma:False}}</div>
-                {% else %}
-                    <div class="col-sm">--</div>      
-                {% endif %}  
-            </div>
-        </div>
-        <br>
-        <div class="row">
-            
-            <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">明細資訊(單位:千元)</div>
-                {% for disdetail in disdetail_qry_set %}
-                    <div class="col-sm">
-                            {% csrf_token %}
-                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            <input class="custom_input" type="text"  value="{{ disdetail.row_name }}" disabled />
-                    </div>
-                {% endfor %}
-                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                <div class="col-sm">總和</div>
-            </div>
-            <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">{{end_date}}</div>
-                {% for key, value in round_disdetail_dict.items %}
-                    <div class="col-sm">
-                        {% csrf_token %}
-                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                        <input type="text" name='disdetail_rowamt' data-disdetail="{{ key }}"value="{{ value |floatformat:0|intcomma:False}}" onchange="FreshTotal()" disabled required/>
-                    </div>
-                {% endfor %}
-                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                <div class="col-sm"><input class="custom_input" type="text" name='disdetail_total_rowamt' value="{{round_total_disdetail|floatformat:0|intcomma:False}}" disabled /></div>
-            </div>
-            <div class="col-sm" style="padding:0px 0px;">
-                <div class="col-sm">{{last_end_date}}</div>
-                {% if prior_disdetail_qry_set != 0 %}
-                    {% for key, value in round_prior_disdetail_dict.items %}
-                        <div class="col-sm">
-                            {% csrf_token %}
-                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            <input class="custom_input" type="text" name='prior_disdetail_rowamt' data-disdetail="{{ key }}" value="{{ value |floatformat:0|intcomma:False}}" disabled />
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    {% for round_disdetail in disdetail_qry_set %}
-                        <div class="col-sm">
-                            {% csrf_token %}
-                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                            <input class="custom_input" type="text"  value="--" disabled />
-                        </div>
-                    {% endfor %}
-                {% endif %}  
-                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
-                {% if round_total_prior_disdetail != 0 %}
-                    <div class="col-sm"><input class="custom_input" type="text" name='total_prior_disdetail_rowamt' value="{{round_total_prior_disdetail|floatformat:0|intcomma:False}}" disabled /></div>
-                {% else %}
-                    <div class="col-sm"><input type="text"  value="--" disabled required/></div>    
-                {% endif %}  
-            </div>
-        </div>
+            <!-- <div class="col-sm" style="padding:0px 0px;"> -->
+                <!-- <div class="col-sm">明細資訊(單位:千元)</div> -->
+                <!-- {% for disdetail in disdetail_qry_set %} -->
+                    <!-- <div class="col-sm"> -->
+                            <!-- {% csrf_token %} -->
+                            <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                            <!-- <input class="custom_input" type="text"  value="{{ disdetail.row_name }}" disabled /> -->
+                    <!-- </div> -->
+                <!-- {% endfor %} -->
+                <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                <!-- <div class="col-sm">總和</div> -->
+            <!-- </div> -->
+            <!-- <div class="col-sm" style="padding:0px 0px;"> -->
+                <!-- <div class="col-sm">{{end_date}}</div> -->
+                <!-- {% for key, value in round_disdetail_dict.items %} -->
+                    <!-- <div class="col-sm"> -->
+                        <!-- {% csrf_token %} -->
+                        <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                        <!-- <input type="text" name='disdetail_rowamt' data-disdetail="{{ key }}"value="{{ value |floatformat:0|intcomma:False}}" onchange="FreshTotal()" disabled required/> -->
+                    <!-- </div> -->
+                <!-- {% endfor %} -->
+                <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                <!-- <div class="col-sm"><input class="custom_input" type="text" name='disdetail_total_rowamt' value="{{round_total_disdetail|floatformat:0|intcomma:False}}" disabled /></div> -->
+            <!-- </div> -->
+            <!-- <div class="col-sm" style="padding:0px 0px;"> -->
+                <!-- <div class="col-sm">{{last_end_date}}</div> -->
+                <!-- {% if prior_disdetail_qry_set != 0 %} -->
+                    <!-- {% for key, value in round_prior_disdetail_dict.items %} -->
+                        <!-- <div class="col-sm"> -->
+                            <!-- {% csrf_token %} -->
+                            <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                            <!-- <input class="custom_input" type="text" name='prior_disdetail_rowamt' data-disdetail="{{ key }}" value="{{ value |floatformat:0|intcomma:False}}" disabled /> -->
+                        <!-- </div> -->
+                    <!-- {% endfor %} -->
+                <!-- {% else %} -->
+                    <!-- {% for round_disdetail in disdetail_qry_set %} -->
+                        <!-- <div class="col-sm"> -->
+                            <!-- {% csrf_token %} -->
+                            <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                            <!-- <input class="custom_input" type="text"  value="--" disabled /> -->
+                        <!-- </div> -->
+                    <!-- {% endfor %} -->
+                <!-- {% endif %}   -->
+                <!-- <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div> -->
+                <!-- {% if round_total_prior_disdetail != 0 %} -->
+                    <!-- <div class="col-sm"><input class="custom_input" type="text" name='total_prior_disdetail_rowamt' value="{{round_total_prior_disdetail|floatformat:0|intcomma:False}}" disabled /></div> -->
+                <!-- {% else %} -->
+                    <!-- <div class="col-sm"><input type="text"  value="--" disabled required/></div>     -->
+                <!-- {% endif %}   -->
+            <!-- </div> -->
+        <!-- </div> -->
 
         <div id=property style="display:none">
             <p>hi</p>
@@ -259,6 +281,32 @@
             } else {  <!-- 總和有差異，提醒使用者 -->
                 alert("千元表示總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
             }
+        });
+        
+        {# 使用者選擇 「當期」或 「前期」 #}
+        $('#base_period_btn').on('click', function(e) {
+            if (! $('input[name="base_period"]:checked').length) {
+                alert('請選擇以哪一期為基準');
+                return;
+            }
+            base_period = $('input[name="base_period"]:checked').val();
+            var acc_name=$('#selectId').find('option:selected').text();
+            $.ajax({
+                dataType: "json",
+                contentType: 'application/json',
+                type: "POST",
+                url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
+                data: JSON.stringify({'base_period': base_period, 'acc_name': acc_name}),
+                success: function(data) {
+                    console.log('data', data);
+                    $('#data').empty();
+                    $('#data').html("<b>當期</b>" + JSON.stringify(JSON.parse(data["now"]), undefined, 3) + "<br/><b>前期</b>" + JSON.stringify(JSON.parse(data["past"]), undefined, 3));
+                    {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
         });
     });
 
