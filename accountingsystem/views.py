@@ -1073,6 +1073,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         # 呼叫 search_previous_comparision
         current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
         print('>>>now:', current_disdetails_ver2.values())
+        print('>>>past:', previous_disdetails_ver2.values())
         if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
@@ -1085,7 +1086,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
         delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
         current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
-        return render(request, 'consolidated_statement_compare_with_last_one.html', {
+        return render(request, 'disclosure_previous_comparison_page.html', {
             'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
             'previous_comparison_exists': True,
              "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
