@@ -1068,6 +1068,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
     '''前期比較'''
     rpt_type = '個體'
     current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
+    distitle = Distitle.objects.get(rpt_id=rpt_id, dis_name=Account.objects.get(acc_id=acc_id).acc_name).dis_name
     if request.method == 'GET':
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # 呼叫 search_previous_comparision
@@ -1077,6 +1078,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+                'distitle': distitle,
                 'previous_comparison_exists': True,
                  "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
                  'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
@@ -1089,6 +1091,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         return render(request, 'disclosure_previous_comparison_page.html', {
             'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
             'previous_comparison_exists': True,
+            'distitle': distitle,
              "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
              'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
         })

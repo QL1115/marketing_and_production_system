@@ -67,15 +67,10 @@
 </head>
 <body>
 <br>
-{% if not previous_comparison_exists %}
-        請選擇以哪一期為基本格式 <br>
-        <input type="radio" name="base_period" value="now">當期<br>
-        <input type="radio" name="base_period" value="past">前期<br>
-        <button id="base_period_btn" type="button">確定</button>
-{% endif %}
 
     <div class="container">
         <div class="row">
+            <div class="col-sm-10 float-right">{{ distitle }}</div>
             <div id="editBtnGroup" class="btn-group col-sm-10 float-right" role="group"
                              aria-label="Basic example">
                 <button id="Edit" type="button" class="btn btn-secondary">編輯</button>
@@ -83,8 +78,8 @@
             </div>
             <div id="editBtnGroup" class="btn-group col-sm-2 float-right" role="group"
                              aria-label="Basic example">
-                <button id="past_button" type="button" class="btn btn-secondary">依前期格式</button>
-                <button id="now_button" type="button" class="btn btn-secondary" disabled>依本期格式</button>
+                <button id="past_period_btn" type="button" class="btn btn-secondary" disabled>依前期格式</button>
+                <button id="now_period_btn" type="button" class="btn btn-secondary">依本期格式</button>
             </div>
         </div>
         <div class="row">
@@ -212,7 +207,7 @@
     </script>
  <script type="text/javascript">
     $(document).ready(function() {
-
+        {# 計算前期、本期、前期(千元)、前期(千元)總和: 開始 #}
         $(function() {
             var disdetail_total = 0;
             $('.now_disdetail').each(function(){
@@ -244,6 +239,7 @@
             });
             $('.past_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
         });
+        {# 計算前期、本期、前期(千元)、前期(千元)總和: 結束 #}
 
         {# 四捨五入千元表達 #}
         $(function(){
@@ -255,6 +251,7 @@
             };
         });
 
+        {# 千元表達總和與本期總合轉為千元後須一致 #}
         setTimeout(function()
         {
             if ($("input[name='disdetail_total_rowamt']").val().replaceAll(',', '') !== $("input[name='total_disdetail_in_thou']").val()) {
@@ -317,19 +314,19 @@
             }
         });
 
-        {# 使用者選擇 「當期」或 「前期」 #}
-        $('#base_period_btn').on('click', function(e) {
-            if (! $('input[name="base_period"]:checked').length) {
-                alert('請選擇以哪一期為基準');
-                return;
-            }
-            base_period = $('input[name="base_period"]:checked').val();
+        {# 使用者選擇 「當期」#}
+        $('#now_period_btn').on('click', function(e) {
+            $('#now_period_btn').prop('disabled', true);
+            $('#past_period_btn').prop('disabled', false);
+            var data={}
+            data['base_period']='now';
+            data['acc_name']='{{ distitle }}'
             $.ajax({
                 dataType: "json",
                 contentType: 'application/json',
                 type: "POST",
                 url: "{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
-                data: JSON.stringify({'base_period': base_period}),
+                data: JSON.stringify(data),
                 success: function(data) {
                     console.log('data', data);
                     $('#data').empty();
@@ -342,13 +339,40 @@
                 }
             });
         });
+
+        {# 使用者選擇 「前期」#}
+        $('#past_period_btn').on('click', function(e) {
+            $('#past_period_btn').prop('disabled', true);
+            $('#now_period_btn').prop('disabled', false);
+            var data={}
+            data['base_period']='past';
+            data['acc_name']='{{ distitle }}'
+            $.ajax({
+                dataType: "json",
+                contentType: 'application/json',
+                type: "POST",
+                url: "{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
+                data: JSON.stringify(data),
+                success: function(data) {
+                    console.log('data', data);
+                    $('#data').empty();
+                    $('#data').html("<b>當期</b>" + JSON.stringify(JSON.parse(data["now"]), undefined, 3) + "<br/><b>前期</b>" + JSON.stringify(JSON.parse(data["past"]), undefined, 3));
+
+                    {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
+        });
+
         $('#test_difference_btn').on('click', function(e) {
             returnData = [];
             // TODO: 需要修改底下的 code, 要撈取使用者實際改的千元表達的值
-            {% for disdetail in past %} 
+            {% for disdetail in past %}
                returnData.push({"id": '{{disdetail.pk}}', 'row_amt_in_thou':'0'});
             {% endfor %}
-            {% for disdetail in now %} 
+            {% for disdetail in now %}
                returnData.push({"id": '{{disdetail.pk}}', 'row_amt_in_thou':'0'});
             {% endfor %}
             console.log('returnData', returnData);
@@ -369,6 +393,7 @@
         })
     })
 
+    {# 按下確定後，畫面須刷新數字修改的部分 #}
     function FreshTotal() {
         var new_total = 0;
         $('.disdetail_thou').each(function() {
@@ -376,6 +401,109 @@
         });
         $('.disdetail_thou_total').val(parseInt(new_total).toLocaleString());
     }
+
+    var json = '[' +
+        '{' +
+        '"text": "資產",' +
+        '"icon": "fa fa-inbox",' +
+        '"nodes": [' +
+
+
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}, ' +
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}' +
+        ']' +
+        '},' +
+
+
+
+
+        '{' +
+        '"text": "負債",' +
+        '"icon": "fa fa-inbox",' +
+        '"nodes": [' +
+
+
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}, ' +
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}' +
+        ']' +
+        '},' +
+
+        '{' +
+        '"text": "權益",' +
+        '"icon": "fa fa-inbox",' +
+        '"nodes": [' +
+
+
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}, ' +
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}' +
+        ']' +
+        '},' +
+
+        '{' +
+        '"text": "損益",' +
+        '"icon": "fa fa-inbox",' +
+        '"nodes": [' +
+
+
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}, ' +
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}' +
+        ']' +
+        '},' +
+
+        '{' +
+        '"text": "其他",' +
+        '"icon": "fa fa-inbox",' +
+        '"nodes": [' +
+
+
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}, ' +
+
+        '{' +
+        '"icon": "fa fa-inbox",' +
+        '"text": "Others"' +
+        '}' +
+        ']' +
+        '}' +
+        ']';
+
+    $('#tree').bstreeview({ data: json });
+
  </script>
 </body>
 </html>
