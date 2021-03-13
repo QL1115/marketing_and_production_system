@@ -1,34 +1,207 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>附註格式 - 前期比較</title>
+
+    <!-- navigation things-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+{#        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>#}
+    <!-- FontAwesome -->
+{#        <script src="https://kit.fontawesome.com/5dc39887b7.js" crossorigin="anonymous"></script>#}
+    <!--tree things -->
+{#        <link href="test.css" rel="stylesheet">#}
+
+{#        <script type="text/javascript" src="/static/js/jquery.js"></script>#}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <style type="text/css">
+        body {
+            min-height: 100vh;
+        }
+        .custom_input {
+            border-style:none;
+            padding:3px 0px;
+            background-color:white;
+            color: black;
+        }
+    </style>
+    <!--start of navbar-->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">OurLogo</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'import' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                   aria-disabled="true"><strong>匯入</strong></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'check_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}"
+                   tabindex="-1" aria-disabled="true"><strong>檢查</strong></a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link" href="{% url 'adjust_acc' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}"
+                   id="navbarDropdown" role="button"
+                   aria-haspopup="true" aria-expanded="false">調整</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                   aria-disabled="true">附註格式</a>
+            </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+        <div class="other_nav_buttons">
+            <i class="fas fa-cog"></i>
+            <i class="fas fa-user"></i>
+        </div>
+    </div>
+</nav>
+
 </head>
 <body>
-
- {% if not previous_comparison_exists %}
+<br>
+{% if not previous_comparison_exists %}
         請選擇以哪一期為基本格式 <br>
         <input type="radio" name="base_period" value="now">當期<br>
         <input type="radio" name="base_period" value="past">前期<br>
         <button id="base_period_btn" type="button">確定</button>
- {% endif %}
- <pre id="data">
-     {% if now %}
-        當期 {{ now_end_date }}
-        {% for disdetail in now %}
-            {{ disdetail.row_name }} {{ disdetail.row_amt }} {{disdetail.row_amt_in_thou}}
-        {% endfor %}
-     {% endif %}
-     <br>
-    {% if past %}
-        前期 {{ past_end_date }} 
-        {% for disdetail in past %} 
-           {{ disdetail.row_name }} {{ disdetail.row_amt }} {{disdetail.row_amt_in_thou}}
-        {% endfor %}
-    {% endif %}
- </pre>
- <button id="test_difference_btn" type="button">尾差回傳格式</button>
+{% endif %}
+
+    <div class="container">
+        <div class="row">
+            <div id="editBtnGroup" class="btn-group col-sm-10 float-right" role="group"
+                             aria-label="Basic example">
+                <button id="Edit" type="button" class="btn btn-secondary">編輯</button>
+                <button id="save" type="button" class="btn btn-secondary" disabled>確定</button>
+            </div>
+            <div id="editBtnGroup" class="btn-group col-sm-2 float-right" role="group"
+                             aria-label="Basic example">
+                <button id="past_button" type="button" class="btn btn-secondary">依前期格式</button>
+                <button id="now_button" type="button" class="btn btn-secondary" disabled>依本期格式</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">明細資訊(單位:元)</div>
+                    {% for disdetail in now %}
+                        <div class="col-sm">
+                                {% csrf_token %}
+                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                                {{ disdetail.row_name }}
+                        </div>
+                    {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">總和</div>
+            </div>
+            <br>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{now_end_date}}</div>
+                    {% for disdetail in now %}
+                        <div class="col-sm now_disdetail">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {{ disdetail.row_amt |floatformat:0|intcomma:False}}
+                        </div>
+                    {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm now_disdetail_total"></div>
+                <input type="hidden" name="total_disdetail_in_thou" />
+            </div>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{past_end_date}}</div>
+                {% if past != 0 %}
+                    {% for disdetail in past %}
+                        <div class="col-sm past_disdetail">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {{ disdetail.row_amt |floatformat:0|intcomma:False}}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% for disdetail in past %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            --
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                {% if total_past != 0 %}
+                    <div class="col-sm past_disdetail_total"></div>
+                {% else %}
+                    <div class="col-sm">--</div>
+                {% endif %}
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">明細資訊(單位:千元)</div>
+                {% for disdetail in now %}
+                    <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            <input class="custom_input" type="text"  value="{{ disdetail.row_name }}" disabled />
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">總和</div>
+            </div>
+             <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{now_end_date}}</div>
+                {% for disdetail in now %}
+                    <div class="col-sm">
+                        {% csrf_token %}
+                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                        {% if disdetail.row_amt_in_thou != None %}
+                            <input type="text" class="now_disdetail_thou" name="disdetail_rowamt" disdetail_id="{{ disdetail.dis_detail_id }}" value="{{ disdetail.row_amt_in_thou |floatformat:0|intcomma:False}}" onchange="FreshTotal()" disabled required/>
+                        {% else %}
+                            <input class="custom_input" type="text"  value="--" disabled />
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm"><input class="custom_input now_disdetail_thou_total" type="text" name='disdetail_total_rowamt' disabled /></div>
+            </div>
+            <div class="col-sm" style="padding:0px 0px;">
+                <div class="col-sm">{{past_end_date}}</div>
+                {% if past != 0 %}
+                    {% for disdetail in past %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            {% if disdetail.row_amt_in_thou != None %}
+                                <input class="custom_input past_disdetail_thou" type="text" name='prior_disdetail_rowamt' value="{{ disdetail.row_amt_in_thou |floatformat:0|intcomma:False}}" disabled />
+                            {% else %}
+                                <input class="custom_input" type="text"  value="--" disabled />
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% for disdetail in past %}
+                        <div class="col-sm">
+                            {% csrf_token %}
+                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                            <input class="custom_input" type="text"  value="--" disabled />
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>
+                <div class="col-sm">
+                    <input class="custom_input past_disdetail_thou_total" type="text" name='total_prior_disdetail_rowamt' disabled>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
 
  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -39,6 +212,111 @@
     </script>
  <script type="text/javascript">
     $(document).ready(function() {
+
+        $(function() {
+            var disdetail_total = 0;
+            $('.now_disdetail').each(function(){
+               disdetail_total += parseInt($(this).text().replaceAll(',', ''));
+            });
+            $('.now_disdetail_total').text(parseInt(disdetail_total).toLocaleString());
+        });
+
+        $(function() {
+            var disdetail_total = 0;
+            $('.past_disdetail').each(function(){
+               disdetail_total += parseInt($(this).text().replaceAll(',', ''));
+            });
+            $('.past_disdetail_total').text(parseInt(disdetail_total).toLocaleString());
+        });
+
+        $(function() {
+            var disdetail_total = 0;
+            $('.now_disdetail_thou').each(function(){
+               disdetail_total += parseInt($(this).val().replaceAll(',', ''));
+            });
+            $('.now_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
+        });
+
+        $(function() {
+            var disdetail_total = 0;
+            $('.past_disdetail_thou').each(function(){
+               disdetail_total += parseInt($(this).val().replaceAll(',', ''));
+            });
+            $('.past_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
+        });
+
+        {# 四捨五入千元表達 #}
+        $(function(){
+            var amt = $('.now_disdetail_total').text().replaceAll(',', '');
+            if (amt/1000 - Math.floor(amt/1000) < 0.5){
+                $("input[name='total_disdetail_in_thou']").val(Math.floor(amt/1000));
+            }else{
+                $("input[name='total_disdetail_in_thou']").val(Math.ceil(amt/1000));
+            };
+        });
+
+        setTimeout(function()
+        {
+            if ($("input[name='disdetail_total_rowamt']").val().replaceAll(',', '') !== $("input[name='total_disdetail_in_thou']").val()) {
+                alert("注意: 當前總和不一致！\n千元表示總和應為" + parseInt($("input[name='total_disdetail_in_thou']").val()).toLocaleString().toString() + "。請手動進行調整。");
+            }
+        }, 300);
+
+        {# 編輯按鈕 #}
+        $('#Edit').on('click', function () {
+            console.log('in')
+            $('#save').prop('disabled', false)
+            {#$('#Edit').prop('disabled', true)#}
+                $("input[name='disdetail_rowamt']").prop("disabled", false)
+                $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false)
+
+        });
+        {# 儲存按鈕 #}
+        $('#save').on('click', function (event) {
+            event.preventDefault()
+            $('#save').prop('disabled', true);
+            msg = '';
+            <!-- $("input[name='disdetail_rowamt']").prop("disabled", 'disabled') -->
+            <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled') -->
+
+
+            var returnArr = []
+            var temp_total = 0
+            var total_disdetail_in_thou = parseInt($("input[name='total_disdetail_in_thou']").val()); <!-- 原始row_amt總和四捨五入後應為的千元表示總和 -->
+            $("input[name='disdetail_rowamt']").each(function() {
+                var id = $(this).attr('disdetail_id');
+                var row_amt = parseInt($(this).val().replaceAll(',', ''));
+                returnArr.push({'id':id, 'row_amt_in_thou': row_amt});
+                temp_total = temp_total + row_amt;
+                <!-- console.log('data-disdetail >>>>>> ', $(this).attr('data-disdetail')); -->
+                <!-- console.log('value >>>>>> ', $(this).val()); -->
+            });
+            <!-- 總和一致才進行更新 -->
+            if (temp_total === total_disdetail_in_thou) {
+                var postData = returnArr
+                console.log(returnArr);
+                $.ajax({
+                        url: "{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id%}",
+                        dataType: "json",
+                        contentType: 'application/json',
+                        data: JSON.stringify(postData),
+                        type:"POST",
+                        success: function (response) {
+                            console.log('ajax success');
+                            alert("成功更新千元表示。");
+                            <!-- 成功更新才把button/input設為disabled -->
+                            $('#save').prop('disabled', true);
+                            $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
+                        }, error: function (error) {
+                            alert('Error. 更新千元表示失敗。');
+                            console.log(error);
+                        }
+                    });
+            } else {  <!-- 總和有差異，提醒使用者 -->
+                alert("千元表示總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
+            }
+        });
+
         {# 使用者選擇 「當期」或 「前期」 #}
         $('#base_period_btn').on('click', function(e) {
             if (! $('input[name="base_period"]:checked').length) {
@@ -90,6 +368,14 @@
             });
         })
     })
+
+    function FreshTotal() {
+        var new_total = 0;
+        $('.disdetail_thou').each(function() {
+            new_total = new_total + parseInt($(this).val().replaceAll(',', ''));
+        });
+        $('.disdetail_thou_total').val(parseInt(new_total).toLocaleString());
+    }
  </script>
 </body>
 </html>

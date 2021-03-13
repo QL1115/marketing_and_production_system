@@ -575,6 +575,7 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
         # print('傳的 data:', data)
         # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
         # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
+        print(">>>data:", data)
         try:
             for disdetail_obj in data:
                 # 更新 disclosure 所關聯的 disdetail
@@ -766,6 +767,7 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
         # 計算合併沖銷，撈出每間公司的關係人交易分錄
         # 先由每間公司對應的pre_amt_id，再撈出關係人交易，把關係人交易相加。
         # 撈活期存款pre_id acc_id=11
+        print(">>> report_id:", report_id)
         pre_id_demand_deposit = Preamt.objects.filter(rpt=report_id).filter(acc=11).values()[0]['pre_id']
         # 再撈出關係人交易
         adj_amt_demand_deposit = Reltrx.objects.filter(pre=pre_id_demand_deposit)
@@ -859,7 +861,7 @@ def get_consolidated_disclosure_page(request, comp_id, rpt_id):
             except Exception as e:
                 print('update_disclosure exception >>> ', e)
                 # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
-                return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})
+                return JsonResponse({"status_codetotal_disdetail_in_thou": 500, "msg": "發生不明錯誤。"})
         # for合併報表附註格式設定頁的科目下拉選單
         else:
             print('in views via ajax nowwwwww')
@@ -1070,6 +1072,7 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # 呼叫 search_previous_comparision
         current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
+        print('>>>now:', current_disdetails_ver2.values())
         if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
