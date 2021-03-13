@@ -130,11 +130,13 @@
             </div>
         </div>
     {% endfor %}
-    <div class="row">
-        <div class="col-sm-10">
-            <div class="font-weight-bold lead col-sm-7">加總金額</div>
-            <div class="font-weight-bold lead col-sm-4 text-right disdetail_total"></div>
-        </div>
+    <br>
+    <div class="row align-items-center">
+        {% comment %} <div class="col-sm-11"> {% endcomment %}
+            <label class="text-right font-weight-bold lead offset-4  col-sm-3" for="disdetail_total">加總金額</label>
+            <input id="disdetail_total" class="text-center font-weight-bold lead col-sm-2" readonly disabled name="disdetail_total" value=""/>
+            {% comment %} <div class="font-weight-bold lead col-sm-4 text-right disdetail_total"></div> {% endcomment %}
+        {% comment %} </div> {% endcomment %}
     </div>
     </div>
 </div>
@@ -171,6 +173,25 @@
     </div>
 </div>
 
+{% comment %} 提示訊息 {% endcomment %}
+<div id="hint_msg_modal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">我瞭解了</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {#<script src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>#}
 {#<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.js" crossorigin="anonymous"></script>#}
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -188,6 +209,7 @@
         acc_level = 1;
 
         refresh_disclosure_amount_in_disdetail();
+        sum_disclosure();
 
         {# 更新畫面的 disdetail 金額，金額為底下的 disclosure 金額相加 #}
         function refresh_disclosure_amount_in_disdetail() {
@@ -203,6 +225,7 @@
 
             });
             {#$('#disclosure_checkboxes_fields').empty();#}
+            sum_disclosure();
         }
 
         {# 顯示哪些科目已經被選取了 #}
@@ -245,7 +268,14 @@
             $('.disclosure_format_plus').addClass('hide');
             {#  檢查有無未選到的 disclosure  #}
             if ($('[data-disclosure]').not('.hide').length < {{ disclosure_qry_set.count }}) {
-                alert('有尚未選到的 disclosure，無法更新。\n未選取 disclosure 為:');
+                var not_selected_disclosure_list = []
+                $('[data-disclosure].hide').each(function() {
+                    not_selected_disclosure_list.push($(this).children().eq(0).text())
+                })
+                console.log('disclosure', not_selected_disclosure_list)
+                $('#hint_msg_modal .modal-title').empty().text('資料更新失敗');
+                $('#hint_msg_modal .modal-body').empty().html('有尚未選到的 disclosure，無法更新。未選取 disclosure 為： <br><b>' + not_selected_disclosure_list + '</b>');
+                $('#hint_msg_modal').modal('show');
                 return;
             }
             {# 抓取要傳回後端的資料 #}
@@ -272,10 +302,14 @@
                 url: "{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}",
                 data: JSON.stringify(result),
                 success: function(data) {
-                    alert(data['msg'])
+                    $('#hint_msg_modal .modal-title').empty().text('更新結果');
+                    $('#hint_msg_modal .modal-body').empty().text(data['msg']);
+                    $('#hint_msg_modal').modal('show');
                 },
                 error: function(error) {
-                    alert(error)
+                    $('#hint_msg_modal .modal-title').empty().text('錯誤訊息');
+                    $('#hint_msg_modal .modal-body').empty().text(error);
+                    $('#hint_msg_modal').modal('show');
                 }
             });
         });
@@ -374,7 +408,10 @@
         {# 檢查目前的 disdetail 是否已經超過 disclosure 數量 #}
         var disclosure_length = {{ disclosure_qry_set.count }};
         if ($('.disdetail_row.hide').length === 0 || $('.disdetail_row.hide').length > disclosure_length) {
-            alert('附註格式分類不可比附註格式多！');
+            $('#hint_msg_modal .modal-title').empty().text('新增失敗');
+            $('#hint_msg_modal .modal-body').empty().text('附註格式分類不可比附註格式多！');
+            $('#hint_msg_modal').modal('show');
+            {% comment %} alert('附註格式分類不可比附註格式多！'); {% endcomment %}
         } else {
             {# 「編輯」按鈕變「確定」按鈕 #}
             $('.disclosure_format_plus').removeClass('hide');
@@ -391,11 +428,14 @@
     });
 
     {# 計算 disclosure 總和 #}
-    var disdetail_total=0
-    $('.disclosure_amount').each(function(){
-        disdetail_total += parseFloat($(this).text().replaceAll(',', ''));
-    });
-    $('.disdetail_total').text('$ '+ parseInt(disdetail_total).toLocaleString())
+    function sum_disclosure() {
+        var disdetail_total=0
+        $('div[data-disclosure]:not(".hide") .disclosure_amount').each(function(){
+            disdetail_total += parseFloat($(this).text().replaceAll(',', ''));
+        });
+        
+        $('#disdetail_total').val('$ '+ parseInt(disdetail_total).toLocaleString())
+    }
 
 
 
