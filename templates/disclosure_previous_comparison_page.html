@@ -52,6 +52,10 @@
                 <a class="nav-link" href="{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
                    aria-disabled="true">附註格式</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                   aria-disabled="true">附註格式(前期比較)</a>
+            </li>
         </ul>
         <form class="form-inline my-2 my-lg-0">
             <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
@@ -64,6 +68,7 @@
     </div>
 </nav>
 
+
 </head>
 <body>
 <br>
@@ -71,14 +76,13 @@
     <div class="container">
         <div class="row">
             <div class="col-sm-10 float-right">{{ distitle }}</div>
-            <div id="editBtnGroup" class="btn-group col-sm-10 float-right" role="group"
+            <div id="editBtnGroup" class="btn-group col-sm-9 float-right" role="group"
                              aria-label="Basic example">
                 <button id="Edit" type="button" class="btn btn-secondary">編輯</button>
                 <button id="save" type="button" class="btn btn-secondary" disabled>確定</button>
             </div>
-            <div id="editBtnGroup" class="btn-group col-sm-2 float-right" role="group"
-                             aria-label="Basic example">
-                <button id="past_period_btn" type="button" class="btn btn-secondary" disabled>依前期格式</button>
+            <div class="col-sm-3 float-right">
+                <button id="past_period_btn" type="button" class="btn btn-secondary">依前期格式</button>
                 <button id="now_period_btn" type="button" class="btn btn-secondary">依本期格式</button>
             </div>
         </div>
@@ -208,48 +212,38 @@
  <script type="text/javascript">
     $(document).ready(function() {
         {# 計算前期、本期、前期(千元)、前期(千元)總和: 開始 #}
-        $(function() {
-            var disdetail_total = 0;
-            $('.now_disdetail').each(function(){
-               disdetail_total += parseInt($(this).text().replaceAll(',', ''));
-            });
-            $('.now_disdetail_total').text(parseInt(disdetail_total).toLocaleString());
+        var disdetail_total = 0;
+        $('.now_disdetail').each(function(){
+           disdetail_total += parseInt($(this).text().replaceAll(',', ''));
         });
+        $('.now_disdetail_total').text(parseInt(disdetail_total).toLocaleString());
 
-        $(function() {
-            var disdetail_total = 0;
-            $('.past_disdetail').each(function(){
-               disdetail_total += parseInt($(this).text().replaceAll(',', ''));
-            });
-            $('.past_disdetail_total').text(parseInt(disdetail_total).toLocaleString());
+        var disdetail_total = 0;
+        $('.past_disdetail').each(function(){
+           disdetail_total += parseInt($(this).text().replaceAll(',', ''));
         });
+        $('.past_disdetail_total').text(parseInt(disdetail_total).toLocaleString());
 
-        $(function() {
-            var disdetail_total = 0;
-            $('.now_disdetail_thou').each(function(){
-               disdetail_total += parseInt($(this).val().replaceAll(',', ''));
-            });
-            $('.now_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
+        var disdetail_total = 0;
+        $('.now_disdetail_thou').each(function(){
+           disdetail_total += parseInt($(this).val().replaceAll(',', ''));
         });
+        $('.now_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
 
-        $(function() {
-            var disdetail_total = 0;
-            $('.past_disdetail_thou').each(function(){
-               disdetail_total += parseInt($(this).val().replaceAll(',', ''));
-            });
-            $('.past_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
+        var disdetail_total = 0;
+        $('.past_disdetail_thou').each(function(){
+           disdetail_total += parseInt($(this).val().replaceAll(',', ''));
         });
+        $('.past_disdetail_thou_total').val(parseInt(disdetail_total).toLocaleString());
         {# 計算前期、本期、前期(千元)、前期(千元)總和: 結束 #}
 
         {# 四捨五入千元表達 #}
-        $(function(){
-            var amt = $('.now_disdetail_total').text().replaceAll(',', '');
-            if (amt/1000 - Math.floor(amt/1000) < 0.5){
-                $("input[name='total_disdetail_in_thou']").val(Math.floor(amt/1000));
-            }else{
-                $("input[name='total_disdetail_in_thou']").val(Math.ceil(amt/1000));
-            };
-        });
+        var amt = $('.now_disdetail_total').text().replaceAll(',', '');
+        if (amt/1000 - Math.floor(amt/1000) < 0.5){
+            $("input[name='total_disdetail_in_thou']").val(Math.floor(amt/1000));
+        }else{
+            $("input[name='total_disdetail_in_thou']").val(Math.ceil(amt/1000));
+        };
 
         {# 千元表達總和與本期總合轉為千元後須一致 #}
         setTimeout(function()
@@ -316,8 +310,6 @@
 
         {# 使用者選擇 「當期」#}
         $('#now_period_btn').on('click', function(e) {
-            $('#now_period_btn').prop('disabled', true);
-            $('#past_period_btn').prop('disabled', false);
             var data={}
             data['base_period']='now';
             data['acc_name']='{{ distitle }}'
@@ -331,7 +323,7 @@
                     console.log('data', data);
                     $('#data').empty();
                     $('#data').html("<b>當期</b>" + JSON.stringify(JSON.parse(data["now"]), undefined, 3) + "<br/><b>前期</b>" + JSON.stringify(JSON.parse(data["past"]), undefined, 3));
-
+                    location.href='{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}'
                     {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
                 },
                 error: function(error) {
@@ -342,8 +334,6 @@
 
         {# 使用者選擇 「前期」#}
         $('#past_period_btn').on('click', function(e) {
-            $('#past_period_btn').prop('disabled', true);
-            $('#now_period_btn').prop('disabled', false);
             var data={}
             data['base_period']='past';
             data['acc_name']='{{ distitle }}'
@@ -357,7 +347,7 @@
                     console.log('data', data);
                     $('#data').empty();
                     $('#data').html("<b>當期</b>" + JSON.stringify(JSON.parse(data["now"]), undefined, 3) + "<br/><b>前期</b>" + JSON.stringify(JSON.parse(data["past"]), undefined, 3));
-
+                    location.href='{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}'
                     {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
                 },
                 error: function(error) {
@@ -401,109 +391,6 @@
         });
         $('.disdetail_thou_total').val(parseInt(new_total).toLocaleString());
     }
-
-    var json = '[' +
-        '{' +
-        '"text": "資產",' +
-        '"icon": "fa fa-inbox",' +
-        '"nodes": [' +
-
-
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}, ' +
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}' +
-        ']' +
-        '},' +
-
-
-
-
-        '{' +
-        '"text": "負債",' +
-        '"icon": "fa fa-inbox",' +
-        '"nodes": [' +
-
-
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}, ' +
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}' +
-        ']' +
-        '},' +
-
-        '{' +
-        '"text": "權益",' +
-        '"icon": "fa fa-inbox",' +
-        '"nodes": [' +
-
-
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}, ' +
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}' +
-        ']' +
-        '},' +
-
-        '{' +
-        '"text": "損益",' +
-        '"icon": "fa fa-inbox",' +
-        '"nodes": [' +
-
-
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}, ' +
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}' +
-        ']' +
-        '},' +
-
-        '{' +
-        '"text": "其他",' +
-        '"icon": "fa fa-inbox",' +
-        '"nodes": [' +
-
-
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}, ' +
-
-        '{' +
-        '"icon": "fa fa-inbox",' +
-        '"text": "Others"' +
-        '}' +
-        ']' +
-        '}' +
-        ']';
-
-    $('#tree').bstreeview({ data: json });
-
  </script>
 </body>
 </html>

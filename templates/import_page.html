@@ -58,6 +58,10 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true">附註格式</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                               aria-disabled="true">附註格式(前期比較)</a>
+                        </li>
                     </ul>
                     <form class="form-inline my-2 my-lg-0">
                         <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">

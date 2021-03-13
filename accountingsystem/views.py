@@ -1059,8 +1059,6 @@ def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
         # TODO 若是資料庫中已有前期比較資料，則需要先刪除。
         current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision(base_period, rpt_id, acc_id, rpt_type, comp_id)
         print('after ajax..')
-        print('current >>> ', current_disdetails_ver2)
-        print('previous >>> ', previous_disdetails_ver2)
         return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})    
 
 @csrf_exempt
@@ -1073,8 +1071,6 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # 呼叫 search_previous_comparision
         current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
-        print('>>>now:', current_disdetails_ver2.values())
-        print('>>>past:', previous_disdetails_ver2.values())
         if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
