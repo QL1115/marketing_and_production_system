@@ -554,8 +554,8 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
                             'disclosure_id_list': level_1_disclosure_list
                         })
                         level_1_disclosure_list = []
-                # print('disdetail_qry_set:', disdetail_qry_set)
-                # print('disclosure_qry_set:', disclosure_qry_set)
+                print('disdetail_qry_set:', disdetail_qry_set)
+                print('disclosure_qry_set:', disclosure_qry_set)
                 # print('disdetail_editor:', disdetail_editor)
             else:
                 msg = uploadFile.get('msg')
