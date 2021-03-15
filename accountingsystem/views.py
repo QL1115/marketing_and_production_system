@@ -660,6 +660,31 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
         else:
             i = i.values()[0][amt]
         return i
+    def check_null_or_not_for_target(i,target_id):
+        if not i:
+            i = 0
+        else:
+            i = i.values()[0][target_id]
+        return i
+    def set_total_adj_amt(list,total_adj_amt):
+        a = 0
+        while a < len(list):
+            j = a + 1
+            while j < len(list):
+                if list[a]['com'] == list[j]['target'] and list[a]['amt'] ==-list[j]['amt']:
+                    total_adj_amt=total_adj_amt+(-abs(list[a]['amt']))
+                    del list[j]
+                    del list[a]
+                else:
+                    j += 1
+            a += 1
+    def set_reltrx_list(dict,com,target,adj_amt,list):
+            dict['com'] =com
+            dict['target']= target
+            dict['amt']= adj_amt
+            if dict['target']!=0:
+                list.append(dict)
+            print(list,'list')
 
     # 撈日期
     start_date = Report.objects.filter(rpt_id=rpt_id).values()[0]['start_date']
@@ -681,6 +706,11 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
     total_adj_amt_foreign_currency_deposit = 0  # 外匯存款adj_amt
     total_adj_amt_currency_cd = 0  # 原幣定存adj_amt
     total_adj_amt_foreign_currency_cd = 0  # 外幣定存adj_amts
+    rel_demand_deposit_list=[]#合併沖銷 活期存款關係人交易list
+    rel_check_deposit_list = []#合併沖銷 支票存款關係人交易list
+    rel_foreign_currency_deposit_list = []#合併沖銷 外匯存款關係人交易list
+    rel_currency_cd_list = []#合併沖銷 原幣定存關係人交易list
+    rel_foreign_currency_cd_list = []#合併沖銷 外幣定存關係人交易list
     # 先撈舊報表的
     # 撈出母公司所屬的集團
     group_id = Company.objects.filter(com_id=comp_id).values()[0]['grp_id']
@@ -772,31 +802,52 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
         # 再撈出關係人交易
         adj_amt_demand_deposit = Reltrx.objects.filter(pre=pre_id_demand_deposit)
         adj_amt_demand_deposit = check_null_or_not(adj_amt_demand_deposit, 'related_amt')
-        total_adj_amt_demand_deposit = total_adj_amt_demand_deposit + adj_amt_demand_deposit
+        target_demand_deposit = Reltrx.objects.filter(pre=pre_id_demand_deposit)
+        target_demand_deposit = check_null_or_not_for_target(target_demand_deposit, 'target_id')
+        adj_amt_demand_deposit_dict={}
+        set_reltrx_list(adj_amt_demand_deposit_dict,i.com_id,target_demand_deposit,adj_amt_demand_deposit,rel_demand_deposit_list)
         # 撈支票存款pre_id acc_id=14
         pre_id_check_deposit = Preamt.objects.filter(rpt=report_id).filter(acc=14).values()[0]['pre_id']
         # 再撈出關係人交易
         adj_amt_check_deposit = Reltrx.objects.filter(pre=pre_id_check_deposit)
         adj_amt_check_deposit = check_null_or_not(adj_amt_check_deposit, 'related_amt')
-        total_adj_amt_check_deposit = total_adj_amt_check_deposit + adj_amt_check_deposit
+        target_check_deposit = Reltrx.objects.filter(pre=pre_id_check_deposit)
+        target_check_deposit = check_null_or_not_for_target(target_check_deposit, 'target_id')
+        adj_amt_check_deposit_dict={}
+        set_reltrx_list(adj_amt_check_deposit_dict,i.com_id,target_check_deposit,adj_amt_check_deposit,rel_check_deposit_list)
         # 撈外匯存款pre_id acc_id=17
         pre_id_foreign_currency_deposit = Preamt.objects.filter(rpt=report_id).filter(acc=17).values()[0]['pre_id']
         # 再撈出關係人交易
         adj_amt_foreign_currency_deposit = Reltrx.objects.filter(pre=pre_id_foreign_currency_deposit)
         adj_amt_foreign_currency_deposit = check_null_or_not(adj_amt_foreign_currency_deposit, 'related_amt')
-        total_adj_amt_foreign_currency_deposit = total_adj_amt_foreign_currency_deposit + adj_amt_foreign_currency_deposit
+        target_foreign_currency_deposit = Reltrx.objects.filter(pre=pre_id_foreign_currency_deposit)
+        target_foreign_currency_deposit = check_null_or_not_for_target(target_foreign_currency_deposit, 'target_id')
+        adj_amt_foreign_currency_deposit_dict={}
+        set_reltrx_list(adj_amt_foreign_currency_deposit_dict,i.com_id,target_foreign_currency_deposit,adj_amt_foreign_currency_deposit,rel_foreign_currency_deposit_list)
         # 撈原幣定存pre_id acc_id=21
         pre_id_currency_cd = Preamt.objects.filter(rpt=report_id).filter(acc=21).values()[0]['pre_id']
         # 再撈出關係人交易
         adj_amt_currency_cd = Reltrx.objects.filter(pre=pre_id_currency_cd)
         adj_amt_currency_cd = check_null_or_not(adj_amt_currency_cd, 'related_amt')
-        total_adj_amt_currency_cd = total_adj_amt_currency_cd + adj_amt_currency_cd
+        target_currency_cd = Reltrx.objects.filter(pre=pre_id_currency_cd)
+        target_currency_cd = check_null_or_not_for_target(target_currency_cd, 'target_id')
+        adj_amt_currency_cd_dict={}
+        set_reltrx_list(adj_amt_currency_cd_dict,i.com_id,target_currency_cd,adj_amt_currency_cd,rel_currency_cd_list)
         # 撈外幣定存pre_id acc_id=22
         pre_id_foreign_currency_cd = Preamt.objects.filter(rpt=report_id).filter(acc=22).values()[0]['pre_id']
         # 再撈出關係人交易
         adj_amt_foreign_currency_cd = Reltrx.objects.filter(pre=pre_id_foreign_currency_cd)
         adj_amt_foreign_currency_cd = check_null_or_not(adj_amt_foreign_currency_cd, 'related_amt')
-        total_adj_amt_foreign_currency_cd = total_adj_amt_foreign_currency_cd + adj_amt_foreign_currency_cd
+        target_foreign_currency_cd = Reltrx.objects.filter(pre=pre_id_foreign_currency_cd)
+        target_foreign_currency_cd = check_null_or_not_for_target(target_foreign_currency_cd, 'target_id')
+        adj_amt_foreign_currency_cd_dict={}
+        set_reltrx_list(adj_amt_foreign_currency_cd_dict,i.com_id,target_foreign_currency_cd,adj_amt_foreign_currency_cd,rel_foreign_currency_cd_list)
+
+    set_total_adj_amt(rel_demand_deposit_list,total_adj_amt_demand_deposit)
+    set_total_adj_amt(rel_check_deposit_list,total_adj_amt_check_deposit)
+    set_total_adj_amt(rel_foreign_currency_deposit_list,total_adj_amt_foreign_currency_deposit)
+    set_total_adj_amt(rel_currency_cd_list,total_adj_amt_currency_cd)
+    set_total_adj_amt(rel_foreign_currency_cd_list,total_adj_amt_foreign_currency_cd)
     demand_deposit_list.append(total_book_amt_demand_deposit)
     demand_deposit_list.append(total_adj_amt_demand_deposit)
     demand_deposit_list.append(total_book_amt_demand_deposit + total_adj_amt_demand_deposit)
@@ -818,7 +869,12 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
                    'demand_deposit_list': demand_deposit_list,
                    'check_deposit_list': check_deposit_list,
                    'foreign_currency_deposit_list': foreign_currency_deposit_list,
-                   'currency_cd_list': currency_cd_list, 'foreign_currency_cd_list': foreign_currency_cd_list})
+                   'currency_cd_list': currency_cd_list, 'foreign_currency_cd_list': foreign_currency_cd_list,
+                   'rel_demand_deposit_list':json.dumps(rel_demand_deposit_list),
+                   'rel_check_deposit_list':json.dumps(rel_check_deposit_list),
+                   'rel_foreign_currency_deposit_list':json.dumps(rel_foreign_currency_deposit_list),
+                   'rel_currency_cd_list':json.dumps(rel_currency_cd_list),
+                   'rel_foreign_currency_cd_list':json.dumps(rel_foreign_currency_cd_list),})
 
 
 @csrf_exempt
@@ -1027,7 +1083,7 @@ def get_consolidated_disclosure_page(request, comp_id, rpt_id):
 def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
     rpt_type = '合併'
     if request.method == 'GET':
-        acc_id = Account.objects.get(acc_name=acc_name, acc_level=3).acc_id
+        acc_id = 1 # Default進來會顯示現金及約當現金的附註格式
         ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
         # 呼叫 search_previous_comparision
         current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
