@@ -176,29 +176,29 @@
         
         if (rel_demand_deposit_list.length>0){
             for (var step = 0; step < rel_demand_deposit_list.length; step++) { 
-                console.log("!")
-                rel_error_alert=rel_error_alert+"活期存款的關係人交易於公司編號"+rel_demand_deposit_list[step].com+"有誤\n"; 
+                console.log("!");
+                rel_error_alert=rel_error_alert+"活期存款的關係人交易於公司編號"+rel_demand_deposit_list[step].com+"中，多出與公司編號"+rel_demand_deposit_list[step].target+"的交易一筆\n";
         }};
 
         if (rel_check_deposit_list.length>0){
             for (var step = 0; step < rel_check_deposit_list.length; step++) {
-                rel_error_alert=rel_error_alert+"支票存款的關係人交易於公司編號"+rel_check_deposit_list[step].com+"有誤\n"; 
+                rel_error_alert=rel_error_alert+"支票存款的關係人交易於公司編號"+rel_check_deposit_list[step].com+"中，多出與公司編號"+rel_check_deposit_list[step].target+"的交易一筆\n";
         }};
 
         if (rel_foreign_currency_deposit_list.length>0){
             console.log("?")
             for (var step = 0; step < rel_foreign_currency_deposit_list.length; step++) { 
-                rel_error_alert=rel_error_alert+"外匯存款的關係人交易於公司編號"+rel_foreign_currency_deposit_list[step].com+"有誤\n"; 
+                rel_error_alert=rel_error_alert+"支票存款的關係人交易於公司編號"+rel_foreign_currency_deposit_list[step].com+"中，多出與公司編號"+rel_foreign_currency_deposit_list[step].target+"的交易一筆\n";
         }};
 
         if (rel_currency_cd_list.length>0){
             for (var step = 0; step < rel_currency_cd_list.length; step++) { 
-                rel_error_alert=rel_error_alert+"原幣定存的關係人交易於公司編號"+rel_currency_cd_list[step].com+"有誤\n"; 
+                rel_error_alert=rel_error_alert+"支票存款的關係人交易於公司編號"+rel_currency_cd_list[step].com+"中，多出與公司編號"+rel_currency_cd_list[step].target+"的交易一筆\n";
         }};
 
         if (rel_foreign_currency_cd_list.length>0){
             for (var step = 0; step < rel_foreign_currency_cd_list.length; step++) { 
-                rel_error_alert=rel_error_alert+"外幣定存的關係人交易於公司編號"+rel_foreign_currency_cd_list[step].com+"有誤\n"; 
+                rel_error_alert=rel_error_alert+"支票存款的關係人交易於公司編號"+rel_foreign_currency_cd_list[step].com+"中，多出與公司編號"+rel_foreign_currency_cd_list[step].target+"的交易一筆\n";
         }};
 
         if (rel_error_alert.length != 0){

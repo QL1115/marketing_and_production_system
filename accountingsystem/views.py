@@ -678,6 +678,7 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
                 else:
                     j += 1
             a += 1
+        return total_adj_amt
     def set_reltrx_list(dict,com,target,adj_amt,list):
             dict['com'] =com
             dict['target']= target
@@ -842,12 +843,13 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
         target_foreign_currency_cd = check_null_or_not_for_target(target_foreign_currency_cd, 'target_id')
         adj_amt_foreign_currency_cd_dict={}
         set_reltrx_list(adj_amt_foreign_currency_cd_dict,i.com_id,target_foreign_currency_cd,adj_amt_foreign_currency_cd,rel_foreign_currency_cd_list)
-
-    set_total_adj_amt(rel_demand_deposit_list,total_adj_amt_demand_deposit)
-    set_total_adj_amt(rel_check_deposit_list,total_adj_amt_check_deposit)
-    set_total_adj_amt(rel_foreign_currency_deposit_list,total_adj_amt_foreign_currency_deposit)
-    set_total_adj_amt(rel_currency_cd_list,total_adj_amt_currency_cd)
-    set_total_adj_amt(rel_foreign_currency_cd_list,total_adj_amt_foreign_currency_cd)
+    
+    total_adj_amt_demand_deposit=set_total_adj_amt(rel_demand_deposit_list,total_adj_amt_demand_deposit)
+    print('!',total_adj_amt_demand_deposit)
+    total_adj_amt_check_deposit=set_total_adj_amt(rel_check_deposit_list,total_adj_amt_check_deposit)
+    total_adj_amt_foreign_currency_deposit=set_total_adj_amt(rel_foreign_currency_deposit_list,total_adj_amt_foreign_currency_deposit)
+    total_adj_amt_currency_cd=set_total_adj_amt(rel_currency_cd_list,total_adj_amt_currency_cd)
+    total_adj_amt_foreign_currency_cd=set_total_adj_amt(rel_foreign_currency_cd_list,total_adj_amt_foreign_currency_cd)
     demand_deposit_list.append(total_book_amt_demand_deposit)
     demand_deposit_list.append(total_adj_amt_demand_deposit)
     demand_deposit_list.append(total_book_amt_demand_deposit + total_adj_amt_demand_deposit)
