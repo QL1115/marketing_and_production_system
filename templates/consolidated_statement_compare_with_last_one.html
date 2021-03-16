@@ -61,9 +61,9 @@
             <div class="col-sm-8" id="cash_title">現金及約當現金</div>
             <div class="col-sm-8" id="property_title" style="display:none">不動產</div>
             <div class="col-sm-2">
-                <select id="selectId" onchange="ShowSelectValue()" >
+                <select id="selectId" >
                     <option value="0">現金及約當現金</option>
-                    <option value="1">不動產</option>
+                    <option value="1">其他流動資產</option>
                     <option value="2">c</option>
                 </select>
             </div>
@@ -191,19 +191,161 @@
                 </div>
             </div>
         </div>
-
-        <div id=property style="display:none">
-            <p>hi</p>
-        </div>
     </div>
 
 
 
 <script type="text/javascript">
-    $(document).ready(function() {
-        console.log(Math.round(1657272.4999999).toLocaleString());
-        $('#cash_title').val($('#selectId').find('option:selected').text());
+    $(document).ready(function() {        
+        {# 計算前期、本期、前期(千元)、前期(千元)總和 #}
+        SumTotalRowAmt();
         
+        {# 千元表達總和與本期總和轉為千元後須一致 #}
+        CheckIfValid();
+        
+        {# 編輯按鈕 #}
+        $('#Edit').on('click', function () {
+            console.log('in')
+            $('#save').prop('disabled', false)
+            $('#Edit').prop('disabled', true)
+                $("input[name='disdetail_rowamt']").prop("disabled", false)
+                $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false)
+
+        });
+        
+        {# 確定按鈕 #}
+        $('#save').on('click', function (event) {
+            FreshTotal()
+            event.preventDefault()
+            msg = '';
+            <!-- $("input[name='disdetail_rowamt']").prop("disabled", 'disabled') -->
+            <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled') -->
+
+
+            var returnArr = []
+            var temp_total = 0
+            var total_disdetail_in_thou = parseInt($("input[name='total_disdetail_in_thou']").val()); <!-- 原始row_amt總和四捨五入後應為的千元表示總和 -->
+            $("input[name='disdetail_rowamt']").each(function() {
+                var id = $(this).attr('disdetail_id');
+                var row_amt = parseInt($(this).val().replaceAll(',', ''));
+                returnArr.push({'id':id, 'row_amt_in_thou': row_amt});
+                temp_total = temp_total + row_amt;
+            });
+            <!-- 總和一致才進行更新 -->
+            if (temp_total === total_disdetail_in_thou) {
+                var postData = returnArr
+                console.log(returnArr);
+                $.ajax({
+                        url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
+                        dataType: "json",
+                        contentType: 'application/json',
+                        data: JSON.stringify(postData),
+                        type:"POST",
+                        success: function (response) {
+                            console.log('ajax success');
+                            $("input[name='disdetail_total_rowamt']").css("color", "black");
+                            alert("成功更新千元表示。");
+                            <!-- 成功更新才把button/input設為disabled -->
+                            $('#save').prop('disabled', true);
+                            $('#Edit').prop('disabled', false);
+                            $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
+                        }, error: function (error) {
+                            alert('Error. 更新千元表示失敗。');
+                            console.log(error);
+                        }
+                    });
+            } else {  <!-- 總和有差異，提醒使用者 -->
+                alert("千元表示總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
+            }
+        });
+
+        {# 使用者選擇 「當期」#}
+        $('#now_period_btn').on('click', function(e) {
+            var data={}
+            data['base_period']='now';
+            data['acc_name']=$('#selectId').find('option:selected').text();
+            $.ajax({
+                dataType: "json",
+                contentType: 'application/json',
+                type: "POST",
+                url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
+                data: JSON.stringify(data),
+                success: function(data) {
+                    InsertIntoHTML(data); <!-- 將後端回傳的data塞回HTML -->
+                    SumTotalRowAmt();     <!-- 計算row_amt/row_amt_in_thou總和 -->
+                    CheckIfValid();       <!-- 檢查千元表示的總和是否與原始row_amt的總和一致 -->
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
+        });
+
+        {# 使用者選擇 「前期」#}
+        $('#past_period_btn').on('click', function(e) {
+            var data={}
+            data['base_period']='past';
+            data['acc_name']=$('#selectId').find('option:selected').text();
+            $.ajax({
+                dataType: "json",
+                contentType: 'application/json',
+                type: "POST",
+                url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
+                data: JSON.stringify(data),
+                success: function(data) {
+                    <!-- JSON.parse(data["now"]).forEach(function(item){ -->
+                        <!-- console.log(item.fields.row_amt); -->
+                    <!-- }); -->                  
+                    InsertIntoHTML(data); <!-- 將後端回傳的data塞回HTML -->
+                    SumTotalRowAmt();     <!-- 計算row_amt/row_amt_in_thou總和 -->
+                    CheckIfValid();       <!-- 檢查千元表示的總和是否與原始row_amt的總和一致 -->
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
+        });
+        
+        {# 科目下拉選單 #}
+        $("#selectId").change(function(){
+                var acc_name=$('#selectId').find('option:selected').text();
+                var testVar = 'changeAcc';
+                $.ajax({
+                    url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
+                    data: { "acc_name": acc_name, "ajax_type": testVar},
+                    type:"POST",
+                    success: function (data) {
+                        console.log('ajax success');
+                        InsertIntoHTML(data);
+                        SumTotalRowAmt();
+                        CheckIfValid();
+                    }, error: function (error) {
+                        alert('Error to get datasource!');
+                        console.log(error);
+                    }
+                });
+            });
+    })
+
+    function GetSelectValue(obj) {
+        var selectObj = document.getElementById(obj);
+        return selectObj.options[selectObj.options.selectedIndex].value;
+    }
+    
+    function FreshTotal() {
+        var new_total = 0;
+        $('.now_disdetail_thou').each(function() {
+            new_total = new_total + parseInt($(this).val().replaceAll(',', ''));
+        });
+        $('.now_disdetail_thou_total').val(parseInt(new_total).toLocaleString());
+        if ($("input[name='disdetail_total_rowamt']").val().replaceAll(',', '') === $("input[name='total_disdetail_in_thou']").val()){
+            $("input[name='disdetail_total_rowamt']").css("color", "black");
+        } else {
+            $("input[name='disdetail_total_rowamt']").css("color", "red");
+        }
+    }
+    
+    function SumTotalRowAmt() {
         {# 計算前期、本期、前期(千元)、前期(千元)總和: 開始 #}
         var disdetail_total = 0;
         $('.now_disdetail').each(function(){
@@ -239,272 +381,138 @@
         }else{
             $("input[name='total_disdetail_in_thou']").val(Math.ceil(amt/1000));
         };
-
-        {# 千元表達總和與本期總合轉為千元後須一致 #}
+    }
+    
+    function CheckIfValid() {
+        {# 千元表達總和與本期總和轉為千元後須一致 #}
         setTimeout(function()
         {
             if ($("input[name='disdetail_total_rowamt']").val().replaceAll(',', '') !== $("input[name='total_disdetail_in_thou']").val()) {
+                $("input[name='disdetail_total_rowamt']").css("color", "red");
                 alert("注意: 當前總和不一致！\n千元表示總和應為" + parseInt($("input[name='total_disdetail_in_thou']").val()).toLocaleString().toString() + "。請手動進行調整。");
-                ("input[name='disdetail_total_rowamt']").val().css("color", "red")
             }
         }, 300);
-        
-        
-        {# 編輯按鈕 #}
-        $('#Edit').on('click', function () {
-            console.log('in')
-            $('#save').prop('disabled', false)
-            $('#Edit').prop('disabled', true)
-                $("input[name='disdetail_rowamt']").prop("disabled", false)
-                $("input[name='total_prior_disdetail_rowamt']").prop("disabled", false)
-
+    }
+    
+    {# 將後端回傳的data塞回HTML #}
+    function InsertIntoHTML(data) {
+        {# 原始row_amt div #}
+        $('#div_for_row_amt').empty();
+        var row_amt_html = '';
+        row_amt_html += '<div class="col-sm" style="padding:0px 0px;">\
+                                           <div class="col-sm">明細資訊(單位:元)</div>';
+        JSON.parse(data["now"]).forEach(function(item){
+            row_amt_html += '<div class="col-sm">\
+                                            {% csrf_token %}\
+                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>'
+                                            +item.fields.row_name+'</div>';
         });
-        {# 確定按鈕 #}
-        $('#save').on('click', function (event) {
-            FreshTotal()
-            event.preventDefault()
-            msg = '';
-            <!-- $("input[name='disdetail_rowamt']").prop("disabled", 'disabled') -->
-            <!-- $("input[name='total_prior_disdetail_rowamt']").prop("disabled", 'disabled') -->
-
-
-            var returnArr = []
-            var temp_total = 0
-            var total_disdetail_in_thou = parseInt($("input[name='total_disdetail_in_thou']").val()); <!-- 原始row_amt總和四捨五入後應為的千元表示總和 -->
-            $("input[name='disdetail_rowamt']").each(function() {
-                var id = $(this).attr('disdetail_id');
-                var row_amt = parseInt($(this).val().replaceAll(',', ''));
-                returnArr.push({'id':id, 'row_amt_in_thou': row_amt});
-                temp_total = temp_total + row_amt;
+        row_amt_html += '<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                            <div class="col-sm">總和</div>\
+                                        </div>\
+                                        <br>\
+                                        <div class="col-sm" style="padding:0px 0px;">\
+                                            <div class="col-sm">{{now_end_date}}</div>';
+        JSON.parse(data["now"]).forEach(function(item){
+            row_amt_html += '<div class="col-sm now_disdetail">\
+                                            {% csrf_token %}\
+                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>'
+                                            +Math.round(item.fields.row_amt).toLocaleString()+'</div>';
+        });
+        row_amt_html += '<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                            <div class="col-sm now_disdetail_total"></div>\
+                                            <input type="hidden" name="total_disdetail_in_thou" />\
+                                        </div>\
+                                        <div class="col-sm" style="padding:0px 0px;">\
+                                            <div class="col-sm">{{past_end_date}}</div>';
+        if (JSON.parse(data["past"]).length!=0){
+            JSON.parse(data["past"]).forEach(function(item){
+                row_amt_html += '<div class="col-sm past_disdetail">\
+                                                {% csrf_token %}\
+                                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>'
+                                                +Math.round(item.fields.row_amt).toLocaleString()+'</div>';
             });
-            <!-- 總和一致才進行更新 -->
-            if (temp_total === total_disdetail_in_thou) {
-                var postData = returnArr
-                console.log(returnArr);
-                $.ajax({
-                        url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
-                        dataType: "json",
-                        contentType: 'application/json',
-                        data: JSON.stringify(postData),
-                        type:"POST",
-                        success: function (response) {
-                            console.log('ajax success');
-                            alert("成功更新千元表示。");
-                            <!-- 成功更新才把button/input設為disabled -->
-                            $('#save').prop('disabled', true);
-                            $('#Edit').prop('disabled', false);
-                            $("input[name='disdetail_rowamt']").prop("disabled", 'disabled')
-                        }, error: function (error) {
-                            alert('Error. 更新千元表示失敗。');
-                            console.log(error);
-                        }
-                    });
-            } else {  <!-- 總和有差異，提醒使用者 -->
-                alert("千元表示總和應為 " + parseInt(total_disdetail_in_thou).toLocaleString().toString() + "。\n調整後的總和不正確，請手動調整。");
+        } else {
+            JSON.parse(data["past"]).forEach(function(item){
+                row_amt_html += '<div class="col-sm">\
+                                                {% csrf_token %}\
+                                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                --\
+                                            </div>';
+            });
+        }
+        row_amt_html += '<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                      <div class="col-sm past_disdetail_total">--</div>\
+                                  </div>';
+        $('#div_for_row_amt').html(row_amt_html);
+        
+        {# 千元表示div #}
+        $('#div_for_row_amt_in_thou').empty();
+        var row_amt_in_thou_html = '';
+        row_amt_in_thou_html += '<div class="col-sm" style="padding:0px 0px;">\
+                                                    <div class="col-sm">明細資訊(單位:千元)</div>';
+        JSON.parse(data["now"]).forEach(function(item){
+            row_amt_in_thou_html += '<div class="col-sm">\
+                                                {% csrf_token %}\
+                                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                <input class="custom_input" type="text"  value="'+item.fields.row_name+'" disabled /></div>';
+        });
+        row_amt_in_thou_html += '<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                            <div class="col-sm">總和</div>\
+                                        </div>\
+                                         <div class="col-sm" style="padding:0px 0px;">\
+                                            <div class="col-sm">{{now_end_date}}</div>';
+        JSON.parse(data["now"]).forEach(function(item){
+            if (item.fields.row_amt_in_thou != null) {
+                row_amt_in_thou_html += '<div class="col-sm">\
+                                                {% csrf_token %}\
+                                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                    <input type="text" class="now_disdetail_thou" name="disdetail_rowamt" disdetail_id="'+item.pk+'" value="'+Math.round(item.fields.row_amt_in_thou).toLocaleString()+'" onchange="FreshTotal()" disabled required/>\
+                                            </div>';
+            } else {
+                row_amt_in_thou_html += '<div class="col-sm">\
+                                                {% csrf_token %}\
+                                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                    <input class="custom_input" type="text"  value="--" disabled />\
+                                            </div>';
             }
         });
-
-        {# 使用者選擇 「當期」#}
-        $('#now_period_btn').on('click', function(e) {
-            var data={}
-            data['base_period']='now';
-            data['acc_name']=$('#selectId').find('option:selected').text();
-            $.ajax({
-                dataType: "json",
-                contentType: 'application/json',
-                type: "POST",
-                url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
-                data: JSON.stringify(data),
-                success: function(data) {
-                    console.log('data', data);
-                    console.log(JSON.parse(data["past"]).length);
-                    if (JSON.parse(data["past"]).length!=0){
-                        console.log('not zerooooooo');
-                    }
-                    <!-- $('#data').empty(); -->
-                    <!-- $('#data').html("<b>當期</b>" + JSON.stringify(JSON.parse(data["now"]), undefined, 3) + "<br/><b>前期</b>" + JSON.stringify(JSON.parse(data["past"]), undefined, 3)); -->
-                    <!-- location.href='{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}' -->
-                    {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
-                },
-                error: function(error) {
-                    alert(error);
+        row_amt_in_thou_html += '<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                            <div class="col-sm"><input class="custom_input now_disdetail_thou_total" type="text" name="disdetail_total_rowamt" disabled /></div>\
+                                        </div>\
+                                        <div class="col-sm" style="padding:0px 0px;">\
+                                            <div class="col-sm">{{past_end_date}}</div>';
+        if (JSON.parse(data["past"]).length!=0){
+            JSON.parse(data["past"]).forEach(function(item){
+                if (item.fields.row_amt_in_thou != null) {
+                    row_amt_in_thou_html += '<div class="col-sm">\
+                                                        {% csrf_token %}\
+                                                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                            <input class="custom_input past_disdetail_thou" type="text" name="prior_disdetail_rowamt" value="'+Math.round(item.fields.row_amt_in_thou).toLocaleString()+'" disabled />\
+                                                    </div>';
+                } else {
+                    row_amt_in_thou_html += '<div class="col-sm">\
+                                                        {% csrf_token %}\
+                                                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                            <input class="custom_input" type="text"  value="--" disabled />\
+                                                    </div>';
                 }
+           });
+        } else {
+            JSON.parse(data["past"]).forEach(function(item){
+                row_amt_in_thou_html += '<div class="col-sm">\
+                                                    {% csrf_token %}\
+                                                    <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+                                                    <input class="custom_input" type="text"  value="--" disabled />\
+                                                </div>';
             });
-        });
-
-        {# 使用者選擇 「前期」#}
-        $('#past_period_btn').on('click', function(e) {
-            var data={}
-            data['base_period']='past';
-            data['acc_name']=$('#selectId').find('option:selected').text();
-            $.ajax({
-                dataType: "json",
-                contentType: 'application/json',
-                type: "POST",
-                url: "{% url 'compare_with_last_consolidated_statement' comp_id=comp_id rpt_id=rpt_id %}",
-                data: JSON.stringify(data),
-                success: function(data) {
-                    JSON.parse(data["now"]).forEach(function(item){
-                        console.log(item.fields.row_amt);
-                    });
-                    console.log('doneeee');
-                    console.log(JSON.parse(data["now"]));
-                    {# 原始row_amt div #}
-                    $('#div_for_row_amt').empty();
-                    $('#div_for_row_amt').append('<div class="col-sm" style="padding:0px 0px;">\
-                                                       <div class="col-sm">明細資訊(單位:元)</div>');
-                    JSON.parse(data["now"]).forEach(function(item){
-                        $('#div_for_row_amt').append('<div class="col-sm">\
-                                                        {% csrf_token %}\
-                                                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>'
-                                                        +item.fields.row_name+'</div>');
-                    });
-                    $('#div_for_row_amt').append('<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                        <div class="col-sm">總和</div>\
-                                                    </div>\
-                                                    <br>\
-                                                    <div class="col-sm" style="padding:0px 0px;">\
-                                                        <div class="col-sm">"{{now_end_date}}"</div>');
-                    JSON.parse(data["now"]).forEach(function(item){
-                        $('#div_for_row_amt').append('<div class="col-sm now_disdetail">\
-                                                        {% csrf_token %}\
-                                                        <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>'
-                                                        +Math.round(item.fields.row_amt).toLocaleString()+'</div>');
-                    });
-                    $('#div_for_row_amt').append('<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                        <div class="col-sm now_disdetail_total"></div>\
-                                                        <input type="hidden" name="total_disdetail_in_thou" />\
-                                                    </div>\
-                                                    <div class="col-sm" style="padding:0px 0px;">\
-                                                        <div class="col-sm">"{{past_end_date}}"</div>');
-                    if (JSON.parse(data["past"]).length!=0){
-                        JSON.parse(data["past"]).forEach(function(item){
-                            $('#div_for_row_amt').append('<div class="col-sm past_disdetail">\
-                                                            {% csrf_token %}\
-                                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>'
-                                                            +Math.round(item.fields.row_amt).toLocaleString()+'</div>');
-                        });
-                    } else {
-                        JSON.parse(data["past"]).forEach(function(item){
-                            $('#div_for_row_amt').append('<div class="col-sm">\
-                                                            {% csrf_token %}\
-                                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                            --\
-                                                        </div>');
-                        });
-                    }
-                    $('#div_for_row_amt').append('<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                  <div class="col-sm past_disdetail_total">--</div>\
-                                              </div>');
-                    {# 千元表示div #}
-                    $('#div_for_row_amt_in_thou').empty();
-                    $('#div_for_row_amt_in_thou').append('<div class="row" id="div_for_row_amt_in_thou">\
-                                                            <div class="col-sm" style="padding:0px 0px;">\
-                                                                <div class="col-sm">明細資訊(單位:千元)</div>');
-                    JSON.parse(data["now"]).forEach(function(item){
-                        $('#div_for_row_amt_in_thou').append('<div class="col-sm">\
-                                                            {% csrf_token %}\
-                                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                            <input class="custom_input" type="text"  value="'+item.fields.row_name+'" disabled /></div>');
-                    });
-                    $('#div_for_row_amt_in_thou').append('<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                        <div class="col-sm">總和</div>\
-                                                    </div>\
-                                                     <div class="col-sm" style="padding:0px 0px;">\
-                                                        <div class="col-sm">{{now_end_date}}</div>');
-                    JSON.parse(data["now"]).forEach(function(item){
-                        if (item.fields.row_amt_in_thou != null) {
-                            $('#div_for_row_amt_in_thou').append('<div class="col-sm">\
-                                                            {% csrf_token %}\
-                                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                                <input type="text" class="now_disdetail_thou" name="disdetail_rowamt" disdetail_id="'+item.fields.dis_detail_id+'" value="'+Math.round(item.fields.row_amt_in_thou).toLocaleString()+'" onchange="FreshTotal()" disabled required/>\
-                                                        </div>');
-                        } else {
-                            $('#div_for_row_amt_in_thou').append('<div class="col-sm">\
-                                                            {% csrf_token %}\
-                                                            <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                                <input class="custom_input" type="text"  value="--" disabled />\
-                                                        </div>');
-                        }
-                    });
-                    $('#div_for_row_amt_in_thou').append('<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                        <div class="col-sm"><input class="custom_input now_disdetail_thou_total" type="text" name="disdetail_total_rowamt" disabled /></div>\
-                                                    </div>\
-                                                    <div class="col-sm" style="padding:0px 0px;">\
-                                                        <div class="col-sm">{{past_end_date}}</div>');
-                    if (JSON.parse(data["past"]).length!=0){
-                        JSON.parse(data["past"]).forEach(function(item){
-                            if (item.fields.row_amt_in_thou != null) {
-                                $('#div_for_row_amt_in_thou').append('<div class="col-sm">\
-                                                                    {% csrf_token %}\
-                                                                    <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                                        <input class="custom_input past_disdetail_thou" type="text" name="prior_disdetail_rowamt" value="'+Math.round(item.fields.row_amt_in_thou).toLocaleString()+'" disabled />\
-                                                                </div>');
-                            } else {
-                                $('#div_for_row_amt_in_thou').append('<div class="col-sm">\
-                                                                    {% csrf_token %}\
-                                                                    <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                                        <input class="custom_input" type="text"  value="--" disabled />\
-                                                                </div>');
-                            }
-                       });
-                    } else {
-                        JSON.parse(data["past"]).forEach(function(item){
-                            $('#div_for_row_amt_in_thou').append('<div class="col-sm">\
-                                                                {% csrf_token %}\
-                                                                <div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
-                                                                <input class="custom_input" type="text"  value="--" disabled />\
-                                                            </div>');
-                        });
-                    }
-                    $('#div_for_row_amt_in_thou').append('<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
+        }
+        row_amt_in_thou_html += '<div class="adj-row row" style="border-bottom-style: dashed; border-bottom-color: darkgray;"></div>\
                                                             <div class="col-sm">\
                                                                 <input class="custom_input past_disdetail_thou_total" type="text" name="total_prior_disdetail_rowamt" disabled>\
                                                             </div>\
-                                                        </div>');
-                    
-                    <!-- location.href='{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}' -->
-                    {#  TODO 先檢查 status code，再檢查 previous_comparison_exists，最後再取得 comparison_data  #}
-                },
-                error: function(error) {
-                    alert(error);
-                }
-            });
-        });
-    })
-
-    function GetSelectValue(obj) {
-        var selectObj = document.getElementById(obj);
-        return selectObj.options[selectObj.options.selectedIndex].value;
-    }
-
-
-    function ShowSelectValue() {
-        var value = GetSelectValue("selectId");
-        if (value==0) {
-            $("#cash").show();
-            $("#cash_title").show();
-            $("#property").hide();
-            $("#property_title").hide();
-            //alert("1");
-        } else if(value==1) {
-            $("#cash").hide();
-            $("#cash_title").hide();
-            $("#property").show();
-            $("#property_title").show();
-            //alert("2");
-        }else{
-            alert("2");
-        }
-    }
-    
-    
-    function FreshTotal() {
-        var new_total = 0;
-        $('.now_disdetail_thou').each(function() {
-            new_total = new_total + parseInt($(this).val().replaceAll(',', ''));
-        });
-        $('.now_disdetail_thou_total').val(parseInt(new_total).toLocaleString());
+                                                        </div>';
+        $('#div_for_row_amt_in_thou').html(row_amt_in_thou_html);
     }
 </script>
 </body>

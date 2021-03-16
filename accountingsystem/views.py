@@ -21,6 +21,7 @@ from .utils.Entries import create_preamount_and_adjust_entries_for_project_accou
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
     get_uploaded_file
 from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, cal_previous_comparision, search_previous_comparision
+from .utils.Common import normal_round
 from dateutil.relativedelta import relativedelta
 
 
@@ -882,13 +883,6 @@ def get_consolidated_statement_page(request, comp_id, rpt_id):
 @csrf_exempt
 def get_consolidated_disclosure_page(request, comp_id, rpt_id):
     # TODO 根據下拉式選單做改變
-    # 因為round()的進位方式是「四捨六入五成雙」，跟一般的四捨五入不完全相同，故重新定義一個四捨五入的function
-    def normal_round(amt):
-        if amt / 1000 - math.floor(amt / 1000) < 0.5:
-            return math.floor(amt / 1000)
-        else:
-            return math.ceil(amt / 1000)
-
     if request.is_ajax():
         # for合併報表更新附註格式
         if request.method == 'POST':
@@ -1114,7 +1108,37 @@ def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
              "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
              'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
         })
-    elif request.method == 'POST' and request.is_ajax():  # 使用者選擇「當期」或「前期」為主要格式
+    elif request.method == 'POST' and request.is_ajax():
+        if request.POST.get('ajax_type', None) == 'changeAcc': # 代表使用者使用下拉選單選定科目
+            acc_name = request.POST.get('acc_name', '')
+            acc_id = Account.objects.get(acc_name=acc_name, acc_level=3).acc_id
+            ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
+            # 呼叫 search_previous_comparision
+            current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
+            if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
+                print('data in DB')
+                print('current >>> ', current_disdetails_ver2)
+                print('previous >>> ', previous_disdetails_ver2)
+                return render(request, 'consolidated_statement_compare_with_last_one.html', {
+                    'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+                    'previous_comparison_exists': True,
+                     "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
+                     'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
+                })
+            # else:
+                # 若還沒有前期比較，則傳回 previous_comparison_exists: False 提示使用者要選擇以哪一期為基準
+                ## 改動附註格式時只會刪除當期因呈現前期比較而新增的Disdetail/Disclosure，會導致只刪掉version_num為2的
+                ## -> 如果沒有完整的前期比較，就把兩期rpt下version_num為2或3的Disdetail都刪掉
+            current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
+            delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
+            delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
+            current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
+            return render(request, 'consolidated_statement_compare_with_last_one.html', {
+                'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+                'previous_comparison_exists': True,
+                 "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
+                 'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)})
+        
         data = json.loads(request.body)
         if type(data) == list: # 代表不是要調整前期比較格式，而是調整尾差
             id_list = [item['id'] for item in data]
