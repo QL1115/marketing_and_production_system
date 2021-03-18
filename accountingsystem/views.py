@@ -32,48 +32,58 @@ def index(request):
 @require_http_methods(["POST"])
 @csrf_exempt
 def upload_file(request, comp_id, rpt_id, acc_id, table_name):
-    '''上傳銀行存款'''
-    # 1. 檢查檔案類型是否為 excel
-    # 2. 檢查檔案是否僅有1個分頁
-    # 3. 呼叫 check_and_save 方法，進入檢查流程
-    print('upload_file() >>> start')
-    try:
-        # file = request.FILES.('file')
-        file = request.FILES["file"]
-        book = xlrd.open_workbook(file.name, file_contents=file.read())
+    if acc_id==1:
+        '''上傳銀行存款'''
+        # 1. 檢查檔案類型是否為 excel
+        # 2. 檢查檔案是否僅有1個分頁
+        # 3. 呼叫 check_and_save 方法，進入檢查流程
+        print('upload_file() >>> start')
+        try:
+            # file = request.FILES.('file')
+            file = request.FILES["file"]
+            book = xlrd.open_workbook(file.name, file_contents=file.read())
 
-        if book.nsheets != 1:
-            return {"status_code": 422, "msg": "檔案超過一個分頁。", "redirect_url": " "}
-        # TODO 之後可以對上傳的檔案新增更多的基本檢查
+            if book.nsheets != 1:
+                return {"status_code": 422, "msg": "檔案超過一個分頁。", "redirect_url": " "}
+            # TODO 之後可以對上傳的檔案新增更多的基本檢查
 
-        sheet = book.sheets()[0]
-        if table_name == "cash_in_bank":
-            result = check_and_save_cash_in_banks(rpt_id, sheet)
-            return result
-        elif table_name == "deposit_account":
-            result = check_and_save_deposit_account(rpt_id, sheet)
-            return result
-        else:
+            sheet = book.sheets()[0]
+            if table_name == "cash_in_bank":
+                result = check_and_save_cash_in_banks(rpt_id, sheet)
+                return result
+            elif table_name == "deposit_account":
+                result = check_and_save_deposit_account(rpt_id, sheet)
+                return result
+            else:
+                return {"status_code": 500, "msg": "發生不明錯誤。"}
+
+        except Exception as e:
+            print('upload_file exception >>> ', e)
+            # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
             return {"status_code": 500, "msg": "發生不明錯誤。"}
+        return render(request, 'import_page.html', {'acc_id': acc_id})
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
 
-    except Exception as e:
-        print('upload_file exception >>> ', e)
-        # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
-        return {"status_code": 500, "msg": "發生不明錯誤。"}
-    return render(request, 'import_page.html', {'acc_id': acc_id})
 
 
-def get_check_page(request, comp_id, rpt_id, acc_id):
-    table_name = 'cash_in_banks'
-    uploadFile = get_uploaded_file(rpt_id, table_name)
-    cibSummary = 0
-    if uploadFile.get('status_code') == 200:
-        cibData = uploadFile.get('returnObject')
-        for i in cibData:
-            cibSummary += (i.ntd_amount)
-    else:
-        msg = uploadFile.get('msg')
-
+# def get_check_page(request, comp_id, rpt_id, acc_id):
+#     if acc_id==1:
+#         table_name = 'cash_in_banks'
+#         uploadFile = get_uploaded_file(rpt_id, table_name)
+#         cibSummary = 0
+#         if uploadFile.get('status_code') == 200:
+#             cibData = uploadFile.get('returnObject')
+#             for i in cibData:
+#                 cibSummary += (i.ntd_amount)
+#         else:
+#             msg = uploadFile.get('msg')
+#     elif acc_id==2:
+#         pass
 
 # @require_http_methods(["DELETE"])
 @csrf_exempt  # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
@@ -95,6 +105,13 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
 def delete_preamount(rpt_id, acc_id):
     if acc_id == 1:
         delete_cash_preamount(rpt_id)
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
+
 
 
 def delete_cash_preamount(rpt_id):
@@ -153,312 +170,343 @@ def check(rpt_id):
 
 @csrf_exempt
 def get_import_page(request, comp_id, rpt_id, acc_id):
-    if request.method == 'GET':
-        check(rpt_id)
-        count_CashInBank_result = check(rpt_id)[0]
-        count_Depositaccount_result = check(rpt_id)[1]
+    if acc_id==1:
+        if request.method == 'GET':
+            check(rpt_id)
+            count_CashInBank_result = check(rpt_id)[0]
+            count_Depositaccount_result = check(rpt_id)[1]
 
-        return render(request, 'import_page.html', {'acc_id': acc_id,
-                                                    'comp_id': comp_id,
-                                                    'rpt_id': rpt_id,
-                                                    'count_CashInBank_list': [count_CashInBank_result['status_code'],
-                                                                              count_CashInBank_result['msg']],
-                                                    'count_Depositaccount_list': [
-                                                        count_Depositaccount_result['status_code'],
-                                                        count_Depositaccount_result['msg']]
-                                                    })
-    elif request.method == 'POST':
-        table_name = request.POST.get('table_name')
-        result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
-        # print('result >>> ', result)
-        # print(type(result))
-        # print(result['status_code'])
-        # print(type(result['status_code']))
-        check(rpt_id)
-        count_CashInBank_result = check(rpt_id)[0]
-        count_Depositaccount_result = check(rpt_id)[1]
+            return render(request, 'import_page.html', {'acc_id': acc_id,
+                                                        'comp_id': comp_id,
+                                                        'rpt_id': rpt_id,
+                                                        'count_CashInBank_list': [count_CashInBank_result['status_code'],
+                                                                                count_CashInBank_result['msg']],
+                                                        'count_Depositaccount_list': [
+                                                            count_Depositaccount_result['status_code'],
+                                                            count_Depositaccount_result['msg']]
+                                                        })
+        elif request.method == 'POST':
+            table_name = request.POST.get('table_name')
+            result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
+            # print('result >>> ', result)
+            # print(type(result))
+            # print(result['status_code'])
+            # print(type(result['status_code']))
+            check(rpt_id)
+            count_CashInBank_result = check(rpt_id)[0]
+            count_Depositaccount_result = check(rpt_id)[1]
 
-        # 如果兩張表都已經匯入，才進行建立分錄
-        if check(rpt_id)[0]['status_code'] == 123 and check(rpt_id)[1]['status_code'] == 789:
-            # 建立分錄，此method放在utils的Entries中
-            create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+            # 如果兩張表都已經匯入，才進行建立分錄
+            if check(rpt_id)[0]['status_code'] == 123 and check(rpt_id)[1]['status_code'] == 789:
+                # 建立分錄，此method放在utils的Entries中
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
 
-        return render(request, 'import_page.html', {'acc_id': acc_id,
-                                                    'comp_id': comp_id,
-                                                    'rpt_id': rpt_id,
-                                                    'import_related_list': [result['status_code'], result['msg']],
-                                                    'count_CashInBank_list': [count_CashInBank_result['status_code'],
-                                                                              count_CashInBank_result['msg']],
-                                                    'count_Depositaccount_list': [
-                                                        count_Depositaccount_result['status_code'],
-                                                        count_Depositaccount_result['msg']]
-                                                    })
+            return render(request, 'import_page.html', {'acc_id': acc_id,
+                                                        'comp_id': comp_id,
+                                                        'rpt_id': rpt_id,
+                                                        'import_related_list': [result['status_code'], result['msg']],
+                                                        'count_CashInBank_list': [count_CashInBank_result['status_code'],
+                                                                                count_CashInBank_result['msg']],
+                                                        'count_Depositaccount_list': [
+                                                            count_Depositaccount_result['status_code'],
+                                                            count_Depositaccount_result['msg']]
+                                                        })
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
 
 
 def get_check_page(request, comp_id, rpt_id, acc_id):
-    table_name = 'cash_in_banks'
-    uploadFile = get_uploaded_file(rpt_id, table_name)
-    cibSummary = 0
-    cibData = {}
-    if uploadFile.get('status_code') == 200:
-        cibData = uploadFile.get('returnObject')
-        for i in cibData:
-            cibSummary += int(i.ntd_amount)
+    if acc_id==1:
+        table_name = 'cash_in_banks'
+        uploadFile = get_uploaded_file(rpt_id, table_name)
+        cibSummary = 0
+        cibData = {}
+        if uploadFile.get('status_code') == 200:
+            cibData = uploadFile.get('returnObject')
+            for i in cibData:
+                cibSummary += int(i.ntd_amount)
 
-    else:
-        msg = uploadFile.get('msg')
+        else:
+            msg = uploadFile.get('msg')
 
-    table_name = 'deposit_account'
-    uploadFile = get_uploaded_file(rpt_id, table_name)
-    depositSummary = 0
-    if uploadFile.get('status_code') == 200:
-        depositData = uploadFile.get('returnObject')
-        # cauclate summary
+        table_name = 'deposit_account'
+        uploadFile = get_uploaded_file(rpt_id, table_name)
+        depositSummary = 0
+        if uploadFile.get('status_code') == 200:
+            depositData = uploadFile.get('returnObject')
+            # cauclate summary
 
-        for i in depositData:
-            depositSummary += int(i.ntd_amount)
-    else:
-        msg = uploadFile.get('msg')
-        # 這裡要傳errorPage回去嗎
+            for i in depositData:
+                depositSummary += int(i.ntd_amount)
+        else:
+            msg = uploadFile.get('msg')
+            # 這裡要傳errorPage回去嗎
+            return render(request, 'checking_page.html',
+                        {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
         return render(request, 'checking_page.html',
-                      {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
-    return render(request, 'checking_page.html',
-                  {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'cibData': cibData,
-                   'depositData': depositData,
-                   'cibSummary': cibSummary, 'depositSummary': depositSummary})
+                    {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'cibData': cibData,
+                    'depositData': depositData,
+                    'cibSummary': cibSummary, 'depositSummary': depositSummary})
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
+
 
 
 @csrf_exempt
 def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
     # print('request >>> ', request)
-    if request.method == 'POST' and request.is_ajax():
-        # ⚠️ 注意：若是用 Ajax 以 JSON 格式， POST 方式送 data 過來，這裡使用 request.body 來接收並且需要處理一下 json。
-        data = json.loads(request.body)  #
-        # print('unprocessed_data >>>', data)
-        data = data['data']
-        # print('data >>> ', data)
-        # print("data >>> ", data)
-        if table_name == 'cash_in_banks':
-            for cib_row in data:
-                # print('cib_row >>> ', cib_row)
-                form = CashinbanksForm(cib_row)
-                if form.is_valid():
-                    cash_in_banks = Cashinbanks.objects.get(cash_in_banks_id=cib_row.get('id'))
-                    form = CashinbanksForm(cib_row, instance=cash_in_banks)
-                    form.save()
-                else:
-                    return JsonResponse({
-                        'table_name': 'cash_in_banks',
-                        'isUpdated': False
-                    })
-            delete_preamount(rpt_id, acc_id)
-            delete_consolidate_report(comp_id, rpt_id)
-            create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
-            return JsonResponse({
-                'table_name': 'cash_in_banks',
-                'isUpdated': True
-            })
+    if acc_id==1:
+        if request.method == 'POST' and request.is_ajax():
+            # ⚠️ 注意：若是用 Ajax 以 JSON 格式， POST 方式送 data 過來，這裡使用 request.body 來接收並且需要處理一下 json。
+            data = json.loads(request.body)  #
+            # print('unprocessed_data >>>', data)
+            data = data['data']
+            # print('data >>> ', data)
+            # print("data >>> ", data)
+            if table_name == 'cash_in_banks':
+                for cib_row in data:
+                    # print('cib_row >>> ', cib_row)
+                    form = CashinbanksForm(cib_row)
+                    if form.is_valid():
+                        cash_in_banks = Cashinbanks.objects.get(cash_in_banks_id=cib_row.get('id'))
+                        form = CashinbanksForm(cib_row, instance=cash_in_banks)
+                        form.save()
+                    else:
+                        return JsonResponse({
+                            'table_name': 'cash_in_banks',
+                            'isUpdated': False
+                        })
+                delete_preamount(rpt_id, acc_id)
+                delete_consolidate_report(comp_id, rpt_id)
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+                return JsonResponse({
+                    'table_name': 'cash_in_banks',
+                    'isUpdated': True
+                })
 
-        elif table_name == 'deposit_account':
-            for dp_row in data:
-                # print('dp_row >>> ', dp_row)
-                form = DepositAccountForm(dp_row)
-                if form.is_valid():
-                    deposit_account = Depositaccount.objects.get(dep_acc_id=dp_row.get('id'))
-                    form = DepositAccountForm(dp_row, instance=deposit_account)
-                    form.save()
-                else:
-                    return JsonResponse({
-                        'table_name': 'deposit_account',
-                        'isUpdated': False
-                    })
-            delete_preamount(rpt_id, acc_id)
-            delete_consolidate_report(comp_id, rpt_id)
-            create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
-            return JsonResponse({
-                'table_name': 'deposit_account',
-                'isUpdated': True
-            })
+            elif table_name == 'deposit_account':
+                for dp_row in data:
+                    # print('dp_row >>> ', dp_row)
+                    form = DepositAccountForm(dp_row)
+                    if form.is_valid():
+                        deposit_account = Depositaccount.objects.get(dep_acc_id=dp_row.get('id'))
+                        form = DepositAccountForm(dp_row, instance=deposit_account)
+                        form.save()
+                    else:
+                        return JsonResponse({
+                            'table_name': 'deposit_account',
+                            'isUpdated': False
+                        })
+                delete_preamount(rpt_id, acc_id)
+                delete_consolidate_report(comp_id, rpt_id)
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+                return JsonResponse({
+                    'table_name': 'deposit_account',
+                    'isUpdated': True
+                })
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
+
 
 
 def adjust_acc(request, comp_id, rpt_id, acc_id):
-    """定期存款&銀行存款調整頁"""
-    table_name = 'deposit_account'
-    uploadFile = get_uploaded_file(rpt_id, table_name)
-    if uploadFile.get('status_code') == 200:
-        depositData = uploadFile.get('returnObject')
-    else:
-        msg = uploadFile.get('msg')
-        # 這裡要傳errorPage回去嗎
-        return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
-    # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').filter(
-        pre__rpt_id=rpt_id).values('pre__acc__acc_name',
-                                   'amount', 'adj_num',
-                                   'credit_debit',
-                                   'entry_name')
+    if acc_id==1:
+        """定期存款&銀行存款調整頁"""
+        table_name = 'deposit_account'
+        uploadFile = get_uploaded_file(rpt_id, table_name)
+        if uploadFile.get('status_code') == 200:
+            depositData = uploadFile.get('returnObject')
+        else:
+            msg = uploadFile.get('msg')
+            # 這裡要傳errorPage回去嗎
+            return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
+        # 取得分錄(acc_name, amount, adj_num, credit_debit)
+        entries = Adjentry.objects.filter(front_end_location=1).select_related('pre__acc').filter(
+            pre__rpt_id=rpt_id).values('pre__acc__acc_name',
+                                    'amount', 'adj_num',
+                                    'credit_debit',
+                                    'entry_name')
 
-    entryList = []
-    depositEntryList = []
-    depositTotalEntryAmountList = []
-    depositTotalAmount = 0
-    # 先check是否有分錄
-    if len(entries) != 0:
-        adjNum = entries[0].get('adj_num')
-        for entry in entries:
-            # 計算調整總額
-            if entry.get('pre__acc__acc_name') in entry.get(
-                    'entry_name'):  # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
-                # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
-                # 此分頁的分錄若計在借方都為正，計在貸方都為負
-                if entry.get('credit_debit') == 0:
-                    amount = entry.get('amount')
+        entryList = []
+        depositEntryList = []
+        depositTotalEntryAmountList = []
+        depositTotalAmount = 0
+        # 先check是否有分錄
+        if len(entries) != 0:
+            adjNum = entries[0].get('adj_num')
+            for entry in entries:
+                # 計算調整總額
+                if entry.get('pre__acc__acc_name') in entry.get(
+                        'entry_name'):  # entry_name不一定會跟adjentry的科目名稱一樣，目前先用contains的方法判斷(待與學姊確定)
+                    # if entry.get('entry_name') == entry.get('pre__acc__acc_name'):
+                    # 此分頁的分錄若計在借方都為正，計在貸方都為負
+                    if entry.get('credit_debit') == 0:
+                        amount = entry.get('amount')
+                    else:
+                        amount = -1 * entry.get('amount')
+                    depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                    depositTotalAmount += amount
+                # 同一組就丟進entryList
+                if entry.get('adj_num') == adjNum:
+                    entryList.append(entry)
+                # 出現新的adj_num
                 else:
-                    amount = -1 * entry.get('amount')
-                depositTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
-                depositTotalAmount += amount
-            # 同一組就丟進entryList
-            if entry.get('adj_num') == adjNum:
-                entryList.append(entry)
-            # 出現新的adj_num
-            else:
-                # 先把上一組的entryList丟進depositEntryList
-                depositEntryList.append(entryList)
-                # 清空entryList
-                entryList = []
-                entryList.append(entry)
-                adjNum = entry.get('adj_num')
-        # 把最後一組的entryList丟進depositEntryList
-        depositEntryList.append(entryList)
-        # 調整合計
-        if len(depositTotalEntryAmountList) != 0:
-            depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
+                    # 先把上一組的entryList丟進depositEntryList
+                    depositEntryList.append(entryList)
+                    # 清空entryList
+                    entryList = []
+                    entryList.append(entry)
+                    adjNum = entry.get('adj_num')
+            # 把最後一組的entryList丟進depositEntryList
+            depositEntryList.append(entryList)
+            # 調整合計
+            if len(depositTotalEntryAmountList) != 0:
+                depositTotalEntryAmountList.append(['合計數', depositTotalAmount])
 
-    table_name = 'cash_in_banks'
-    uploadFile = get_uploaded_file(rpt_id, table_name)
-    cibData = {}
-    if uploadFile.get('status_code') == 200:
-        cibData = uploadFile.get('returnObject')
-        # 只取外幣金額不為NULL的
-        cibData = cibData.filter(foreign_currency_amount__isnull=False)
-        # 取定期存款外幣金額不為NULL的
-        depositDataInCIBpage = depositData.filter(foreign_currency_amount__isnull=False)
-        # 取得匯率
-        exchangeRate = Exchangerate.objects.filter(rpt_id=rpt_id)
-        rateDict = {}
-        for exchangerate in exchangeRate:
-            rateDict[exchangerate.currency_name] = exchangerate.rate
-        # 計算核算金額、差異
-        cibCalculatedAmountList = []
-        cibDifferenceList = []
-        cibRateList = []
-        for cib in cibData:
-            rate = rateDict.get(cib.currency)
-            cibRateList.append(rate)
-            calculatedAmount = rate * cib.foreign_currency_amount
-            cibCalculatedAmountList.append(calculatedAmount)
-            cibDifferenceList.append(calculatedAmount - cib.ntd_amount)
-        zipForCib = zip(cibData, cibRateList, cibCalculatedAmountList, cibDifferenceList)
+        table_name = 'cash_in_banks'
+        uploadFile = get_uploaded_file(rpt_id, table_name)
+        cibData = {}
+        if uploadFile.get('status_code') == 200:
+            cibData = uploadFile.get('returnObject')
+            # 只取外幣金額不為NULL的
+            cibData = cibData.filter(foreign_currency_amount__isnull=False)
+            # 取定期存款外幣金額不為NULL的
+            depositDataInCIBpage = depositData.filter(foreign_currency_amount__isnull=False)
+            # 取得匯率
+            exchangeRate = Exchangerate.objects.filter(rpt_id=rpt_id)
+            rateDict = {}
+            for exchangerate in exchangeRate:
+                rateDict[exchangerate.currency_name] = exchangerate.rate
+            # 計算核算金額、差異
+            cibCalculatedAmountList = []
+            cibDifferenceList = []
+            cibRateList = []
+            for cib in cibData:
+                rate = rateDict.get(cib.currency)
+                cibRateList.append(rate)
+                calculatedAmount = rate * cib.foreign_currency_amount
+                cibCalculatedAmountList.append(calculatedAmount)
+                cibDifferenceList.append(calculatedAmount - cib.ntd_amount)
+            zipForCib = zip(cibData, cibRateList, cibCalculatedAmountList, cibDifferenceList)
 
-        depAccCalculatedAmountList = []
-        depAccDifferenceList = []
-        depAccRateList = []
-        for depAcc in depositDataInCIBpage:
-            rate = rateDict.get(depAcc.currency)
-            depAccRateList.append(rate)
-            calculatedAmount = rate * depAcc.foreign_currency_amount
-            depAccCalculatedAmountList.append(calculatedAmount)
-            depAccDifferenceList.append(calculatedAmount - depAcc.ntd_amount)
-        zipForDepAcc = zip(depositDataInCIBpage, depAccRateList, depAccCalculatedAmountList, depAccDifferenceList)
-    else:
-        msg = uploadFile.get('msg')
-        return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
+            depAccCalculatedAmountList = []
+            depAccDifferenceList = []
+            depAccRateList = []
+            for depAcc in depositDataInCIBpage:
+                rate = rateDict.get(depAcc.currency)
+                depAccRateList.append(rate)
+                calculatedAmount = rate * depAcc.foreign_currency_amount
+                depAccCalculatedAmountList.append(calculatedAmount)
+                depAccDifferenceList.append(calculatedAmount - depAcc.ntd_amount)
+            zipForDepAcc = zip(depositDataInCIBpage, depAccRateList, depAccCalculatedAmountList, depAccDifferenceList)
+        else:
+            msg = uploadFile.get('msg')
+            return render(request, 'adjust_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
 
-    # 取得分錄(acc_name, amount, adj_num, credit_debit)
-    entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').filter(
-        pre__rpt_id=rpt_id).values('pre__acc__acc_name',
-                                   'amount', 'adj_num',
-                                   'credit_debit',
-                                   'entry_name',
-                                   'front_end_location')
+        # 取得分錄(acc_name, amount, adj_num, credit_debit)
+        entries = Adjentry.objects.filter(front_end_location=2).select_related('pre__acc').filter(
+            pre__rpt_id=rpt_id).values('pre__acc__acc_name',
+                                    'amount', 'adj_num',
+                                    'credit_debit',
+                                    'entry_name',
+                                    'front_end_location')
 
-    entryList = []
-    cibEntryList = []
-    cibTotalEntryAmountList = []
-    cibTotalAmount = 0
-    # 先check是否有分錄
-    if len(entries) != 0:
-        adjNum = entries[0].get('adj_num')
-        for entry in entries:
-            # 計算調整總額
-            # 用contains的方法判斷
-            if (entry.get('pre__acc__acc_name') in entry.get('entry_name')):
-                # 此分頁的分錄若計在借方都為正，計在貸方都為負
-                if entry.get('credit_debit') == 0:
-                    amount = entry.get('amount')
+        entryList = []
+        cibEntryList = []
+        cibTotalEntryAmountList = []
+        cibTotalAmount = 0
+        # 先check是否有分錄
+        if len(entries) != 0:
+            adjNum = entries[0].get('adj_num')
+            for entry in entries:
+                # 計算調整總額
+                # 用contains的方法判斷
+                if (entry.get('pre__acc__acc_name') in entry.get('entry_name')):
+                    # 此分頁的分錄若計在借方都為正，計在貸方都為負
+                    if entry.get('credit_debit') == 0:
+                        amount = entry.get('amount')
+                    else:
+                        amount = -1 * entry.get('amount')
+                    cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
+                    cibTotalAmount += amount
+                # 同一組就丟進entryList
+                if entry.get('adj_num') == adjNum:
+                    entryList.append(entry)
+                # 出現新的adj_num
                 else:
-                    amount = -1 * entry.get('amount')
-                cibTotalEntryAmountList.append([entry.get('pre__acc__acc_name'), amount])
-                cibTotalAmount += amount
-            # 同一組就丟進entryList
-            if entry.get('adj_num') == adjNum:
-                entryList.append(entry)
-            # 出現新的adj_num
-            else:
-                # 先把上一組的entryList丟進cibEntryList
-                cibEntryList.append(entryList)
-                # 清空entryList
-                entryList = []
-                entryList.append(entry)
-                adjNum = entry.get('adj_num')
-        # 把最後一組的entryList丟進cibEntryList
-        cibEntryList.append(entryList)
-        # 差異合計
-        if len(cibTotalEntryAmountList) != 0:
-            cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
+                    # 先把上一組的entryList丟進cibEntryList
+                    cibEntryList.append(entryList)
+                    # 清空entryList
+                    entryList = []
+                    entryList.append(entry)
+                    adjNum = entry.get('adj_num')
+            # 把最後一組的entryList丟進cibEntryList
+            cibEntryList.append(entryList)
+            # 差異合計
+            if len(cibTotalEntryAmountList) != 0:
+                cibTotalEntryAmountList.append(['合計數', cibTotalAmount])
 
-    ############### 單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表
-    # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set: book_amt 非 0 的，科目直接或間接是 acc_id 的子類別的，acc_id 為 23，24，25，26 的
-    preamt_qry_set = Preamt.objects.filter((Q(rpt__rpt_id=rpt_id) & (
-            Q(acc__acc_parent__acc_parent_id=acc_id) | Q(acc__acc_parent__acc_id=acc_id) | Q(
-        acc__acc_id=acc_id) | Q(acc__acc_id__in=[23, 24, 25, 26])))).values('pre_id', 'acc__acc_name', 'book_amt',
-                                                                            'adj_amt', 'pre_amt').order_by('pre_id')
-    # print('preamt_qry_set >>> ', preamt_qry_set)
-    # 得到查詢到的 preamt 的所有 pre_id
-    preamt_id_list = list(preamt_qry_set.values_list('pre_id', flat=True))
-    # print('preamt_id_list >>> ', preamt_id_list)
-    # 使用 pre_id_list 查詢所有符合的 adj_entries_qry_set
-    adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name',
-                                                                                         'credit_debit', 'amount',
-                                                                                         'entry_name',
-                                                                                         'adj_num').order_by('adj_num')
-    # print('調整分錄配對之前的 qry set, adj_entries_qry_set >>> ', adj_entries_qry_set)
-    # 處理調整分錄的配對：[{'credit': [cre_1, cre_2] , 'debit': [debit1, debit2]}, {其他相同的 adj_num 借貸配對}, ...]
-    adj_num_list = list(adj_entries_qry_set.values_list('adj_num', flat=True).distinct())  # 共有幾個不同的 adj_num
-    # print('adj_num_list >>> ', adj_num_list)
-    adj_entries_list = []
+        ############### 單一科目 - 調整頁面 的最後一個：查詢明細資料表和科目調整總表
+        # 使用 rpt_id 和 acc_id 查詢 preamt_qry_set: book_amt 非 0 的，科目直接或間接是 acc_id 的子類別的，acc_id 為 23，24，25，26 的
+        preamt_qry_set = Preamt.objects.filter((Q(rpt__rpt_id=rpt_id) & (
+                Q(acc__acc_parent__acc_parent_id=acc_id) | Q(acc__acc_parent__acc_id=acc_id) | Q(
+            acc__acc_id=acc_id) | Q(acc__acc_id__in=[23, 24, 25, 26])))).values('pre_id', 'acc__acc_name', 'book_amt',
+                                                                                'adj_amt', 'pre_amt').order_by('pre_id')
+        # print('preamt_qry_set >>> ', preamt_qry_set)
+        # 得到查詢到的 preamt 的所有 pre_id
+        preamt_id_list = list(preamt_qry_set.values_list('pre_id', flat=True))
+        # print('preamt_id_list >>> ', preamt_id_list)
+        # 使用 pre_id_list 查詢所有符合的 adj_entries_qry_set
+        adj_entries_qry_set = Adjentry.objects.filter(pre__pre_id__in=preamt_id_list).values('adj_id', 'pre__acc__acc_name',
+                                                                                            'credit_debit', 'amount',
+                                                                                            'entry_name',
+                                                                                            'adj_num').order_by('adj_num')
+        # print('調整分錄配對之前的 qry set, adj_entries_qry_set >>> ', adj_entries_qry_set)
+        # 處理調整分錄的配對：[{'credit': [cre_1, cre_2] , 'debit': [debit1, debit2]}, {其他相同的 adj_num 借貸配對}, ...]
+        adj_num_list = list(adj_entries_qry_set.values_list('adj_num', flat=True).distinct())  # 共有幾個不同的 adj_num
+        # print('adj_num_list >>> ', adj_num_list)
+        adj_entries_list = []
 
-    def filter_set(entry_list, adj_num, credit_debit):
-        def iterator_func(item):
-            # print('item >>> ', item)
-            if item['adj_num'] == adj_num:
-                if bool(item['credit_debit']) == bool(credit_debit):
-                    return True
-            return False
+        def filter_set(entry_list, adj_num, credit_debit):
+            def iterator_func(item):
+                # print('item >>> ', item)
+                if item['adj_num'] == adj_num:
+                    if bool(item['credit_debit']) == bool(credit_debit):
+                        return True
+                return False
 
-        return filter(iterator_func, entry_list)
+            return filter(iterator_func, entry_list)
 
-    for adj_num in adj_num_list:
-        adj_entries_list.append({'credit': list(filter_set(list(adj_entries_qry_set), adj_num, 0)),
-                                 'debit': list(filter_set(list(adj_entries_qry_set), adj_num, 1))})
-    # print('調整分錄配對好後的 list, adj_entries_list >>> ', adj_entries_list)
-    return render(request, 'adjust_page.html',
-                  {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set,
-                   'adj_entries': adj_entries_list,
-                   'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc,
-                   'depositEntryList': depositEntryList,
-                   'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList,
-                   'cibTotalEntryAmountList': cibTotalEntryAmountList})
+        for adj_num in adj_num_list:
+            adj_entries_list.append({'credit': list(filter_set(list(adj_entries_qry_set), adj_num, 0)),
+                                    'debit': list(filter_set(list(adj_entries_qry_set), adj_num, 1))})
+        # print('調整分錄配對好後的 list, adj_entries_list >>> ', adj_entries_list)
+        return render(request, 'adjust_page.html',
+                    {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'preamts': preamt_qry_set,
+                    'adj_entries': adj_entries_list,
+                    'depositData': depositData, 'cibData': zipForCib, 'depositDataInCIB': zipForDepAcc,
+                    'depositEntryList': depositEntryList,
+                    'cibEntryList': cibEntryList, 'depositTotalEntryAmountList': depositTotalEntryAmountList,
+                    'cibTotalEntryAmountList': cibTotalEntryAmountList})
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
+
 
 
 @csrf_exempt
@@ -497,105 +545,112 @@ def get_dashboard_page(request, comp_id):
 
 @csrf_exempt
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
-    """
-    如果 method 是 GET，回傳正確 disclosure 頁面
-    如果 method 是 POST，將傳回的 disclosure 檢查後存進資料庫
-    """
-    # 確認銀行存款和定期存款有被上傳
-    if request.method == 'GET':
-        table_name = 'cash_in_banks'
-        uploadFile = get_uploaded_file(rpt_id, table_name)
-        if uploadFile.get('status_code') == 200:
-            table_name = 'deposit_account'
+    if acc_id==1:
+        """
+        如果 method 是 GET，回傳正確 disclosure 頁面
+        如果 method 是 POST，將傳回的 disclosure 檢查後存進資料庫
+        """
+        # 確認銀行存款和定期存款有被上傳
+        if request.method == 'GET':
+            table_name = 'cash_in_banks'
             uploadFile = get_uploaded_file(rpt_id, table_name)
-            cibData = uploadFile.get('returnObject')
-            # 成功被上傳，找出需回傳的 disdetail 和 disclosure (排除金額為0的)
             if uploadFile.get('status_code') == 200:
-                depositData = uploadFile.get('returnObject')
-                disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
-                disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                    filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name'], version_num=1). \
-                    exclude(row_amt=0). \
-                    values()
-                disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
-                    filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name'], version_num=1). \
-                    exclude(pre_amt=0). \
-                    values('disclosure_id', 'pre_amt',
-                           'pre__acc__acc_name',
-                           'dis_detail__dis_detail_id')
-                # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
-                unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
-                                                    filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0, version_num=1)[
-                                                :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
-                # print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
+                table_name = 'deposit_account'
+                uploadFile = get_uploaded_file(rpt_id, table_name)
+                cibData = uploadFile.get('returnObject')
+                # 成功被上傳，找出需回傳的 disdetail 和 disclosure (排除金額為0的)
+                if uploadFile.get('status_code') == 200:
+                    depositData = uploadFile.get('returnObject')
+                    disname = Account.objects.filter(acc_id=acc_id).values('acc_name')
+                    disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                        filter(dis_title__rpt_id=rpt_id, dis_title__dis_name=disname[0]['acc_name'], version_num=1). \
+                        exclude(row_amt=0). \
+                        values()
+                    disclosure_qry_set = Disclosure.objects.select_related('dis_title__rpt__pre__disclosure'). \
+                        filter(pre__rpt_id=rpt_id, dis_detail__dis_title__dis_name=disname[0]['acc_name'], version_num=1). \
+                        exclude(pre_amt=0). \
+                        values('disclosure_id', 'pre_amt',
+                            'pre__acc__acc_name',
+                            'dis_detail__dis_detail_id')
+                    # 從未被對到的 disdetail 中選出 (disclosure - disdetail) 個。
+                    unspecified_disdetail_qry_set = Disdetail.objects.select_related('rpt__distitle__disdetail'). \
+                                                        filter(dis_title__rpt__rpt_id=rpt_id, row_amt=0, version_num=1)[
+                                                    :(disclosure_qry_set.count() - disdetail_qry_set.count())].values()
+                    # print('unspecified_disdetail_qry_set >>> ', unspecified_disdetail_qry_set)
 
-                # 找出需回傳階層表
-                # 1. 找出 Level 2 科目，和其 Level 1 子科目
-                # 2. Level 1 子科目找出對應的 disclosure
-                # 3. 組成 disdetail_editor
-                disdetail_editor = []
-                level_1_disclosure_list = []
-                level_2_account = Account.objects.filter(acc_parent=acc_id)
-                for account_l2 in level_2_account:
-                    level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
-                    for account_l1 in level_1_account:
-                        if account_l1 is not None:
-                            level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
-                                                                           pre__rpt_id=rpt_id, version_num=1).exclude(pre_amt=0)
-                        for disclosure in level_1_disclosure:
-                            level_1_disclosure_list.append(disclosure.disclosure_id)
-                            # print('level_1_disclosure_list:', level_1_disclosure_list)
-                        else:
+                    # 找出需回傳階層表
+                    # 1. 找出 Level 2 科目，和其 Level 1 子科目
+                    # 2. Level 1 子科目找出對應的 disclosure
+                    # 3. 組成 disdetail_editor
+                    disdetail_editor = []
+                    level_1_disclosure_list = []
+                    level_2_account = Account.objects.filter(acc_parent=acc_id)
+                    for account_l2 in level_2_account:
+                        level_1_account = Account.objects.filter(acc_parent=account_l2.acc_id)
+                        for account_l1 in level_1_account:
+                            if account_l1 is not None:
+                                level_1_disclosure = Disclosure.objects.filter(pre__acc__acc_id=account_l1.acc_id,
+                                                                            pre__rpt_id=rpt_id, version_num=1).exclude(pre_amt=0)
+                            for disclosure in level_1_disclosure:
+                                level_1_disclosure_list.append(disclosure.disclosure_id)
+                                # print('level_1_disclosure_list:', level_1_disclosure_list)
+                            else:
+                                pass
+                        if not level_1_disclosure_list:
                             pass
-                    if not level_1_disclosure_list:
-                        pass
-                    else:
-                        disdetail_editor.append({
-                            'acc_parent_name': account_l2.acc_name,
-                            'disclosure_id_list': level_1_disclosure_list
-                        })
-                        level_1_disclosure_list = []
-                print('disdetail_qry_set:', disdetail_qry_set)
-                print('disclosure_qry_set:', disclosure_qry_set)
-                # print('disdetail_editor:', disdetail_editor)
+                        else:
+                            disdetail_editor.append({
+                                'acc_parent_name': account_l2.acc_name,
+                                'disclosure_id_list': level_1_disclosure_list
+                            })
+                            level_1_disclosure_list = []
+                    print('disdetail_qry_set:', disdetail_qry_set)
+                    print('disclosure_qry_set:', disclosure_qry_set)
+                    # print('disdetail_editor:', disdetail_editor)
+                else:
+                    msg = uploadFile.get('msg')
+                    return render(request, 'disclosure_page.html',
+                                {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
             else:
                 msg = uploadFile.get('msg')
                 return render(request, 'disclosure_page.html',
-                              {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
-        else:
-            msg = uploadFile.get('msg')
+                            {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
             return render(request, 'disclosure_page.html',
-                          {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
-        return render(request, 'disclosure_page.html',
-                      {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
-                       'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor,
-                       'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
+                        {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'disdetail_qry_set': disdetail_qry_set,
+                        'disclosure_qry_set': disclosure_qry_set, 'disdetail_editor': disdetail_editor,
+                        'unspecified_disdetail_qry_set': unspecified_disdetail_qry_set})
 
-    if request.method == 'POST' and request.is_ajax():
-        data = json.loads(request.body)
-        # print('傳的 data:', data)
-        # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
-        # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
-        print(">>>data:", data)
-        try:
-            for disdetail_obj in data:
-                # 更新 disclosure 所關聯的 disdetail
-                disclosures = disdetail_obj['disclosures']
-                total_pre_amt = 0
-                for disclosure in disclosures:
-                    a = Disclosure.objects.filter(disclosure_id=disclosure['disclosure_id'], version_num=1)
-                    a.update(dis_detail_id=disdetail_obj['disdetail_id'])
-                    total_pre_amt += a[0].pre_amt
-                # 更新 disdetail row_name，並根據 pre_amt 總和更新 row_amt
-                Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id'], version_num=1) \
-                    .update(row_name=disdetail_obj['row_name'], row_amt=total_pre_amt)
-            # 更新附註格式時要把過去為了呈現前期比較而新增的Disdetail/Disclosure刪掉
-            delete_disdetail_from_previous_comparison(rpt_id, acc_id)
-            return JsonResponse({"status_code": 200, "msg": "成功更新附註格式。"})
-        except Exception as e:
-            print('update_disclosure exception >>> ', e)
-            # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
-            return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})
+        if request.method == 'POST' and request.is_ajax():
+            data = json.loads(request.body)
+            # print('傳的 data:', data)
+            # TODO 檢查1: 有沒有重複的 dis_id (比對disclosure_list，有重複的就拿掉)
+            # TODO 檢查2: 每個 disclosure 都要對到 disdetail (disclosure 數量)
+            print(">>>data:", data)
+            try:
+                for disdetail_obj in data:
+                    # 更新 disclosure 所關聯的 disdetail
+                    disclosures = disdetail_obj['disclosures']
+                    total_pre_amt = 0
+                    for disclosure in disclosures:
+                        a = Disclosure.objects.filter(disclosure_id=disclosure['disclosure_id'], version_num=1)
+                        a.update(dis_detail_id=disdetail_obj['disdetail_id'])
+                        total_pre_amt += a[0].pre_amt
+                    # 更新 disdetail row_name，並根據 pre_amt 總和更新 row_amt
+                    Disdetail.objects.filter(dis_detail_id=disdetail_obj['disdetail_id'], version_num=1) \
+                        .update(row_name=disdetail_obj['row_name'], row_amt=total_pre_amt)
+                # 更新附註格式時要把過去為了呈現前期比較而新增的Disdetail/Disclosure刪掉
+                delete_disdetail_from_previous_comparison(rpt_id, acc_id)
+                return JsonResponse({"status_code": 200, "msg": "成功更新附註格式。"})
+            except Exception as e:
+                print('update_disclosure exception >>> ', e)
+                # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
+                return JsonResponse({"status_code": 500, "msg": "發生不明錯誤。"})
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass
 
 
 def consolidated_report(request, comp_id):
@@ -1163,58 +1218,65 @@ def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
 
 @csrf_exempt
 def previous_comparison(request, comp_id, rpt_id, acc_id):
-    '''前期比較'''
-    rpt_type = '個體'
-    current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
-    distitle = Distitle.objects.get(rpt_id=rpt_id, dis_name=Account.objects.get(acc_id=acc_id).acc_name).dis_name
-    if request.method == 'GET':
-        ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
-        # 呼叫 search_previous_comparision
-        current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
-        if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
-            return render(request, 'disclosure_previous_comparison_page.html', {
-                'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
-                'distitle': distitle,
-                'previous_comparison_exists': True,
-                 "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
-                 'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
-            })
-       # else:
-        # TODO 之後看情況要不要留 delete，這裡只是為了防止有沒有刪乾淨的 version
-        delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
-        delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
-        current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
-        return render(request, 'disclosure_previous_comparison_page.html', {
-            'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
-            'previous_comparison_exists': True,
-            'distitle': distitle,
-             "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
-             'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
-        })
-    elif request.method == 'POST' and request.is_ajax():  # 使用者選擇「當期」或「前期」為主要格式
-        data = json.loads(request.body)
-        print('data', data)
-        print('data type', type(data))
-        if type(data) == list: # 代表不是要調整前期比較格式，而是調整尾差
-            id_list = [item['id'] for item in data]
-            update_disdetail = []
-            disdetail_qry_set = Disdetail.objects.filter(dis_detail_id__in=id_list)
-            for item in data:
-                disdetail = disdetail_qry_set.get(dis_detail_id=item['id'])
-                disdetail.row_amt_in_thou = item['row_amt_in_thou']
-                update_disdetail.append(disdetail)
-            # 一次將 row_amt_in_thou 更新到資料庫
-            Disdetail.objects.bulk_update(update_disdetail, ['row_amt_in_thou'])
-            return JsonResponse({"status_code": 200, "msg": "成功更新尾差。"})
-        elif data['base_period'] is not None: # 代表使用者要調整前期比較格式
-            base_period = data['base_period']
-            acc_name = data['acc_name']
-            acc_id = Account.objects.get(acc_name=acc_name, acc_level=3).acc_id
-            # TODO （看之後要不要刪）若是資料庫中已有前期比較資料，則需要先刪除。
+    if acc_id==1:
+        '''前期比較'''
+        rpt_type = '個體'
+        current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
+        distitle = Distitle.objects.get(rpt_id=rpt_id, dis_name=Account.objects.get(acc_id=acc_id).acc_name).dis_name
+        if request.method == 'GET':
+            ### 檢查是否已經有前期比較（version 2），若有則回傳前期比較。
+            # 呼叫 search_previous_comparision
+            current_disdetails_ver2, previous_disdetails_ver2 = search_previous_comparision(rpt_id, acc_id, rpt_type, comp_id)
+            if current_disdetails_ver2 and previous_disdetails_ver2:  # 資料庫中有前期比較資料，則直接回傳
+                return render(request, 'disclosure_previous_comparison_page.html', {
+                    'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+                    'distitle': distitle,
+                    'previous_comparison_exists': True,
+                    "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
+                    'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
+                })
+        # else:
+            # TODO 之後看情況要不要留 delete，這裡只是為了防止有沒有刪乾淨的 version
             delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
             delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
-            current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision(base_period, rpt_id, acc_id, rpt_type, comp_id)
-            return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})    
+            current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
+            return render(request, 'disclosure_previous_comparison_page.html', {
+                'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+                'previous_comparison_exists': True,
+                'distitle': distitle,
+                "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
+                'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
+            })
+        elif request.method == 'POST' and request.is_ajax():  # 使用者選擇「當期」或「前期」為主要格式
+            data = json.loads(request.body)
+            print('data', data)
+            print('data type', type(data))
+            if type(data) == list: # 代表不是要調整前期比較格式，而是調整尾差
+                id_list = [item['id'] for item in data]
+                update_disdetail = []
+                disdetail_qry_set = Disdetail.objects.filter(dis_detail_id__in=id_list)
+                for item in data:
+                    disdetail = disdetail_qry_set.get(dis_detail_id=item['id'])
+                    disdetail.row_amt_in_thou = item['row_amt_in_thou']
+                    update_disdetail.append(disdetail)
+                # 一次將 row_amt_in_thou 更新到資料庫
+                Disdetail.objects.bulk_update(update_disdetail, ['row_amt_in_thou'])
+                return JsonResponse({"status_code": 200, "msg": "成功更新尾差。"})
+            elif data['base_period'] is not None: # 代表使用者要調整前期比較格式
+                base_period = data['base_period']
+                acc_name = data['acc_name']
+                acc_id = Account.objects.get(acc_name=acc_name, acc_level=3).acc_id
+                # TODO （看之後要不要刪）若是資料庫中已有前期比較資料，則需要先刪除。
+                delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
+                delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
+                current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision(base_period, rpt_id, acc_id, rpt_type, comp_id)
+                return JsonResponse({"status_code": 200, "base_period": base_period, "now": serialize('json', current_disdetails_ver2), "past": serialize('json', previous_disdetails_ver2)})   
+    elif acc_id==2:
+        pass
+    elif acc_id==3:
+        pass
+    elif acc_id==4:
+        pass 
            
 
 
