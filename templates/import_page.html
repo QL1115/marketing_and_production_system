@@ -235,7 +235,7 @@
             {% endif %}
             {% if import_related_list.count != 0 and import_related_list.0 != 200 %}
                 <div class="row justify-content-center">
-                    <div class="col-8">上傳失敗，原因：{{ import_related_list.1 }}</div>
+                    <div class="col-8">{{ import_related_list.1 }}</div>
                 </div>
             {% endif %}
 

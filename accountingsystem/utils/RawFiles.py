@@ -24,7 +24,7 @@ def check_and_save_cash_in_banks(rpt_id, sheet): # 參數：sheet 為 Excel 中�
     #
     if sheet.ncols != expected_ncols:
         return  {"status_code": 422, "msg":"檔案欄位個數不符合格式。"}
-    if col_names != sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.nrows): # TODO 之後要更彈性
+    if col_names != sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.ncols): # TODO 之後要更彈性
         return {"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}
     # column 型態檢查，每次檢查一整個 column
     for i in range(expected_ncols):
@@ -84,9 +84,11 @@ def check_and_save_deposit_account(rpt_id, sheet): # 參數：sheet 為 Excel �
     col_types = [xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_TEXT, xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_NUMBER
                , xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_DATE, xlrd.XL_CELL_DATE] # 上傳的檔案欄位長度應該 為 9
     #
+    print('input 表 ', sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.ncols))
     if sheet.ncols != expected_ncols:
         return {"status_code": 422, "msg":"檔案欄位個數不符合格式。"}
-    if col_names != sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.nrows): # TODO 之後要更彈性
+    if col_names != sheet.row_values(rowx=0, start_colx=0, end_colx=sheet.ncols): # TODO 之後要更彈性
+        print('名稱？？')
         return {"status_code": 422, "msg":"檔案欄位名稱不符合格式。"}
     # column 型態檢查，每次檢查一整個 column
     for i in range(expected_ncols):

@@ -379,8 +379,6 @@ def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
         # print('cashinbank_type_and_ntd_amount >>> ', cashinbank_type_and_ntd_amount)
         deposit_account_qry_set = Depositaccount.objects.filter(rpt__rpt_id=rpt_id)
         depositaccount_type_and_ntd_amount = deposit_account_qry_set.values('type__acc_id', 'type__acc_name').annotate(ntd_amount = Sum('ntd_amount'))
-        # print('depositaccount.query >>> ', depositaccount_type_and_ntd_amount.query)
-        # print('depositaccount_type_and_ntd_amount >>> ', depositaccount_type_and_ntd_amount)
 
         # 使用上傳資料表的 type 的 acc id 和 rpt_id 查出對應的 preamount qry set
         rpt_acc_tuples = tuple([(rpt_id, item['type__acc_id']) for item in cashinbank_type_and_ntd_amount.values('type__acc_id')]) + tuple([(rpt_id, item['type__acc_id']) for item in depositaccount_type_and_ntd_amount.values('type__acc_id')])
@@ -399,72 +397,57 @@ def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
         # print('!!!!!!', report_end_date + relativedelta(months=3))
         # 報導結束日
         # 2. 設置 preamt value
+        
         # 活期存款 preamt
-        # print('cashinbank_type_and_ntd_amount.get(type__acc_name="活期存款").get("type__acc_id") >>> ', cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('type__acc_id'))
-        preamt_demand_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('type__acc_id'))
-        # print('活期存款 preamt >>> ', preamt_demand_deposit)
-        preamt_demand_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('ntd_amount')
-        preamt_demand_deposit.adj_amt = 0 # TODO
-        preamt_demand_deposit.pre_amt = preamt_demand_deposit.book_amt + preamt_demand_deposit.adj_amt
-        preamt_demand_deposit.save()
-        # print('活期存款：{}, {}, {}'.format(preamt_demand_deposit.book_amt, preamt_demand_deposit.adj_amt, preamt_demand_deposit.pre_amt))
+        if cashinbank_type_and_ntd_amount.filter(type__acc_name='活期存款').first() is not None: 
+            preamt_demand_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('type__acc_id'))
+            preamt_demand_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='活期存款').get('ntd_amount')
+            preamt_demand_deposit.adj_amt = 0 # TODO
+            preamt_demand_deposit.pre_amt = preamt_demand_deposit.book_amt + preamt_demand_deposit.adj_amt
+            preamt_demand_deposit.save()
 
         # 支票存款 preamt
-        preamt_check_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='支票存款').get('type__acc_id'))
-        # print('支票存款 preamt >>> ', preamt_check_deposit)
-        preamt_check_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='支票存款').get('ntd_amount')
-        preamt_check_deposit.adj_amt = 0  # TODO
-        preamt_check_deposit.pre_amt = preamt_check_deposit.book_amt + preamt_check_deposit.adj_amt
-        preamt_check_deposit.save()
-        # print('支票存款：{}, {}, {}'.format(preamt_check_deposit.book_amt, preamt_check_deposit.adj_amt, preamt_check_deposit.pre_amt))
+        if cashinbank_type_and_ntd_amount.filter(type__acc_name='支票存款').first():
+            preamt_check_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='支票存款').get('type__acc_id'))
+            preamt_check_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='支票存款').get('ntd_amount')
+            preamt_check_deposit.adj_amt = 0  # TODO
+            preamt_check_deposit.pre_amt = preamt_check_deposit.book_amt + preamt_check_deposit.adj_amt
+            preamt_check_deposit.save()
 
         # 外匯存款 preamt
-        preamt_foreign_currency_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='外匯存款').get('type__acc_id'))
-        # print('外匯存款 preamt >>> ', preamt_foreign_currency_deposit)
-        preamt_foreign_currency_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='外匯存款').get('ntd_amount')
-        preamt_foreign_currency_deposit.adj_amt = list[2]['外匯存款'].amount if list[2]['外匯存款'].credit_debit == 0 else list[2]['外匯存款'].amount*(-1)
-        preamt_foreign_currency_deposit.pre_amt = preamt_foreign_currency_deposit.book_amt + preamt_foreign_currency_deposit.adj_amt
-        preamt_foreign_currency_deposit.save()
-        # print('外匯存款：{}, {}, {}'.format(preamt_foreign_currency_deposit.book_amt, preamt_foreign_currency_deposit.adj_amt, preamt_foreign_currency_deposit.pre_amt))
+        if cashinbank_type_and_ntd_amount.filter(type__acc_name='外匯存款').first() is not None:
+            preamt_foreign_currency_deposit = preamt_qry_set.get(acc__acc_id=cashinbank_type_and_ntd_amount.get(type__acc_name='外匯存款').get('type__acc_id'))
+            preamt_foreign_currency_deposit.book_amt = cashinbank_type_and_ntd_amount.get(type__acc_name='外匯存款').get('ntd_amount')
+            preamt_foreign_currency_deposit.adj_amt = list[2]['外匯存款'].amount if list[2]['外匯存款'].credit_debit == 0 else list[2]['外匯存款'].amount*(-1)
+            preamt_foreign_currency_deposit.pre_amt = preamt_foreign_currency_deposit.book_amt + preamt_foreign_currency_deposit.adj_amt
+            preamt_foreign_currency_deposit.save()
 
         # 原幣定存 preamt
-        currency = Company.objects.filter(com_id=comp_id).values_list('currency', flat=True)[0]
-        # print("depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('type__acc_id') >>> ", depositaccount_type_and_ntd_amount.get(type__acc_name='台幣定存').get('type__acc_id'))
-        preamt_ntd_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('type__acc_id'))
-        # print('台幣定存 preamt >>> ', preamt_ntd_cd)
-        preamt_ntd_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('ntd_amount')
-        preamt_ntd_cd.adj_amt = -1 * (deposit_account_qry_set.filter(plege=1, currency=currency).aggregate(Sum('ntd_amount')).get('ntd_amount__sum') \
-                         + deposit_account_qry_set.filter(plege=0, currency=currency, end_date__gte=report_end_date + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum'))
-        preamt_ntd_cd.pre_amt = preamt_ntd_cd.book_amt + preamt_ntd_cd.adj_amt
-        preamt_ntd_cd.save()
-        # print('台幣定存：{}, {}, {}'.format(preamt_ntd_cd.book_amt, preamt_ntd_cd.adj_amt, preamt_ntd_cd.pre_amt))
+        if depositaccount_type_and_ntd_amount.filter(type__acc_name='原幣定存').first() is not None:
+            currency = Company.objects.filter(com_id=comp_id).values_list('currency', flat=True)[0]
+            preamt_ntd_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('type__acc_id'))
+            preamt_ntd_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='原幣定存').get('ntd_amount')
+            preamt_ntd_cd.adj_amt = -1 * (deposit_account_qry_set.filter(plege=1, currency=currency).aggregate(Sum('ntd_amount')).get('ntd_amount__sum') \
+                            + deposit_account_qry_set.filter(plege=0, currency=currency, end_date__gte=report_end_date + relativedelta(months=3)).aggregate(Sum('ntd_amount')).get('ntd_amount__sum'))
+            preamt_ntd_cd.pre_amt = preamt_ntd_cd.book_amt + preamt_ntd_cd.adj_amt
+            preamt_ntd_cd.save()
 
         # 外幣定存 preamt
-        # print("depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('type__acc_id') >>> ", depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('type__acc_id'))
-        preamt_foreign_currency_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('type__acc_id'))
-        # print('外幣定存 preamt >>> ', preamt_foreign_currency_cd)
-        preamt_foreign_currency_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('ntd_amount')
-        preamt_foreign_currency_cd.adj_amt = -1 * (deposit_account_qry_set.filter(Q(plege=0) & ~Q(currency='TWD') & Q(end_date__gte=report_end_date + relativedelta(months=3))).aggregate(Sum('ntd_amount')).get('ntd_amount__sum')) \
-                            + (list[3]['外幣定存'].amount if list[3]['外幣定存'].credit_debit == 0 else list[3]['外幣定存'].amount*(-1))
-        preamt_foreign_currency_cd.pre_amt = preamt_foreign_currency_cd.book_amt + preamt_foreign_currency_cd.adj_amt
-        preamt_foreign_currency_cd.save()
-        # print('外幣定存：{}, {}, {}'.format(preamt_foreign_currency_cd.book_amt, preamt_foreign_currency_cd.adj_amt, preamt_foreign_currency_cd.pre_amt))
+        if depositaccount_type_and_ntd_amount.filter(type__acc_name='外幣定存').first() is not None:
+            preamt_foreign_currency_cd = preamt_qry_set.get(acc__acc_id=depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('type__acc_id'))
+            # print('外幣定存 preamt >>> ', preamt_foreign_currency_cd)
+            # if len depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存')
+            preamt_foreign_currency_cd.book_amt = depositaccount_type_and_ntd_amount.get(type__acc_name='外幣定存').get('ntd_amount')
+            preamt_foreign_currency_cd.adj_amt = -1 * (deposit_account_qry_set.filter(Q(plege=0) & ~Q(currency='TWD') & Q(end_date__gte=report_end_date + relativedelta(months=3))).aggregate(Sum('ntd_amount')).get('ntd_amount__sum')) \
+                                + (list[3]['外幣定存'].amount if list[3]['外幣定存'].credit_debit == 0 else list[3]['外幣定存'].amount*(-1))
+            preamt_foreign_currency_cd.pre_amt = preamt_foreign_currency_cd.book_amt + preamt_foreign_currency_cd.adj_amt
+            preamt_foreign_currency_cd.save()
+            # print('外幣定存：{}, {}, {}'.format(preamt_foreign_currency_cd.book_amt, preamt_foreign_currency_cd.adj_amt, preamt_foreign_currency_cd.pre_amt))
 
-
-        # # 3. 回傳資料
-        # print('尚未測試 fill_in_preamount。 程式碼沒有報錯，但是要檢查金額是否正確。')
-        # return {"status_code": 200, "returnObject": ""}
         print('finished fill_in_preamt.')
     except Cashinbanks.DoesNotExist or Depositaccount.DoesNotExist as e:
         print('「銀行存款」或者「定期存款」資料表中沒有對應的 records >>> ', e)
         # return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
 
     fill_in_disclosure(preamt_qry_set, rpt_id)
-
-        # TODO 測試時註解掉
-        # except Exception as e:
-        #     print('發生非預期錯誤 >>> ', e)
-        #     return '{"status_code": 500, "msg": "發生非預期錯誤。"}'
-    # else:
-    #     return {"status_code": 501, "msg": "尚未實作該科目。"}
 
