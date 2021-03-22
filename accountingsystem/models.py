@@ -164,6 +164,24 @@ class Report(models.Model):
         db_table = 'report'
 
 
+class ReceiptsInAdvance(models.Model):
+    ''' 預收款項 '''
+    id = models.AutoField(primary_key=True)
+    voucher_num = models.CharField(max_length=30) # 傳票編號
+    voucher_date = models.DateField() # 傳票日期
+    customer_code = models.CharField(max_length=30) # 客戶代號
+    customer_abbre = models.CharField(max_length=30) # 客戶簡稱
+    currency = models.CharField(max_length=10)
+    foreign_currency_amount = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
+    ntd_amount = models.DecimalField(max_digits=22, decimal_places=2)
+    summary = models.CharField(max_length=50) # 摘要
+    rpt = models.ForeignKey('Report', models.CASCADE)
+
+    class Meta:
+        managed = False
+        db_table = 'ReceiptsInAdvance'
+
+
 class Systemcode(models.Model):
     system_code_id = models.AutoField(primary_key=True)
     code_type = models.CharField(max_length=20)

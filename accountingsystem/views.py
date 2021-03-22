@@ -13,13 +13,13 @@ from pandas._libs import json
 
 from .forms import CashinbanksForm, DepositAccountForm
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Reltrx, \
-    Disclosure, Disdetail, Distitle
+    Disclosure, Disdetail, Distitle, ReceiptsInAdvance
 from .utils.ConsolidateReport import create_consolidated_report, create_consolidated_report_preamt, \
     delete_consolidate_report
 from .utils.Disclosure import delete_disclosure_for_project_account
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
-    get_uploaded_file
+    get_uploaded_file, check_and_save_receipts_in_advance
 from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, cal_previous_comparision, search_previous_comparision
 from .utils.Common import normal_round
 from dateutil.relativedelta import relativedelta
@@ -32,22 +32,22 @@ def index(request):
 @require_http_methods(["POST"])
 @csrf_exempt
 def upload_file(request, comp_id, rpt_id, acc_id, table_name):
-    if acc_id==1:
-        '''上傳銀行存款'''
-        # 1. 檢查檔案類型是否為 excel
-        # 2. 檢查檔案是否僅有1個分頁
-        # 3. 呼叫 check_and_save 方法，進入檢查流程
-        print('upload_file() >>> start')
-        try:
-            # file = request.FILES.('file')
-            file = request.FILES["file"]
-            book = xlrd.open_workbook(file.name, file_contents=file.read())
+    '''上傳'''
+    # 1. 檢查檔案類型是否為 excel
+    # 2. 檢查檔案是否僅有1個分頁
+    # 3. 呼叫 check_and_save 方法，進入檢查流程
+    print('upload_file() >>> start')
+    try:
+        # file = request.FILES.('file')
+        file = request.FILES["file"]
+        book = xlrd.open_workbook(file.name, file_contents=file.read())
 
-            if book.nsheets != 1:
-                return {"status_code": 422, "msg": "檔案超過一個分頁。", "redirect_url": " "}
-            # TODO 之後可以對上傳的檔案新增更多的基本檢查
+        if book.nsheets != 1:
+            return {"status_code": 422, "msg": "檔案超過一個分頁。", "redirect_url": " "}
+        # TODO 之後可以對上傳的檔案新增更多的基本檢查
 
-            sheet = book.sheets()[0]
+        sheet = book.sheets()[0]
+        if acc_id==1:
             if table_name == "cash_in_bank":
                 result = check_and_save_cash_in_banks(rpt_id, sheet)
                 return result
@@ -56,50 +56,36 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
                 return result
             else:
                 return {"status_code": 500, "msg": "發生不明錯誤。"}
-
-        except Exception as e:
-            print('upload_file exception >>> ', e)
-            # return HttpResponseRedirect('{"status_code": 500, "msg": "發生不明錯誤。"}')
-            return {"status_code": 500, "msg": "發生不明錯誤。"}
-        return render(request, 'import_page.html', {'acc_id': acc_id})
-    elif acc_id==2:
-        pass
-    elif acc_id==3:
-        pass
-    elif acc_id==4:
-        pass
-
-
-
-# def get_check_page(request, comp_id, rpt_id, acc_id):
-#     if acc_id==1:
-#         table_name = 'cash_in_banks'
-#         uploadFile = get_uploaded_file(rpt_id, table_name)
-#         cibSummary = 0
-#         if uploadFile.get('status_code') == 200:
-#             cibData = uploadFile.get('returnObject')
-#             for i in cibData:
-#                 cibSummary += (i.ntd_amount)
-#         else:
-#             msg = uploadFile.get('msg')
-#     elif acc_id==2:
-#         pass
+        elif acc_id==2:
+            pass
+        elif acc_id==3:
+            pass
+        elif acc_id==4:
+            pass
+        elif acc_id == 27:
+            if table_name == 'receipts_in_advance':
+                print('!!! in upload acc id 27')
+                result = check_and_save_receipts_in_advance(rpt_id, sheet)
+                print('upload 27 result  >>> ', result)
+                return result
+            else:
+                return {"status_code": 500, "msg": "發生不明錯誤。"}
+    except Exception as e:
+        print('upload_file exception >>> ', e)
+        return {"status_code": 500, "msg": "發生不明錯誤。"}
+    # return render(request, 'import_page.html', {'acc_id': acc_id})
 
 # @require_http_methods(["DELETE"])
 @csrf_exempt  # TODO: for test，若未加這行，使用 postman 測試 post 時，會報 403，因為沒有 CSRF token
 def delete_file(request, comp_id, rpt_id, acc_id, table_name):
-    # print('del')
-    # delete_uploaded_file(rpt_id, table_name)
-    # return HttpResponse({"status_code":
-    #
-    # , "msg":"成功刪除檔案"})
-    # delete_preamount(rpt_id, acc_id)
     try:
         delete_uploaded_file(rpt_id, table_name)
         delete_preamount(rpt_id, acc_id)
         delete_consolidate_report(comp_id, rpt_id)
+        return {'status_code': 200, 'msg': '刪除成功'}
     except Exception as e:
         print('刪除錯誤：', e)
+        return {'status_code': 500, 'msg': '刪除錯誤'}
 
 
 def delete_preamount(rpt_id, acc_id):
@@ -188,10 +174,6 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
         elif request.method == 'POST':
             table_name = request.POST.get('table_name')
             result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
-            # print('result >>> ', result)
-            # print(type(result))
-            # print(result['status_code'])
-            # print(type(result['status_code']))
             check(rpt_id)
             count_CashInBank_result = check(rpt_id)[0]
             count_Depositaccount_result = check(rpt_id)[1]
@@ -217,6 +199,17 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
         pass
     elif acc_id==4:
         pass
+    elif acc_id == 27:
+        if request.method == 'GET':
+            # TODO 檢查是否已經有上傳的了
+            ria_qry_set = ReceiptsInAdvance.objects.filter(rpt__rpt_id=rpt_id)
+            print('ria >>> ', len(ria_qry_set))
+            return render(request, 'receipts_in_advance/import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ria_qry_set)==0 else True })
+        elif request.method == 'POST':
+            table_name = request.POST.get('table_name')
+            result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
+            return render(request, 'receipts_in_advance/import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
+
 
 
 def get_check_page(request, comp_id, rpt_id, acc_id):
