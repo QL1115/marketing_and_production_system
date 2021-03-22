@@ -74,6 +74,7 @@
 <br>
 
     <div class="container">
+    {% if now and past is not None %}
         <div class="row">
             <div class="col-sm-10 float-right">{{ distitle }}</div>
             <div id="editBtnGroup" class="btn-group col-sm-9 float-right" role="group"
@@ -200,6 +201,9 @@
             </div>
         </div>
         </div>
+        {% else %} 
+            <p>沒有前期比較可顯示，可能原因：沒有上一期資料</p>
+        {% endif %}
     </div>
 
  <script src="https://code.jquery.com/jquery-3.4.1.min.js"

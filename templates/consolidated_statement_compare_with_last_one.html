@@ -70,7 +70,7 @@
         </div>
         <br>
         <br>
-        
+        {% if now and past is not None %}
         <div class="row">
             <div id="editBtnGroup" class="btn-group col-sm-9 float-right" role="group"
                              aria-label="Basic example">
@@ -191,6 +191,9 @@
                 </div>
             </div>
         </div>
+        {% else %}
+        <p>沒有前期比較可顯示，可能原因：沒有上一期資料</p>
+        {% endif %}
     </div>
 
 

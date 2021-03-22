@@ -1154,14 +1154,15 @@ def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
             ## 改動附註格式時只會刪除當期因呈現前期比較而新增的Disdetail/Disclosure，會導致只刪掉version_num為2的
             ## -> 如果沒有完整的前期比較，就把兩期rpt下version_num為2或3的Disdetail都刪掉
         current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
-        delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
-        delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
+        if current_rpt and previous_rpt is not None:
+            delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
+            delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
         current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
         return render(request, 'consolidated_statement_compare_with_last_one.html', {
             'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
             'previous_comparison_exists': True,
              "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
-             'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
+             'now_end_date': str(current_rpt.end_date if current_rpt is not None else '', ), 'past_end_date': str(previous_rpt.end_date if previous_rpt is not None else '', )
         })
     elif request.method == 'POST' and request.is_ajax():
         if request.POST.get('ajax_type', None) == 'changeAcc': # 代表使用者使用下拉選單選定科目
@@ -1192,7 +1193,8 @@ def compare_with_last_consolidated_statement(request, comp_id, rpt_id):
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
                 'previous_comparison_exists': True,
                  "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
-                 'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)})
+                 'now_end_date': str(current_rpt.end_date if current_rpt is not None else '', ), 'past_end_date': str(previous_rpt.end_date if previous_rpt is not None else '')
+            })
         
         data = json.loads(request.body)
         if type(data) == list: # 代表不是要調整前期比較格式，而是調整尾差
@@ -1237,15 +1239,18 @@ def previous_comparison(request, comp_id, rpt_id, acc_id):
                 })
         # else:
             # TODO 之後看情況要不要留 delete，這裡只是為了防止有沒有刪乾淨的 version
-            delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
-            delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
+            if current_rpt and previous_rpt is not None:
+                delete_disdetail_from_previous_comparison(current_rpt.rpt_id, acc_id)
+                delete_disdetail_from_previous_comparison(previous_rpt.rpt_id, acc_id)
             current_disdetails_ver2, previous_disdetails_ver2 = cal_previous_comparision('past', rpt_id, acc_id, rpt_type, comp_id)
+            print('previous_disdetails_ver2 >>> ', previous_disdetails_ver2)
+            print('current_disdetails_ver2 >>> ', current_disdetails_ver2)
             return render(request, 'disclosure_previous_comparison_page.html', {
                 'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
                 'previous_comparison_exists': True,
                 'distitle': distitle,
                 "now": current_disdetails_ver2, "past": previous_disdetails_ver2,
-                'now_end_date': str(current_rpt.end_date), 'past_end_date': str(previous_rpt.end_date)
+                'now_end_date': str(current_rpt.end_date if current_rpt is not None else '', ), 'past_end_date': str(previous_rpt.end_date if previous_rpt is not None else '', )
             })
         elif request.method == 'POST' and request.is_ajax():  # 使用者選擇「當期」或「前期」為主要格式
             data = json.loads(request.body)
