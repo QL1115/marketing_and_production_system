@@ -17,7 +17,7 @@ from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate,
 from .utils.ConsolidateReport import create_consolidated_report, create_consolidated_report_preamt, \
     delete_consolidate_report
 from .utils.Disclosure import delete_disclosure_for_project_account
-from .utils.Entries import create_preamount_and_adjust_entries_for_project_account
+from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, delete_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
     get_uploaded_file, check_and_save_receipts_in_advance
 from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, cal_previous_comparision, search_previous_comparision
@@ -87,39 +87,6 @@ def delete_file(request, comp_id, rpt_id, acc_id, table_name):
         print('刪除錯誤：', e)
         return {'status_code': 500, 'msg': '刪除錯誤'}
 
-
-def delete_preamount(rpt_id, acc_id):
-    if acc_id == 1:
-        delete_cash_preamount(rpt_id)
-    elif acc_id==2:
-        pass
-    elif acc_id==3:
-        pass
-    elif acc_id==4:
-        pass
-
-
-
-def delete_cash_preamount(rpt_id):
-    print('!!!!in')
-    # 全部予以刪除 
-    # 必定刪除:1 23 24 25 26
-    acc_id = 1
-    countIdList = [1, 23, 24, 25, 26]
-    deleteAccount = []
-    # 抓出全部要被刪除的Account的ID
-    for i in countIdList:
-        childList = Account.objects.filter(acc_parent=i)
-        for a in childList:
-            if a.acc_id in countIdList:
-                pass
-            else:
-                countIdList.append(a.acc_id)
-
-    delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
-    # print('執行完了 delete_disclosure_for_project_account')
-    for i in countIdList:
-        Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
 
 
 def check(rpt_id):
@@ -204,11 +171,14 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
             # TODO 檢查是否已經有上傳的了
             ria_qry_set = ReceiptsInAdvance.objects.filter(rpt__rpt_id=rpt_id)
             print('ria >>> ', len(ria_qry_set))
-            return render(request, 'receipts_in_advance/import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ria_qry_set)==0 else True })
+            return render(request, 'receipts_in_advance/ria_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ria_qry_set)==0 else True })
         elif request.method == 'POST':
             table_name = request.POST.get('table_name')
             result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
-            return render(request, 'receipts_in_advance/import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
+            if result['status_code'] == 200:
+                delete_preamount
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+            return render(request, 'receipts_in_advance/ria_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
 
 
 
@@ -250,6 +220,9 @@ def get_check_page(request, comp_id, rpt_id, acc_id):
         pass
     elif acc_id==4:
         pass
+    elif acc_id == 27:
+        return render(request, 'receipts_in_advance/ria_checking_page.html',
+                    {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
 
 
 
@@ -311,7 +284,10 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
         pass
     elif acc_id==4:
         pass
-
+    elif acc_id == 27:
+        delete_preamount(rpt_id, acc_id)
+        delete_consolidate_report(comp_id, rpt_id)
+        create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
 
 
 def adjust_acc(request, comp_id, rpt_id, acc_id):
@@ -499,6 +475,34 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         pass
     elif acc_id==4:
         pass
+    elif acc_id == 27: # 預收帳款調整
+        ria_qry_set = ReceiptsInAdvance.objects.filter(rpt__rpt_id=rpt_id)
+        currency_type = list(ria_qry_set.values_list('currency', flat=True).distinct())
+        exchange_rate_qry_set = Exchangerate.objects.filter(rpt__rpt_id=rpt_id).values_list('currency_name', 'rate')
+        exchange_rate_dict = dict() 
+        for currency_name,rate in exchange_rate_qry_set: 
+            exchange_rate_dict.setdefault(currency_name, rate)
+        original_currency = getattr(Company.objects.filter(com_id=comp_id).first(), 'currency')
+        for ria in ria_qry_set:
+            currency_name = getattr(ria,'currency')
+            if currency_name != original_currency:
+                ria.exchange_rate = round(exchange_rate_dict[currency_name], 3)
+            else: 
+                ria.exchange_rate = 1.00
+            ria.check_amount = ria.foreign_currency_amount * round(ria.exchange_rate,3)  if (ria.exchange_rate is not None and ria.foreign_currency_amount is not None) else ria.ntd_amount
+            ria.amount_difference = round(ria.check_amount - ria.ntd_amount)
+        # 調整分錄
+        # TODO 因為目前「預收」只有兩個 adj entry，所以沒有要配對的問題。
+        entries = Adjentry.objects.filter(front_end_location=3).select_related('pre__acc').filter(
+            pre__rpt_id=rpt_id).values('pre__acc__acc_name',
+                                    'amount', 'adj_num',
+                                    'credit_debit',
+                                    'entry_name',
+                                    'front_end_location')
+        print('entries >>> ', entries)
+        return render(request, 'receipts_in_advance/ria_adjust_page.html',
+                    {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'ria_qry_set': ria_qry_set, 'entries': entries})
+
 
 
 
@@ -644,6 +648,8 @@ def get_disclosure_page(request, comp_id, rpt_id, acc_id):
         pass
     elif acc_id==4:
         pass
+    elif acc_id == 27:
+        return render(request, 'receipts_in_advance/ria_disclosure_page.html', {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
 
 
 def consolidated_report(request, comp_id):

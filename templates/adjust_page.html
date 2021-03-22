@@ -349,7 +349,7 @@
                                     <td><input type="text" name="bank_account_number" value="{{ depositData.bank_account_number }}" disabled/></td>
                                     <td><input type="text" name="currency" value="{{ depositData.currency }}" disabled/></td>
                                     <td><input type="text" name="foreign_currency_amount"
-                                               value="{{ depositData.foreign_currency_amount|default_if_none:"--" }}" disabled/></td>
+                                               value="{{ depositData.foreign_currency_amount|default_if_none:'--' }}" disabled/></td>
                                     <td><input type="number" name="ntd_amount" value="{{ depositData.ntd_amount }}" disabled/></td>
                                     <td><input type="text" name="rate" value="{{ rate|floatformat:2 }}" disabled/></td>
                                     <td><input type="text" name="calculatedAmount" value="{{ calculatedAmount|floatformat:2 }}" disabled/></td>

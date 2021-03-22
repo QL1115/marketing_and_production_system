@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <!-- FontAwesome -->
+        <link href="{% static 'css/bstreeview.css' %}" rel="stylesheet">
+        <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+        <style type="text/css">
+            body {
+                min-height: 100vh;
+            }
+        </style>
+    </head>
+<body>
+    <!--start of navbar-->
+    <div class="col-12">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">OurLogo</a>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'import' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true"><strong>匯入</strong></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'check_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true"><strong>檢查</strong></a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link" href="{% url 'adjust_acc' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" id="navbarDropdown" role="button"
+                               aria-haspopup="true" aria-expanded="false">調整</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'disclosure_page' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1" aria-disabled="true">附註格式</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'previous_comparison' comp_id=comp_id rpt_id=rpt_id acc_id=acc_id %}" tabindex="-1"
+                               aria-disabled="true">附註格式(前期比較)</a>
+                        </li>
+                    </ul>
+                    <form class="form-inline my-2 my-lg-0">
+                        <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                    </form>
+                    <div class="other_nav_buttons">
+                        <i class="fas fa-cog"></i>
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </nav>
+    </div>
+    <!--end of navbar-->
+    <div class="container-fluid" >
+        <div class="row">
+            <!-- start tree -->
+            <div class="col-md-2 pt-5">
+                <div id="tree">
+                </div>
+            </div>
+            <!-- endof tree-->
+            <br>
+            {% comment %} 調整表！ {% endcomment %}
+            <div class="col-md-9 pt-2">
+                {% comment %} btn group {% endcomment %}
+                {% comment %} <div class='row'>
+                    <div id="riaAdjustBtnGroup" class="col-6" aria-label="Basic example">
+                        <button id="AdjustRIA" type="button" class="btn btn-secondary" value="receipts_in_advance">預收款項調整外幣評價損益</button>
+                        <button id="Adjust" type="button" class="btn btn-secondary">調整表</button>
+                    </div>
+                </div> {% endcomment %}
+                {% comment %} 單個調整表區塊 {% endcomment %}
+                <br>
+                <div class="row">
+                        <table class="table-responsive col-md-12" id="ria_table">
+                            <thead>
+                                <tr class="table-active">
+                                    <th style="padding:8px;">傳票編號</th>
+                                    <th style="padding:8px;">傳票日期</th>
+                                    <th style="padding:8px;">幣別</th>
+                                    <th style="padding:8px;">原始外幣</th>
+                                    <th style="padding:8px;">原始本幣</th>
+                                    <th style="padding:8px;">匯率</th>
+                                    <th style="padding:8px;">核算台幣</th>
+                                    <th style="padding:8px;">差異</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in ria_qry_set %}
+                                    <tr class="input_row">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{ row.id }}"/>
+                                        <td><input type="text" name="voucher_num" value="{{ row.voucher_num }}" disabled/></td>
+                                        <td><input type="text" name="voucher_date"
+                                                    value="{{ row.voucher_date }}" disabled/></td>
+                                        <td><input type="text" name="currency" value="{{ row.currency }}" disabled/></td>
+                                        <td><input type="text" name="foreign_currency_amount"
+                                                    value="{{ row.foreign_currency_amount|default_if_none:'--' }}" disabled/></td>
+                                        <td><input type="number" name="ntd_amount" value="{{ row.ntd_amount }}" disabled/>
+                                        </td>
+                                        <td><input type="text"  name="exchange_rate" value="{{ row.exchange_rate|default_if_none:'--' }}" disabled/></td>
+                                        <td><input type="text"  name="check_amount" value="{{ row.check_amount  }}" disabled/></td>
+                                        {% if row.amount_difference == 0 %}
+                                        <td><input type="text"  name="amount_difference" value="--" disabled/></td>
+                                        {% else %}
+                                        <td><input type="text"  name="amount_difference" value="{{ row.amount_difference }}" disabled/></td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if entries %}
+                            <h5 class="col-md-12">調整分錄</h5><br>
+                            <table class='col-md-12'>
+                                {% for entry in entries %}
+                                  <tr class='row'>
+                                    {% if entry.credit_debit == 1 %} <td class='col-md-1'></td> {% endif %}
+                                    <td class='col-md-2'>{{entry.pre__acc__acc_name}}</td>
+                                    {% if entry.credit_debit == 1 %} <td class='col-md-1'></td> {% endif %}
+                                    <td class='col-md-2'>{{entry.amount}}</td>
+                                  </tr>  
+                    
+                                {% endfor %}
+                            </table>
+                        {% endif %}
+                </div>
+            </div>
+
+        </div> 
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+        <script src="{% static 'js/bstreeview.js' %}">
+    </script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+    
+            var search = function(e) {
+            var pattern = $('#input-search').val();
+            var options = {
+                ignoreCase: $('#chk-ignore-case').is(':checked'),
+                exactMatch: $('#chk-exact-match').is(':checked'),
+                revealResults: $('#chk-reveal-results').is(':checked')
+            };
+
+            var output = '<p>' + results.length + ' matches found</p>';
+            $.each(results, function (index, result) {
+                output += '<p>- ' + result.text + '</p>';
+            });
+            $('#search-output').html(output);
+            }
+            $('#btn-clear-search').on('click', function (e) {
+            $('#input-search').val('');
+            $('#search-output').html('');
+            });
+            })
+
+            var json = '[' +
+                '{' +
+                '"text": "資產",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+
+
+
+                '{' +
+                '"text": "負債",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "權益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "損益",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '},' +
+
+                '{' +
+                '"text": "其他",' +
+                '"icon": "fa fa-inbox",' +
+                '"nodes": [' +
+
+
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}, ' +
+
+                '{' +
+                '"icon": "fa fa-inbox",' +
+                '"text": "Others"' +
+                '}' +
+                ']' +
+                '}' +
+                ']';
+
+            $('#tree').bstreeview({ data: json }
+        );
+        
+    </script>
+</body>
+</html>
