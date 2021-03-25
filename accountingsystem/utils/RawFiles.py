@@ -233,8 +233,6 @@ def check_and_save_accounts_payable(rpt_id, sheet):
         with transaction.atomic():
             for i in range(1, sheet.nrows):
                 type = Account.objects.filter(acc_name = sheet.cell_value(rowx=i, colx=4)).first()
-                print('type',type)
-                print(sheet.cell_value(rowx=i, colx=4))
                 currency = Systemcode.objects.filter(code_type='幣別', code_name=sheet.cell_value(rowx=i,
                                                                                                 colx=5)).first().system_code  # currency欄位存所屬幣別的system_code
                 if type is None:
@@ -304,6 +302,12 @@ def get_uploaded_file(rpt_id, table_name):
                 
         elif table_name == 'deposit_account': # 定期存款
             returnObject = Depositaccount.objects.filter(rpt=report)
+            if len(returnObject) != 0:
+                returnDict = {"status_code":200, "returnObject": returnObject} # 因為TABLE會含有多個row, 直接回傳整個QuerySet
+            else:
+                returnDict = {"status_code":404, "msg": "資料庫無此筆資料。"}
+        elif table_name == 'accounts_payable': # 應付帳款
+            returnObject = AccountsPayable.objects.filter(rpt=report)
             if len(returnObject) != 0:
                 returnDict = {"status_code":200, "returnObject": returnObject} # 因為TABLE會含有多個row, 直接回傳整個QuerySet
             else:

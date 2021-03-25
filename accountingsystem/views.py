@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pandas._libs import json
 
-from .forms import CashinbanksForm, DepositAccountForm
+from .forms import CashinbanksForm, DepositAccountForm, AccountsPayableForm
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Reltrx, \
     Disclosure, Disdetail, Distitle, ReceiptsInAdvance, AccountsPayable
 from .utils.ConsolidateReport import create_consolidated_report, create_consolidated_report_preamt, \
@@ -196,7 +196,7 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
             result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
             if result['status_code'] == 200:
                 delete_preamount(rpt_id, acc_id)
-                #create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return render(request, 'accounts_payable/ap_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
 
 
@@ -242,6 +242,26 @@ def get_check_page(request, comp_id, rpt_id, acc_id):
     elif acc_id == 27:
         return render(request, 'receipts_in_advance/ria_checking_page.html',
                     {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id})
+    elif acc_id == 31:
+        print('here')
+        table_name = 'accounts_payable'
+        uploadFile = get_uploaded_file(rpt_id, table_name)
+        accounts_payable_Summary = 0
+        if uploadFile.get('status_code') == 200:
+            accounts_payable_Data = uploadFile.get('returnObject')
+            # cauclate summary
+            for i in accounts_payable_Data:
+                accounts_payable_Summary += int(i.ntd_amount)
+        else:
+            msg = uploadFile.get('msg')
+            # 這裡要傳errorPage回去嗎
+            return render(request,'accounts_payable/ap_checking_page.html',
+                        {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'msg': msg})
+        print('here')
+        print('data',accounts_payable_Data)
+        return render(request, 'accounts_payable/ap_checking_page.html',
+                    {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id,
+                    'accounts_payable_Data': accounts_payable_Data,'accounts_payable_Summary': accounts_payable_Summary})
 
 
 
@@ -308,9 +328,30 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
         delete_consolidate_report(comp_id, rpt_id)
         create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
     elif acc_id == 31:
-        delete_preamount(rpt_id, acc_id)
-        delete_consolidate_report(comp_id, rpt_id)
-        create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+        if request.method == 'POST' and request.is_ajax():
+            # ⚠️ 注意：若是用 Ajax 以 JSON 格式， POST 方式送 data 過來，這裡使用 request.body 來接收並且需要處理一下 json。
+            data = json.loads(request.body)
+            data = data['data']
+            if table_name == 'accounts_payable':
+                for ap_row in data:
+                    # print('cib_row >>> ', cib_row)
+                    form = AccountsPayableForm(ap_row)
+                    if form.is_valid():
+                        accounts_payable = AccountsPayable.objects.get(acc_payable_id=ap_row.get('id'))
+                        form = AccountsPayableForm(ap_row, instance=accounts_payable)
+                        form.save()
+                    else:
+                        return JsonResponse({
+                            'table_name': 'accounts_payable',
+                            'isUpdated': False
+                        })
+                delete_preamount(rpt_id, acc_id)
+                delete_consolidate_report(comp_id, rpt_id)
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+                return JsonResponse({
+                    'table_name': 'accounts_payable',
+                    'isUpdated': True
+                })
 
 
 def adjust_acc(request, comp_id, rpt_id, acc_id):

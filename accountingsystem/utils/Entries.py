@@ -91,6 +91,8 @@ def create_preamount(comp_id, rpt_id, acc_id):
         number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
         preamount_list.append(number25)
         preamount_list.append(number26)
+    elif acc_id == 31:
+        pass
 
     for i in countIdList:
         preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
@@ -105,6 +107,8 @@ def create_adjust_entries(comp_id, rpt_id, acc_id):
         create_cash_adjust_entries(comp_id,rpt_id, acc_id)
     elif acc_id == 27: # 預收款項
         create_receipts_in_advance_entries(comp_id, rpt_id, acc_id)
+    elif acc_id == 31: #應付帳款
+        pass
 
 def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
     # 建立所有現金的 adjust entry
