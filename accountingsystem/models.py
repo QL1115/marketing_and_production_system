@@ -181,6 +181,21 @@ class ReceiptsInAdvance(models.Model):
         managed = False
         db_table = 'ReceiptsInAdvance'
 
+class AccountsPayable(models.Model):
+    acc_payable_id = models.AutoField(primary_key=True)
+    voucher_number = models.CharField(max_length=20)
+    voucher_date = models.DateField()
+    customer_code = models.CharField(max_length=20)
+    customer_name = models.CharField(max_length=20)
+    type = models.ForeignKey(Account, models.CASCADE, db_column='type')
+    currency = models.CharField(max_length=10)
+    foreign_currency_amount = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
+    ntd_amount = models.DecimalField(max_digits=22, decimal_places=2)
+    note = models.CharField(max_length=200)
+    rpt = models.ForeignKey('Report', models.CASCADE)
+    class Meta:
+        managed = False
+        db_table = 'accountspayable'
 
 class Systemcode(models.Model):
     system_code_id = models.AutoField(primary_key=True)

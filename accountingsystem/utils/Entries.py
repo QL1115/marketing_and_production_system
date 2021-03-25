@@ -17,6 +17,8 @@ def delete_preamount(rpt_id, acc_id):
         pass
     elif acc_id==27:
         delete_receipts_in_advance_preamount(rpt_id)
+    elif acc_id==31:
+        pass
 
 def delete_receipts_in_advance_preamount(rpt_id):
     ''' 刪除「預收款項」的 preamt '''

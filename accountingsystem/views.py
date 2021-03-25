@@ -13,13 +13,13 @@ from pandas._libs import json
 
 from .forms import CashinbanksForm, DepositAccountForm
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Reltrx, \
-    Disclosure, Disdetail, Distitle, ReceiptsInAdvance
+    Disclosure, Disdetail, Distitle, ReceiptsInAdvance, AccountsPayable
 from .utils.ConsolidateReport import create_consolidated_report, create_consolidated_report_preamt, \
     delete_consolidate_report
 from .utils.Disclosure import delete_disclosure_for_project_account
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, delete_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
-    get_uploaded_file, check_and_save_receipts_in_advance
+    get_uploaded_file, check_and_save_receipts_in_advance, check_and_save_accounts_payable
 from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, cal_previous_comparision, search_previous_comparision
 from .utils.Common import normal_round
 from dateutil.relativedelta import relativedelta
@@ -70,6 +70,12 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
                 return result
             else:
                 return {"status_code": 500, "msg": "發生不明錯誤。"}
+        elif acc_id == 31:
+            if table_name == "accounts_payable":
+                result = check_and_save_accounts_payable(rpt_id, sheet)
+                return result
+            else:
+                return {"status_code": 500, "msg": "發生不明錯誤。"}        
     except Exception as e:
         print('upload_file exception >>> ', e)
         return {"status_code": 500, "msg": "發生不明錯誤。"}
@@ -179,6 +185,19 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
                 delete_preamount
                 create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return render(request, 'receipts_in_advance/ria_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
+    elif acc_id == 31:
+        if request.method == 'GET':
+            # TODO 檢查是否已經有上傳的了
+            ap_qry_set = AccountsPayable.objects.filter(rpt__rpt_id=rpt_id)
+            print('ap_qry_set >>> ', len(ap_qry_set))
+            return render(request, 'accounts_payable/ap_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ap_qry_set)==0 else True })
+        elif request.method == 'POST':
+            table_name = request.POST.get('table_name')
+            result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
+            if result['status_code'] == 200:
+                delete_preamount(rpt_id, acc_id)
+                #create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+            return render(request, 'accounts_payable/ap_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
 
 
 
@@ -285,6 +304,10 @@ def update_raw_file(request, comp_id, rpt_id, acc_id, table_name):
     elif acc_id==4:
         pass
     elif acc_id == 27:
+        delete_preamount(rpt_id, acc_id)
+        delete_consolidate_report(comp_id, rpt_id)
+        create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+    elif acc_id == 31:
         delete_preamount(rpt_id, acc_id)
         delete_consolidate_report(comp_id, rpt_id)
         create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
