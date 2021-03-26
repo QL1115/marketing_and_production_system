@@ -1,30 +1,33 @@
+from builtins import Exception, list, set, len
+
 from ..models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Group, Reltrx, Distitle, Disdetail, Disclosure
 from .Common import normal_round
 from dateutil.relativedelta import relativedelta
 
 def get_current_and_previous_rpt(current_rpt_id, rpt_type, comp_id):
-        '''input: 當期 rpt_id, output: 當期 rpt 和 前期 rpt'''
-        try:
-            current_rpt = Report.objects.get(rpt_id=current_rpt_id, type=rpt_type, com_id=comp_id)
-            # if current_rpt is None:
-            #     return None
-            rd = relativedelta(current_rpt.end_date + relativedelta(days=1), current_rpt.start_date)
-            months_duration = rd.years * 12 + rd.months # 一期為幾個月
-            # 推算前一期起始及結束日
-            previous_rpt_end_date = current_rpt.start_date - relativedelta(days=1)
-            previous_rpt_start_date = previous_rpt_end_date + relativedelta(days=1) - relativedelta(months=months_duration)
-            previous_rpt = Report.objects.get(start_date=previous_rpt_start_date, end_date=current_rpt.start_date - relativedelta(days=1), type=rpt_type, com_id=comp_id)
-            # if previous_rpt is None:
-            #     return
-            return current_rpt, previous_rpt
-        except Exception as e:
-            return None, None
+    '''input: 當期 rpt_id, output: 當期 rpt 和 前期 rpt'''
+    try:
+        current_rpt = Report.objects.get(rpt_id=current_rpt_id, type=rpt_type, com_id=comp_id)
+        # if current_rpt is None:
+        #     return None
+        rd = relativedelta(current_rpt.end_date + relativedelta(days=1), current_rpt.start_date)
+        months_duration = rd.years * 12 + rd.months # 一期為幾個月
+        # 推算前一期起始及結束日
+        previous_rpt_end_date = current_rpt.start_date - relativedelta(days=1)
+        previous_rpt_start_date = previous_rpt_end_date + relativedelta(days=1) - relativedelta(months=months_duration)
+        previous_rpt = Report.objects.get(start_date=previous_rpt_start_date, end_date=current_rpt.start_date - relativedelta(days=1), type=rpt_type, com_id=comp_id)
+        # if previous_rpt is None:
+        #     return
+        return current_rpt, previous_rpt
+    except Exception as e:
+        return None, None
 
 def cal_previous_comparision(base_period, rpt_id, acc_id, rpt_type, comp_id):  # 此處的 acc_id 是 level 3 的。 eg. 現金及約當現金的 id
     '''計算並回傳前期比較。base: 基準，relative: 另一期'''
     # 確認期間是多久，取得「當期 rpt」和「前期 rpt」
     current_rpt, previous_rpt = get_current_and_previous_rpt(rpt_id, rpt_type, comp_id)
-    if current_rpt or previous_rpt is None:
+    print(current_rpt, previous_rpt)
+    if (current_rpt or previous_rpt) is None:
         return None, None
     relative_version_num = 0
     base_version_num = 0

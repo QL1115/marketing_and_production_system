@@ -30,6 +30,7 @@ def delete_receipts_in_advance_preamount(rpt_id):
     # 刪預收帳款下兌換損失, 兌換利益 adj entries 對應的 preamt
     Preamt.objects.filter(Q(rpt__rpt_id=rpt_id) & Q(acc__acc_id__in=[25,26]) & Q(pre_id__in=pre_id_list)).delete()
     Adjentry.objects.filter(front_end_location=3).delete() # eg. 刪掉預收的 應收帳款 adj entry，應收帳款 preamt 不刪掉
+    delete_disclosure_for_project_account(acc_id, [acc_id], rpt_id)
 
 
 def delete_cash_preamount(rpt_id):

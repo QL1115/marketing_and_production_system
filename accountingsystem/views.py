@@ -598,11 +598,11 @@ def get_dashboard_page(request, comp_id):
 
 @csrf_exempt
 def get_disclosure_page(request, comp_id, rpt_id, acc_id):
+    """
+    如果 method 是 GET，回傳正確 disclosure 頁面
+    如果 method 是 POST，將傳回的 disclosure 檢查後存進資料庫
+    """
     if acc_id==1:
-        """
-        如果 method 是 GET，回傳正確 disclosure 頁面
-        如果 method 是 POST，將傳回的 disclosure 檢查後存進資料庫
-        """
         # 確認銀行存款和定期存款有被上傳
         if request.method == 'GET':
             table_name = 'cash_in_banks'
