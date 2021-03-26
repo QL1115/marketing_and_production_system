@@ -1,6 +1,7 @@
 import datetime
 
-from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, Exchangerate,Adjentry,Preamt, Company, Disdetail, Disclosure, Distitle, ReceiptsInAdvance
+from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, Exchangerate, Adjentry, Preamt, Company, \
+    Disdetail, Disclosure, Distitle, ReceiptsInAdvance, Accountreceivable
 from django.db import connection
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q, F, Count
@@ -13,13 +14,17 @@ def delete_preamount(rpt_id, acc_id):
     elif acc_id==2:
         pass
     elif acc_id==3:
-        pass
+        delete_accounts_receivable_preamount(rpt_id)
     elif acc_id==4:
         pass
     elif acc_id==27:
         delete_receipts_in_advance_preamount(rpt_id)
     elif acc_id==31:
         pass
+
+def delete_accounts_receivable_preamount(rpt_id):
+    ''' 刪除「應收帳款」的 preamt '''
+    pass
 
 def delete_receipts_in_advance_preamount(rpt_id):
     ''' 刪除「預收款項」的 preamt '''
@@ -116,6 +121,8 @@ def create_adjust_entries(comp_id, rpt_id, acc_id, preamt_list):
     print('>>> create_adjust_entries')
     if acc_id==1: #如果科目是現金，建立現金的分錄
         create_cash_adjust_entries(comp_id,rpt_id, acc_id)
+    elif acc_id == 3: # 應收帳款
+        create_accounts_receivable(comp_id, rpt_id, acc_id, preamt_list)
     elif acc_id == 27: # 預收款項
         create_receipts_in_advance_entries(comp_id, rpt_id, acc_id, preamt_list)
     elif acc_id == 31: #應付帳款
@@ -144,6 +151,70 @@ def create_cash_adjust_entries(comp_id,rpt_id, acc_id):
     #
     li = [over_3_month_dp, pledge_deposit, foreign_currency_deposit, foreign_currency_time_deposit, cib_over_3_month]
     fill_in_preamount(li, comp_id, rpt_id, acc_id)
+
+def cal_acc_recv_asset_liability(ria_qry_set, acc_recv_qry_set, exchange_rate_qry_set):
+    ''' 計算應收帳款的資負同高，回傳 excel 應收_資負同高的資料，除了 adjust entries '''
+    acc_recv_result = []
+    print('ria_qry_set >>> ', ria_qry_set)
+    ria_voucher_num_list = list(ria_qry_set.values_list('voucher_num', flat=True))
+    print('ria_voucher_num_list >>> ', ria_voucher_num_list)
+    hedge_accounts_recv_qry_set = acc_recv_qry_set.filter(voucher_num__in=ria_voucher_num_list)
+    common_voucher_num_list = list(hedge_accounts_recv_qry_set.values_list('voucher_num', flat=True))
+    print('common_voucher_num_list >>> ', common_voucher_num_list)
+    for acc_recv in acc_recv_qry_set:
+        if acc_recv.voucher_num in common_voucher_num_list: # 如果需要對沖（「應收帳款」和「預收帳款」有一樣的傳票編號）
+            # 先計算「預收款項」核算本幣
+            ria = ria_qry_set.get(voucher_num=acc_recv.voucher_num)
+            print('ria currency >>> ', ria.currency)
+            # print('ria currency rate >>> ', ria.foreign_currency_amount * exchange_rate_qry_set.get(currency_name=ria.currency).rate)
+            ria_check_amt = ria.ntd_amount if ria.foreign_currency_amount is None else ria.foreign_currency_amount * round(exchange_rate_qry_set.get(currency_name=ria.currency).rate, 3)
+            acc_recv.check_amount = round(acc_recv.ntd_amount if acc_recv.foreign_currency_amount is None else acc_recv.foreign_currency_amount * round(exchange_rate_qry_set.get(currency_name=acc_recv.currency).rate, 3))
+            acc_recv.hedge_foreign_currency = ria.foreign_currency_amount
+            acc_recv.hedge_ntd_amount = ria_check_amt
+            if acc_recv.foreign_currency_amount is not None:
+                acc_recv.min_foreign_currency = round(min(acc_recv.hedge_foreign_currency, acc_recv.foreign_currency_amount))
+            acc_recv.min_ntd_amount = round(min(acc_recv.hedge_ntd_amount, acc_recv.ntd_amount))
+            acc_recv.adj_ntd_amount = round(acc_recv.check_amount - acc_recv.min_ntd_amount)
+            acc_recv.adj_foreign_currency = round(acc_recv.foreign_currency_amount - acc_recv.min_foreign_currency) if acc_recv.foreign_currency_amount is not None else None
+        else: # 如果不用對沖（「應收帳款」和「預收帳款」沒有一樣的傳票編號）
+            # 計算「應收帳款」的 核算本幣 即可
+            acc_recv.check_amount = round(acc_recv.ntd_amount if acc_recv.foreign_currency_amount is None else acc_recv.foreign_currency_amount * round(exchange_rate_qry_set.get(currency_name=acc_recv.currency).rate, 3))
+            acc_recv.adj_foreign_currency = None if acc_recv.foreign_currency_amount is None else acc_recv.foreign_currency_amount
+            acc_recv.adj_ntd_amount = round(acc_recv.check_amount)
+            acc_recv.hedge_foreign_currency = None
+            acc_recv.hedge_ntd_amount = None
+            acc_recv.min_foreign_currency = None
+            acc_recv.min_ntd_amount = None
+        acc_recv_result.append(acc_recv)
+    return acc_recv_result
+
+def create_accounts_receivable(comp_id, rpt_id, acc_id, preamt_list):
+    ''' 應收帳款 '''
+    #### 資負同高
+    total_sum = 0
+    ria_qry_set = ReceiptsInAdvance.objects.filter(rpt__rpt_id=rpt_id)
+    accounts_recv_qry_set = Accountreceivable.objects.filter(rpt__rpt_id=rpt_id)
+    exchange_rate_qry_set = Exchangerate.objects.filter(rpt__rpt_id=rpt_id)
+    asset_liability = cal_acc_recv_asset_liability(ria_qry_set, accounts_recv_qry_set, exchange_rate_qry_set)
+    for row in asset_liability:
+        if row.min_ntd_amount is not None:
+            total_sum += row.min_ntd_amount
+    # 撈取最大的 adj_num + 1
+    adj_num = Adjentry.objects.all().order_by('-adj_num').values('adj_num').first()['adj_num'] + 1
+    acc_recv_preamt = Preamt.objects.filter(rpt__rpt_id=rpt_id, acc__acc_id=30).first() # TODO 應收帳款 level 1 preamt 不止一個，跟預收帳款所需要的應收preempt 撞了
+    ria_preamt = Preamt.objects.get(rpt__rpt_id=rpt_id, acc__acc_id=29) # 預收款項 level 1 preamt
+
+    if total_sum >= 0:
+        debit = Adjentry.objects.create(amount=abs(total_sum), adj_num=adj_num, pre=ria_preamt, credit_debit=1, front_end_location=4, entry_name='應收_資負同高')
+        credit = Adjentry.objects.create(amount=abs(total_sum), adj_num=adj_num, pre=acc_recv_preamt, credit_debit=0, front_end_location=4, entry_name='應收_資負同高')
+        # fill_in_preamount([{'兌換利益': debit, '應收帳款': credit}, comp_id, rpt_id, acc_id]
+    else:
+        debit = Adjentry.objects.create(amount=abs(total_sum), adj_num=adj_num, pre=acc_recv_preamt, credit_debit=1, front_end_location=4, entry_name='應收_資負同高')
+        credit = Adjentry.objects.create(amount=abs(total_sum), adj_num=adj_num, pre=ria_preamt, credit_debit=0, front_end_location=4, entry_name='應收_資負同高')
+        # fill_in_preamount([{'兌換損失': credit, '應收帳款': debit}, comp_id, rpt_id, acc_id]
+
+
+
 
 
 # 銀行存款-外匯存款
@@ -561,7 +632,7 @@ def fill_in_preamount(list,  comp_id, rpt_id, acc_id):
             print('「銀行存款」或者「定期存款」資料表中沒有對應的 records >>> ', e)
             # return {"status_code": 404, "msg": "無法根據 rpt_id 查詢到「銀行存款」或者「定期存款」。"}
     elif acc_id == 27: # 預收款項
-        pass # TODO 不確定預收需不需要 preamt
+        pass
 
     fill_in_disclosure(preamt_qry_set, rpt_id)
 
