@@ -1,7 +1,5 @@
-import math
 import xlrd  # xlrd 方法參考：https://blog.csdn.net/wangweimic/article/details/87344803
 # from datetime import datetime
-from datetime import datetime
 from django.core.serializers import serialize
 from django.db import connection
 from django.db.models import Q
@@ -14,15 +12,14 @@ from pandas._libs import json
 from .forms import CashinbanksForm, DepositAccountForm, AccountsPayableForm
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Reltrx, \
     Disclosure, Disdetail, Distitle, ReceiptsInAdvance, AccountsPayable
+from .utils.Common import normal_round
 from .utils.ConsolidateReport import create_consolidated_report, create_consolidated_report_preamt, \
     delete_consolidate_report
-from .utils.Disclosure import delete_disclosure_for_project_account
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, delete_preamount
+from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, \
+    cal_previous_comparision, search_previous_comparision
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
     get_uploaded_file, check_and_save_receipts_in_advance, check_and_save_accounts_payable
-from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, cal_previous_comparision, search_previous_comparision
-from .utils.Common import normal_round
-from dateutil.relativedelta import relativedelta
 
 
 def index(request):
@@ -64,9 +61,7 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
             pass
         elif acc_id == 27:
             if table_name == 'receipts_in_advance':
-                print('!!! in upload acc id 27')
                 result = check_and_save_receipts_in_advance(rpt_id, sheet)
-                print('upload 27 result  >>> ', result)
                 return result
             else:
                 return {"status_code": 500, "msg": "發生不明錯誤。"}
@@ -174,22 +169,20 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
         pass
     elif acc_id == 27:
         if request.method == 'GET':
-            # TODO 檢查是否已經有上傳的了
+            # 檢查是否已經有上傳的了
             ria_qry_set = ReceiptsInAdvance.objects.filter(rpt__rpt_id=rpt_id)
-            print('ria >>> ', len(ria_qry_set))
             return render(request, 'receipts_in_advance/ria_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ria_qry_set)==0 else True })
         elif request.method == 'POST':
             table_name = request.POST.get('table_name')
             result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
             if result['status_code'] == 200:
-                delete_preamount
+                delete_preamount(rpt_id, acc_id)
                 create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
             return render(request, 'receipts_in_advance/ria_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
     elif acc_id == 31:
         if request.method == 'GET':
             # TODO 檢查是否已經有上傳的了
             ap_qry_set = AccountsPayable.objects.filter(rpt__rpt_id=rpt_id)
-            print('ap_qry_set >>> ', len(ap_qry_set))
             return render(request, 'accounts_payable/ap_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ap_qry_set)==0 else True })
         elif request.method == 'POST':
             table_name = request.POST.get('table_name')
@@ -541,7 +534,7 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
         pass
     elif acc_id == 27: # 預收帳款調整
         ria_qry_set = ReceiptsInAdvance.objects.filter(rpt__rpt_id=rpt_id)
-        currency_type = list(ria_qry_set.values_list('currency', flat=True).distinct())
+        # currency_type = list(ria_qry_set.values_list('currency', flat=True).distinct())
         exchange_rate_qry_set = Exchangerate.objects.filter(rpt__rpt_id=rpt_id).values_list('currency_name', 'rate')
         exchange_rate_dict = dict() 
         for currency_name,rate in exchange_rate_qry_set: 
@@ -557,13 +550,12 @@ def adjust_acc(request, comp_id, rpt_id, acc_id):
             ria.amount_difference = round(ria.check_amount - ria.ntd_amount)
         # 調整分錄
         # TODO 因為目前「預收」只有兩個 adj entry，所以沒有要配對的問題。
-        entries = Adjentry.objects.filter(front_end_location=3).select_related('pre__acc').filter(
+        entries = Adjentry.objects.filter(front_end_location=3).exclude(amount=0).select_related('pre__acc').filter(
             pre__rpt_id=rpt_id).values('pre__acc__acc_name',
                                     'amount', 'adj_num',
                                     'credit_debit',
                                     'entry_name',
                                     'front_end_location')
-        print('entries >>> ', entries)
         return render(request, 'receipts_in_advance/ria_adjust_page.html',
                     {'comp_id': comp_id, 'rpt_id': rpt_id, 'acc_id': acc_id, 'ria_qry_set': ria_qry_set, 'entries': entries})
 

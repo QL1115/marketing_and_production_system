@@ -4,7 +4,8 @@ from ..models import Cashinbanks, Depositaccount, Report, Account, Systemcode, E
 from django.db import connection
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum, Q, F, Count
-from .Disclosure import create_disclosure_for_project_account, fill_in_disclosure
+from .Disclosure import create_disclosure_for_project_account, fill_in_disclosure, delete_disclosure_for_project_account
+
 
 def delete_preamount(rpt_id, acc_id):
     if acc_id == 1:
@@ -24,12 +25,15 @@ def delete_receipts_in_advance_preamount(rpt_id):
     ''' 刪除「預收款項」的 preamt '''
     acc_id = 27
     Preamt.objects.filter(Q(rpt__rpt_id=rpt_id) & (Q(acc__acc_id=acc_id) | Q(acc__acc_parent__acc_id=acc_id) | Q(acc__acc_parent__acc_parent__acc_id=acc_id))).delete()
-    Preamt.objects.filter(acc__acc_id__in=[25,26,30]).delete() # 兌換損失, 兌換利益, 應收帳款
+    # front-end-location 3 目前是預收帳款在用，為了防止刪到其他科目的「兌換利益」和「兌換損失」，故用 front-end-location 做區別
+    pre_id_list = Adjentry.objects.filter(pre__rpt__rpt_id=rpt_id, front_end_location=3).values_list('pre__pre_id', flat=True).distinct()
+    # 刪預收帳款下兌換損失, 兌換利益 adj entries 對應的 preamt
+    Preamt.objects.filter(Q(rpt__rpt_id=rpt_id) & Q(acc__acc_id__in=[25,26]) & Q(pre_id__in=pre_id_list)).delete()
+    Adjentry.objects.filter(front_end_location=3).delete() # eg. 刪掉預收的 應收帳款 adj entry，應收帳款 preamt 不刪掉
 
 
 def delete_cash_preamount(rpt_id):
-    print('!!!!in')
-    # 全部予以刪除 
+    # 全部予以刪除
     # 必定刪除:1 23 24 25 26
     acc_id = 1
     countIdList = [1, 23, 24, 25, 26]
@@ -46,14 +50,14 @@ def delete_cash_preamount(rpt_id):
     delete_disclosure_for_project_account(acc_id, countIdList, rpt_id)
     # print('執行完了 delete_disclosure_for_project_account')
     for i in countIdList:
-        Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
+        temp = Preamt.objects.filter(rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i)).delete()
 
 def create_preamount_and_adjust_entries_for_project_account(comp_id: object, rpt_id: object, acc_id: object) -> object:
     print('>>> create_preamount_and_adjust_entries_for_project_account')
     #建立調整和附註格式
-    create_preamount(comp_id, rpt_id, acc_id)
+    preamt_list = create_preamount(comp_id, rpt_id, acc_id)
     #建立分錄
-    create_adjust_entries(comp_id, rpt_id, acc_id) 
+    create_adjust_entries(comp_id, rpt_id, acc_id, preamt_list)
 
 # def create_preamount(comp_id, rpt_id, acc_id):
 #     print('>>> create_preamount')
@@ -66,7 +70,7 @@ def create_preamount(comp_id, rpt_id, acc_id):
     print('>>> create preamount')
     preamount_list = []  #用於建立 disdetail
     countIdList = []
-    
+    report = Report.objects.get(rpt_id=rpt_id)
     countIdList.append(acc_id)
     for i in countIdList:
         childList = Account.objects.filter(acc_parent=i)
@@ -78,35 +82,41 @@ def create_preamount(comp_id, rpt_id, acc_id):
                 # 要接一個account object
     
     if acc_id == 1:
-        number23 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=23))
-        number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=24))
-        number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
-        number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
+        number23 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=23))
+        number24 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=24))
+        number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=25))
+        number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=26))
         preamount_list.append(number23)
         preamount_list.append(number24)
         preamount_list.append(number25)
         preamount_list.append(number26)
     elif acc_id == 27:
-        number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=25))
-        number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=26))
+        # 如果有空的「兌換利益」或「兌換損失」可用，則不產生新的。因為刪除預收帳款的時候，沒有刪兌換利益和兌換損失。
+        # number25 = Preamt.objects.filter(Q(rpt=report) & Q(acc_id=25) & Q(pre_amt=0) & Q(book_amt=0) & Q(adj_amt=0)).first()
+        # number26 = Preamt.objects.filter(Q(rpt=report) & Q(acc_id=26) & Q(pre_amt=0) & Q(book_amt=0) & Q(adj_amt=0)).first()
+        # if number25 is None:
+        number25 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=25))
+        # if number26 is None:
+        number26 = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=26))
         preamount_list.append(number25)
         preamount_list.append(number26)
     elif acc_id == 31:
         pass
 
     for i in countIdList:
-        preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=Report.objects.get(rpt_id=rpt_id), acc=Account.objects.get(acc_id=i))
+        preamount = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, rpt=report, acc=Account.objects.get(acc_id=i))
         preamount_list.append(preamount)
 
     print('preamount_list >>>', preamount_list)
     create_disclosure_for_project_account(preamount_list, rpt_id, acc_id)
+    return preamount_list
 
-def create_adjust_entries(comp_id, rpt_id, acc_id):
+def create_adjust_entries(comp_id, rpt_id, acc_id, preamt_list):
     print('>>> create_adjust_entries')
     if acc_id==1: #如果科目是現金，建立現金的分錄
         create_cash_adjust_entries(comp_id,rpt_id, acc_id)
     elif acc_id == 27: # 預收款項
-        create_receipts_in_advance_entries(comp_id, rpt_id, acc_id)
+        create_receipts_in_advance_entries(comp_id, rpt_id, acc_id, preamt_list)
     elif acc_id == 31: #應付帳款
         pass
 
@@ -415,7 +425,7 @@ def create_pledge_deposit_account_entry(comp_id,cash_qry_set, rpt_id):
     return{"質押定存": credit_pledge_total,
            "原幣定存": debit_ntd_deposit_total}
 
-def create_receipts_in_advance_entries(comp_id, rpt_id, acc_id):
+def create_receipts_in_advance_entries(comp_id, rpt_id, acc_id, preamt_list):
     ''' 預收款項 '''
     # 非本幣的 receipts in advance
     ria_qry_set = ReceiptsInAdvance.objects.filter(Q(rpt__rpt_id=rpt_id) & (~Q(foreign_currency_amount=0) & ~Q(foreign_currency_amount=None)))  
@@ -423,29 +433,40 @@ def create_receipts_in_advance_entries(comp_id, rpt_id, acc_id):
     # 共有幾種不同的外幣幣別
     currency_type = list(ria_qry_set.values_list('currency', flat=True).distinct())
     exchange_rate_qry_set = Exchangerate.objects.filter(rpt__rpt_id=rpt_id).values_list('currency_name', 'rate')
-    print('exchange rage >>> ', exchange_rate_qry_set)
-    print('currency_type >>> ', currency_type)
+    # print('exchange rage >>> ', exchange_rate_qry_set)
+    # print('currency_type >>> ', currency_type)
     for currency_name, rate in exchange_rate_qry_set:
         result = ria_qry_set.filter(currency=currency_name).aggregate(single_foreign_sum = Sum(F('foreign_currency_amount')*round(rate,2) - F('ntd_amount')))
         total_difference += list(result.values())[0]
-    print('total_difference >>> ', total_difference)
+    # print('total_difference >>> ', total_difference)
     # 撈取最大的 adj_num + 1
     adj_num = Adjentry.objects.all().order_by('-adj_num').values('adj_num').first()['adj_num'] + 1
-    print('adj num >> ', adj_num)
+    # print('adj num >> ', adj_num)
     accounts_receivable_preamt = Preamt.objects.filter(acc__acc_id=30, rpt__rpt_id=rpt_id).first()
     if accounts_receivable_preamt is None:
         accounts_receivable_preamt = Preamt.objects.create(book_amt=0, adj_amt=0, pre_amt=0, acc=Account.objects.get(acc_id=30), rpt=Report.objects.get(rpt_id=rpt_id))
-        print('剛建立的應收帳款 preamt >>> ', accounts_receivable_preamt)
+        # print('剛建立的應收帳款 preamt >>> ', accounts_receivable_preamt)
+    number25 = None
+    number26 = None
+    for preamt in preamt_list:
+        if preamt.acc.acc_id == 26:
+            number26 = preamt
+        if preamt.acc.acc_id == 25:
+            number25 = preamt
     if total_difference >= 0: # 兌換利益
+        Adjentry.objects.create(amount=0, adj_num=adj_num,
+                                pre=number25,  credit_debit=1, front_end_location=3, entry_name='預收款項') # TODO
         debit = Adjentry.objects.create(amount=abs(total_difference), adj_num=adj_num, 
-                        pre=Preamt.objects.get(rpt_id=rpt_id, acc__acc_id=26), # 兌換利益
+                        pre=number26, # 兌換利益
                         credit_debit=1, front_end_location=3, entry_name='預收款項')
         credit = Adjentry.objects.create(amount=abs(total_difference), adj_num=adj_num, pre=accounts_receivable_preamt,
                         credit_debit=0, front_end_location=3, entry_name='預收款項')
         # fill_in_preamount([{'兌換利益': debit, '應收帳款': credit}, comp_id, rpt_id, acc_id]
-    else: 
+    else:
+        Adjentry.objects.create(amount=0, adj_num=adj_num,
+                                pre=number26,  credit_debit=1, front_end_location=3, entry_name='預收款項') # TODO
         credit = Adjentry.objects.create(amount=abs(total_difference), adj_num=adj_num, 
-                        pre=Preamt.objects.get(rpt_id=rpt_id, acc__acc_id=25), # 兌換損失
+                        pre=number25, # 兌換損失
                         credit_debit=0, front_end_location=3, entry_name='預收款項')
         debit = Adjentry.objects.create(amount=abs(total_difference), adj_num=adj_num, pre=accounts_receivable_preamt,
                         credit_debit=1, front_end_location=3, entry_name='預收款項')

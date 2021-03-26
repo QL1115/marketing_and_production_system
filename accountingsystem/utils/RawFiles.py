@@ -253,11 +253,9 @@ def check_and_save_accounts_payable(rpt_id, sheet):
                                            note = sheet.cell_value(rowx=i, colx=8),
                                            rpt = rpt)
                 record.save()
-        print('!!')
         return {"status_code": 200, "msg": "檔案上傳/更新成功。"}
     except Exception as e:
         print('check_and_save_cash_in_banks >>> ', e)
-        print('??')
         return {"status_code": 500, "msg": "檔案上傳/更新失敗，發生不明錯誤。"}
 
 def delete_uploaded_file(rpt_id, table_name):
@@ -272,14 +270,13 @@ def delete_uploaded_file(rpt_id, table_name):
         elif table_name == 'deposit_account': # 定期存款
             Depositaccount.objects.filter(rpt=report).delete()
         elif table_name == 'receipts_in_advance':
-            print('in delete 27')
             ReceiptsInAdvance.objects.filter(rpt=report).delete()
         elif table_name == 'accounts_payable':
             AccountsPayable.objects.filter(rpt=report).delete()
-        return '{"status_code":200, "msg": "您刪除了 id 為' + str(report.id) + ' 專案的' + table_name +'。"}'
+        return {"status_code":200, "msg": "您刪除了 id 為' + str(rpt_id) + ' 專案的' + table_name +'。"}
     except Exception as e:
         print('delete_uploaded_file >>> ', e)
-        return '{"status_code":500, "msg": "刪除資料發生不明錯誤。}'
+        return {"status_code":500, "msg": "刪除資料發生不明錯誤。"}
 
 def get_uploaded_file(rpt_id, table_name):
     '''根據 table name 抓取特定的上傳資料。eg. cash_in_banks 代表銀行存款'''
