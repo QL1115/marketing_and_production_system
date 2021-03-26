@@ -13,13 +13,13 @@ from pandas._libs import json
 
 from .forms import CashinbanksForm, DepositAccountForm
 from .models import Cashinbanks, Depositaccount, Adjentry, Preamt, Exchangerate, Report, Account, Company, Reltrx, \
-    Disclosure, Disdetail, Distitle, ReceiptsInAdvance
+    Disclosure, Disdetail, Distitle, ReceiptsInAdvance,Allowanceforloss, Accountreceivable
 from .utils.ConsolidateReport import create_consolidated_report, create_consolidated_report_preamt, \
     delete_consolidate_report
 from .utils.Disclosure import delete_disclosure_for_project_account
 from .utils.Entries import create_preamount_and_adjust_entries_for_project_account, delete_preamount
 from .utils.RawFiles import delete_uploaded_file, check_and_save_cash_in_banks, check_and_save_deposit_account, \
-    get_uploaded_file, check_and_save_receipts_in_advance
+    get_uploaded_file, check_and_save_receipts_in_advance, check_and_save_accountreceivable, check_and_save_allowanceforloss
 from .utils.PreviousComparison import delete_disdetail_from_previous_comparison, get_current_and_previous_rpt, cal_previous_comparision, search_previous_comparision
 from .utils.Common import normal_round
 from dateutil.relativedelta import relativedelta
@@ -59,7 +59,13 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
         elif acc_id==2:
             pass
         elif acc_id==3:
-            pass
+            if table_name == "account_receivable":
+                print('!!! in upload acc id 3')
+                result = check_and_save_accountreceivable(rpt_id, sheet)
+                print('upload 3 result  >>> ', result)
+                return result
+            else:
+                return {"status_code": 500, "msg": "發生不明錯誤。"}
         elif acc_id==4:
             pass
         elif acc_id == 27:
@@ -67,6 +73,14 @@ def upload_file(request, comp_id, rpt_id, acc_id, table_name):
                 print('!!! in upload acc id 27')
                 result = check_and_save_receipts_in_advance(rpt_id, sheet)
                 print('upload 27 result  >>> ', result)
+                return result
+            else:
+                return {"status_code": 500, "msg": "發生不明錯誤。"}
+        elif acc_id == 35:
+            if table_name == 'account_receivable':
+                print('!!! in upload acc id 35')
+                result = check_and_save_allowanceforloss(rpt_id, sheet)
+                print('upload 35 result  >>> ', result)
                 return result
             else:
                 return {"status_code": 500, "msg": "發生不明錯誤。"}
@@ -163,7 +177,18 @@ def get_import_page(request, comp_id, rpt_id, acc_id):
     elif acc_id==2:
         pass
     elif acc_id==3:
-        pass
+        if request.method == 'GET':
+            # TODO 檢查是否已經有上傳的了
+            ar_qry_set = Accountreceivable.objects.filter(rpt__rpt_id=rpt_id)
+            print('ar >>> ', len(ar_qry_set))
+            return render(request, 'account_receivable/ar_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': False if len(ar_qry_set)==0 else True })
+        elif request.method == 'POST':
+            table_name = request.POST.get('table_name')
+            result = upload_file(request, comp_id, rpt_id, acc_id, table_name)
+            if result['status_code'] == 200:
+                delete_preamount
+                create_preamount_and_adjust_entries_for_project_account(comp_id, rpt_id, acc_id)
+            return render(request, 'account_receivable/ar_import_page.html', {'acc_id': acc_id, 'comp_id': comp_id, 'rpt_id': rpt_id, 'exists': True if result['status_code']==200 else False, 'isSuccessful': result['msg']})
     elif acc_id==4:
         pass
     elif acc_id == 27:
@@ -217,6 +242,7 @@ def get_check_page(request, comp_id, rpt_id, acc_id):
     elif acc_id==2:
         pass
     elif acc_id==3:
+        # TODO: 檢查頁面
         pass
     elif acc_id==4:
         pass

@@ -12,6 +12,24 @@ class Account(models.Model):
         unique_together = (('acc_id', 'acc_name'),)
 
 
+class Accountreceivable(models.Model):
+    recv_id = models.AutoField(primary_key=True)
+    voucher_num = models.CharField(max_length=30) # 傳票編號
+    voucher_date = models.DateField() # 傳票日期
+    customer_code = models.CharField(max_length=30) # 客戶代號
+    customer_abbre = models.CharField(max_length=30) # 客戶簡稱
+    currency = models.CharField(max_length=10) # 幣別
+    foreign_currency_amount = models.DecimalField(max_digits=22, decimal_places=2, blank=True, null=True)
+    ntd_amount = models.DecimalField(max_digits=22, decimal_places=2)
+    summary = models.CharField(max_length=50) # 摘要
+    est_payment_date = models.DateField() # 預計收款日
+    rpt = models.ForeignKey('Report', models.CASCADE)
+
+    class Meta:
+        managed = False
+        db_table = 'accountreceivable'
+
+
 class Adjentry(models.Model):
     adj_id = models.AutoField(primary_key=True)
     amount = models.DecimalField(max_digits=22, decimal_places=2)
@@ -23,6 +41,22 @@ class Adjentry(models.Model):
     class Meta:
         managed = False
         db_table = 'adjentry'
+
+
+class Allowanceforloss(models.Model):
+    alw_id = models.AutoField(primary_key=True)
+    opening_balance = models.DecimalField(max_digits=22, decimal_places=2) #期初餘額
+    recognized_amt = models.DecimalField(max_digits=22, decimal_places=2) #本期提列
+    reversal_amt = models.DecimalField(max_digits=22, decimal_places=2) #減損迴轉
+    charge_off_amt = models.DecimalField(max_digits=22, decimal_places=2) #無法收回而沖銷
+    exchange_gain_loss = models.DecimalField(max_digits=22, decimal_places=2) #兌換損益
+    alw_for_loss_individual = models.DecimalField(max_digits=22, decimal_places=2) #備抵損失-非關係人
+    alw_for_loss_consolidate = models.DecimalField(max_digits=22, decimal_places=2)  # 備抵損失-關係人
+    rpt = models.ForeignKey('Report', models.CASCADE)
+
+    class Meta:
+        managed = False
+        db_table = 'allowanceforloss'
 
 
 class Cashinbanks(models.Model):
